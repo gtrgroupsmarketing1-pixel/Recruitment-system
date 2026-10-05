@@ -13,6 +13,7 @@ describe("application.state-machine", () => {
       STATUS.SOURCED,
       STATUS.SCREENED,
       STATUS.SHORTLISTED,
+      STATUS.CLIENT_INTERVIEWED,
       STATUS.SELECTED,
       STATUS.MEDICAL_BOOKED,
       STATUS.MEDICAL_CLEARED,
@@ -54,9 +55,9 @@ describe("application.state-machine", () => {
 
   describe("illegal transitions", () => {
     it("rejects skipping stages", () => {
-      expect(() => transition(STATUS.SOURCED, STATUS.SELECTED)).toThrow(
-        IllegalTransitionError
-      );
+      expect(() =>
+        transition(STATUS.SHORTLISTED, STATUS.SELECTED)
+      ).toThrow(IllegalTransitionError);
       expect(() =>
         transition(STATUS.MEDICAL_CLEARED, STATUS.VISA_STAMPED)
       ).toThrow(IllegalTransitionError);

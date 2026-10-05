@@ -39,68 +39,26 @@ const EXIT_STATES: readonly Status[] = [
   STATUS.ABSCONDED,
 ] as const;
 
-/** Legal forward transitions. Exit states are allowed from any non-exit state. */
+/** Legal forward-progress edges only. Exit states are appended by nextStates(). */
 const TRANSITIONS: Record<Status, readonly Status[]> = {
-  [STATUS.SOURCED]: [STATUS.SCREENED, STATUS.REJECTED, STATUS.ON_HOLD],
-  [STATUS.SCREENED]: [STATUS.SHORTLISTED, STATUS.REJECTED, STATUS.ON_HOLD],
-  [STATUS.SHORTLISTED]: [
-    STATUS.CLIENT_INTERVIEWED,
-    STATUS.SELECTED,
-    STATUS.REJECTED,
-    STATUS.ON_HOLD,
-  ],
-  [STATUS.CLIENT_INTERVIEWED]: [
-    STATUS.SELECTED,
-    STATUS.REJECTED,
-    STATUS.ON_HOLD,
-  ],
-  [STATUS.SELECTED]: [
-    STATUS.MEDICAL_BOOKED,
-    STATUS.REJECTED,
-    STATUS.ON_HOLD,
-  ],
-  [STATUS.MEDICAL_BOOKED]: [
-    STATUS.MEDICAL_CLEARED,
-    STATUS.MEDICAL_UNFIT,
-    STATUS.ON_HOLD,
-  ],
-  [STATUS.MEDICAL_CLEARED]: [
-    STATUS.DOCUMENTS_IN_ATTESTATION,
-    STATUS.REJECTED,
-    STATUS.ON_HOLD,
-  ],
-  [STATUS.DOCUMENTS_IN_ATTESTATION]: [
-    STATUS.ATTESTATION_CLEARED,
-    STATUS.REJECTED,
-    STATUS.ON_HOLD,
-  ],
-  [STATUS.ATTESTATION_CLEARED]: [
-    STATUS.VISA_APPLIED,
-    STATUS.REJECTED,
-    STATUS.ON_HOLD,
-  ],
-  [STATUS.VISA_APPLIED]: [
-    STATUS.VISA_STAMPED,
-    STATUS.VISA_REFUSED,
-    STATUS.ON_HOLD,
-  ],
-  [STATUS.VISA_STAMPED]: [
-    STATUS.TICKET_BOOKED,
-    STATUS.REJECTED,
-    STATUS.ON_HOLD,
-  ],
-  [STATUS.TICKET_BOOKED]: [
-    STATUS.TRAVELED,
-    STATUS.REJECTED,
-    STATUS.ON_HOLD,
-  ],
-  [STATUS.TRAVELED]: [STATUS.MOBILIZED, STATUS.ABSCONDED, STATUS.ON_HOLD],
-  [STATUS.MOBILIZED]: [STATUS.PROBATION, STATUS.ABSCONDED, STATUS.ON_HOLD],
-  [STATUS.PROBATION]: [STATUS.CONFIRMED, STATUS.ABSCONDED, STATUS.ON_HOLD],
-  [STATUS.CONFIRMED]: [], // terminal success
-  // Exit states have no outgoing transitions
+  [STATUS.SOURCED]: [STATUS.SCREENED],
+  [STATUS.SCREENED]: [STATUS.SHORTLISTED],
+  [STATUS.SHORTLISTED]: [STATUS.CLIENT_INTERVIEWED],
+  [STATUS.CLIENT_INTERVIEWED]: [STATUS.SELECTED],
+  [STATUS.SELECTED]: [STATUS.MEDICAL_BOOKED],
+  [STATUS.MEDICAL_BOOKED]: [STATUS.MEDICAL_CLEARED],
+  [STATUS.MEDICAL_CLEARED]: [STATUS.DOCUMENTS_IN_ATTESTATION],
+  [STATUS.DOCUMENTS_IN_ATTESTATION]: [STATUS.ATTESTATION_CLEARED],
+  [STATUS.ATTESTATION_CLEARED]: [STATUS.VISA_APPLIED],
+  [STATUS.VISA_APPLIED]: [STATUS.VISA_STAMPED],
+  [STATUS.VISA_STAMPED]: [STATUS.TICKET_BOOKED],
+  [STATUS.TICKET_BOOKED]: [STATUS.TRAVELED],
+  [STATUS.TRAVELED]: [STATUS.MOBILIZED],
+  [STATUS.MOBILIZED]: [STATUS.PROBATION],
+  [STATUS.PROBATION]: [STATUS.CONFIRMED],
+  [STATUS.CONFIRMED]: [],
   [STATUS.REJECTED]: [],
-  [STATUS.ON_HOLD]: [], // can be resumed via explicit business rule later
+  [STATUS.ON_HOLD]: [],
   [STATUS.MEDICAL_UNFIT]: [],
   [STATUS.VISA_REFUSED]: [],
   [STATUS.ABSCONDED]: [],
@@ -137,7 +95,8 @@ export function transition(from: Status, to: Status): void {
   }
 }
 
-/** Returns true if the status is a terminal success or exit. */
+/** All statuses for exhaustive testing / UI. */
+export const ALL_STATUSES = Object.values(STATUS);
 export function isTerminal(status: Status): boolean {
   return (
     status === STATUS.CONFIRMED ||
@@ -145,5 +104,13 @@ export function isTerminal(status: Status): boolean {
   );
 }
 
-/** All statuses for exhaustive testing / UI. */
-export const ALL_STATUSES = Object.values(STATUS);
+/**
+ * UI options: forward edges plus every exit, uniformly.
+ * Exits are not stored on TRANSITIONS, so maps cannot drift.
+ */
+export function nextStates(from: Status): Status[] {
+  if (EXIT_STATES.includes(from) || from === STATUS.CONFIRMED) {
+    return [];
+  }
+  return [...(TRANSITIONS[from] ?? []), ...EXIT_STATES];
+}

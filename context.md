@@ -59,5 +59,5 @@ Layer order: Route → Router → Service → Repo → DB.
 10. No bypassing state machine, encryption middleware, or RLS.
 
 ## Session pointer
-Session 00 — bootstrap completion. Models + repo/service/router skeletons
-only. No auth, no encryption logic, no UI.
+Session 02 — tenancy + auth. Written. Verification depends on Pass B install.
+Session 00 state machine: SHORTLISTED goes only to CLIENT_INTERVIEWED. Exits are appended by nextStates(), not stored on TRANSITIONS.
