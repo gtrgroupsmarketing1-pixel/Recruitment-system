@@ -1,60 +1,11 @@
-import { PrismaClient } from "@prisma/client";
-import { encryptionQueryHook } from "@/core/db/encryption.middleware";
+import type { PrismaClient } from "@prisma/client";
 import { getActiveTx, txStorage } from "@/core/db/tx-context";
-
-const globalForPrisma = globalThis as unknown as {
-  appPrisma?: PrismaClient;
-  authPrisma?: PrismaClient;
-};
-
-function requireUrl(name: "DATABASE_URL" | "AUTH_DATABASE_URL"): string {
-  const url = process.env[name];
-  if (!url) {
-    throw new Error(`${name} is not set`);
-  }
-  return url;
-}
-
-/**
- * Auth client — AUTH_DATABASE_URL (app_auth role, BYPASSRLS).
- * Use only for Auth.js adapter, signup, migrations. Never for tenant-scoped data.
- */
-const authPlain =
-  globalForPrisma.authPrisma ??
-  new PrismaClient({
-    datasources: { db: { url: process.env.AUTH_DATABASE_URL ?? process.env.DATABASE_URL } },
-  });
-
-/**
- * App client base — DATABASE_URL (app_tenant role, RLS enforced).
- * RLS-enforced. Never import in auth flows or signup. Never call outside withTenant.
- */
-const appPlain =
-  globalForPrisma.appPrisma ??
-  new PrismaClient({
-    datasources: { db: { url: process.env.DATABASE_URL } },
-  });
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.authPrisma = authPlain;
-  globalForPrisma.appPrisma = appPlain;
-}
-
-/** Encryption middleware on the app client (including txs started from it). */
-const appExtended = appPlain.$extends({
-  query: {
-    $allModels: {
-      async $allOperations({ model, operation, args, query }) {
-        return encryptionQueryHook({
-          model,
-          operation,
-          args: args as Record<string, unknown>,
-          query: query as (a: Record<string, unknown>) => Promise<unknown>,
-        });
-      },
-    },
-  },
-});
+import {
+  appExtended,
+  appPlain,
+  authPlain,
+} from "@/core/db/prisma-instances";
+import { eventBus } from "@/core/events/event-bus";
 
 /**
  * RLS bypassed. Auth.js adapter + signup + privileged test setup only.
@@ -98,11 +49,10 @@ export const db = new Proxy(appExtended as unknown as PrismaClient, {
 }) as PrismaClient;
 
 /**
- * Opens a transaction-local set_config('app.tenant_id', ..., true) and runs fn
- * with db Proxy resolving to that transaction client.
- * Idempotent: reuses an already-active tenant tx.
+ * Tenant-scoped transaction without post-commit event dispatch.
+ * Used by eventBus.dispatchPending to avoid recursive dispatch.
  */
-export async function withTenant<T>(
+export async function runInTenantTx<T>(
   tenantId: string,
   fn: () => Promise<T>
 ): Promise<T> {
@@ -115,5 +65,25 @@ export async function withTenant<T>(
   });
 }
 
-// Touch requireUrl in types/docs — callers must set env before runtime queries.
-void requireUrl;
+/**
+ * Opens a transaction-local set_config('app.tenant_id', ..., true) and runs fn
+ * with db Proxy resolving to that transaction client.
+ * After commit, dispatches pending DomainEvent rows (transactional outbox).
+ * Idempotent for nested calls: reuses an already-active tenant tx (no nested dispatch).
+ */
+export async function withTenant<T>(
+  tenantId: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  if (getActiveTx()) {
+    return fn();
+  }
+  const result = await runInTenantTx(tenantId, fn);
+  // Post-commit outbox drain. Failures are logged; rows stay pending for retry.
+  try {
+    await eventBus.dispatchPending(tenantId);
+  } catch {
+    // Avoid console.log of sensitive data; silent retain for retry.
+  }
+  return result;
+}

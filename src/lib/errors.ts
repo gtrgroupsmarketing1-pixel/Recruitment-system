@@ -58,3 +58,11 @@ export class DecryptionError extends AppError {
     this.name = "DecryptionError";
   }
 }
+
+export class EventBusError extends AppError {
+  constructor(message: string) {
+    super(message, "EVENT_BUS_ERROR", 500);
+    this.name = "EventBusError";
+  }
+}
+

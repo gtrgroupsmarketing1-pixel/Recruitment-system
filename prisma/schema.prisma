@@ -406,17 +406,19 @@ model DeploymentRecord {
 }
 
 model DomainEvent {
-  id        String   @id @default(cuid())
-  tenantId  String
-  type      String
-  payload   Json
-  createdAt DateTime @default(now())
+  id           String    @id @default(cuid())
+  tenantId     String
+  type         String
+  payload      Json
+  createdAt    DateTime  @default(now())
+  dispatchedAt DateTime? // null = pending outbox dispatch
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId])
   @@index([tenantId, type])
   @@index([tenantId, createdAt])
+  @@index([tenantId, dispatchedAt])
 }
 
 model AuditLog {

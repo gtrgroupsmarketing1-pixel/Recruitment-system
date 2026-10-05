@@ -1,5 +1,6 @@
 import { ApplicationRepo } from "./application.repo";
 import { transition, type Status } from "./application.state-machine";
+import { eventBus } from "@/core/events/event-bus";
 import { NotFoundError } from "@/lib/errors";
 import type { ApplicationStatus } from "@prisma/client";
 
@@ -12,15 +13,17 @@ export const ApplicationService = {
     userId: string,
     applicationId: string,
     toStatus: ApplicationStatus,
-    _reason?: string
+    reason?: string
   ) {
     const app = await ApplicationRepo.findById(tenantId, applicationId);
     if (!app) {
       throw new NotFoundError("Application");
     }
 
+    const fromStatus = app.status;
+
     // Pure state machine — throws IllegalTransitionError on illegal move.
-    transition(app.status as Status, toStatus as Status);
+    transition(fromStatus as Status, toStatus as Status);
 
     const updated = await ApplicationRepo.updateStatus(
       tenantId,
@@ -32,7 +35,20 @@ export const ApplicationService = {
       throw new NotFoundError("Application");
     }
 
-    // Session 06: eventBus.publish({ type: "candidate.status_changed", ... })
+    await eventBus.publish({
+      type: "candidate.status_changed",
+      tenantId,
+      payload: {
+        applicationId,
+        candidateId: app.candidateId,
+        requisitionId: app.requisitionId,
+        from: fromStatus,
+        to: toStatus,
+        actorId: userId,
+        reason,
+      },
+    });
+
     return updated;
   },
 

@@ -59,5 +59,5 @@ Layer order: Route → Router → Service → Repo → DB.
 10. No bypassing state machine, encryption middleware, or RLS.
 
 ## Session pointer
-Session 05/05b — RLS verified at DB layer (psql). Session 06 unblocked.
-ORM-layer isolation tests pending Prisma install.
+Session 06 — event bus (transactional outbox). Written. Vitest suite unverified (no node_modules).
+DB migration for DomainEvent.dispatchedAt applied via psql when Postgres available.
