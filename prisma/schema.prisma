@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  users        User[]
+  branches     Branch[]
+  clients      ClientCompany[]
+  candidates   Candidate[]
+  requisitions JobRequisition[]
+  applications CandidateApplication[]
+}
+
+enum UserRole {
+  TENANT_ADMIN
+  BRANCH_MANAGER
+  RECRUITER
+  MOBILIZATION_OFFICER
+  COMPLIANCE_OFFICER
+  FINANCE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  branchId     String?
+  email        String
+  passwordHash String?
+  name         String
+  role         UserRole @default(RECRUITER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  branch Branch? @relation(fields: [branchId], references: [id])
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+model Branch {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  city      String?
+  country   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  users  User[]
+
+  @@index([tenantId])
+}
+
+model ClientCompany {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  country   String?
+  code      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+model Candidate {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  fullName           String
+  email              String?
+  phone              String?
+  passportNumber     String? // encrypted by Session 04 middleware
+  passportNumberBidx String? // blind index
+  nationalId         String?
+  nationalIdBidx     String?
+  medicalResult      String?
+  medicalResultBidx  String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  deletedAt          DateTime?
+
+  tenant       Tenant                 @relation(fields: [tenantId], references: [id])
+  applications CandidateApplication[]
+
+  @@index([tenantId])
+  @@index([tenantId, passportNumberBidx])
+  @@index([tenantId, nationalIdBidx])
+}
+
+model JobRequisition {
+  id                   String    @id @default(cuid())
+  tenantId             String
+  clientCompanyId      String
+  reqCode              String // {ClientCode}-{Country}-{RoleCat}-{YYYYMM}-{Seq}
+  roleCategory         String
+  country              String
+  vacancyTarget        Int
+  location             String?
+  targetOnboardingDate DateTime?
+  status               String    @default("OPEN")
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime?
+
+  tenant       Tenant                 @relation(fields: [tenantId], references: [id])
+  applications CandidateApplication[]
+
+  @@unique([tenantId, reqCode])
+  @@index([tenantId, status])
+}
+
+enum ApplicationStatus {
+  SOURCED
+  SCREENED
+  SHORTLISTED
+  CLIENT_INTERVIEWED
+  SELECTED
+  MEDICAL_BOOKED
+  MEDICAL_CLEARED
+  DOCUMENTS_IN_ATTESTATION
+  ATTESTATION_CLEARED
+  VISA_APPLIED
+  VISA_STAMPED
+  TICKET_BOOKED
+  TRAVELED
+  MOBILIZED
+  PROBATION
+  CONFIRMED
+  REJECTED
+  ON_HOLD
+  MEDICAL_UNFIT
+  VISA_REFUSED
+  ABSCONDED
+}
+
+model CandidateApplication {
+  id            String            @id @default(cuid())
+  tenantId      String
+  candidateId   String
+  requisitionId String
+  status        ApplicationStatus @default(SOURCED)
+  recruiterId   String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  deletedAt     DateTime?
+
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  candidate   Candidate      @relation(fields: [candidateId], references: [id])
+  requisition JobRequisition @relation(fields: [requisitionId], references: [id])
+
+  @@unique([tenantId, candidateId, requisitionId])
+  @@index([tenantId, status])
+  @@index([tenantId, requisitionId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String?
+  entity    String
+  entityId  String
+  field     String?
+  oldValue  String?
+  newValue  String?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, entity, entityId])
+  @@index([tenantId, createdAt])
+}
