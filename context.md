@@ -59,6 +59,6 @@ Layer order: Route → Router → Service → Repo → DB.
 10. No bypassing state machine, encryption middleware, or RLS.
 
 ## Session pointer
-Session 03 — domain spine + application service. Written. Verification depends on install.
+Session 04 — encryption middleware. Written. Verification depends on install.
+Sensitive fields: Candidate.passportNumber/nationalId/medicalResult, WorkPermitVisa.visaNumber.
 Only ApplicationService.changeStatus may write CandidateApplication.status.
-Session 00 state machine: SHORTLISTED → CLIENT_INTERVIEWED only. Exits via nextStates().

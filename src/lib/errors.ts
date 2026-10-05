@@ -51,3 +51,10 @@ export class ConflictError extends AppError {
     this.name = "ConflictError";
   }
 }
+
+export class DecryptionError extends AppError {
+  constructor(message = "Decryption failed") {
+    super(message, "DECRYPTION_ERROR", 500);
+    this.name = "DecryptionError";
+  }
+}

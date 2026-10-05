@@ -19,6 +19,8 @@ Ideas captured during sessions. Do not implement until a future planned session.
 - [ ] Session 02 written, unverified. One pnpm attempt never reached `pnpm install`: `corepack enable && corepack prepare pnpm@9` produced no output for 10+ minutes. No second attempt. Green suite not run. next-auth and @auth/prisma-adapter added to package.json because Auth.js was not already a dependency.
 - [ ] Session 02b JWT fix written, unverified, tests pending. `timeout 600 npx --yes pnpm@9 install --ignore-scripts` exited 124 after resolving 625 packages and adding 20/505. No retry. Green suite not run.
 - [ ] Session 03 written, unverified. node_modules unavailable; DATABASE_URL unset so migrate skipped. Application service tests are pure (mocked repo) and should run once vitest is installed.
+- [ ] Session 04 written, unverified. Crypto tests pure; middleware tests use in-memory query stubs. nested-write encryption deferred.
+- [ ] Session 04 deferral: nested-write encryption.
 - [ ] Middleware ALS may not cross into RSC. Header `x-tenant-id` is set as the fallback. Confirm `experimental.nodeMiddleware` on this Next version when install works.
 
 
