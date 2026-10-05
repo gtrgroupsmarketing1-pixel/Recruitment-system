@@ -59,6 +59,6 @@ Layer order: Route → Router → Service → Repo → DB.
 10. No bypassing state machine, encryption middleware, or RLS.
 
 ## Session pointer
-Session 04 — encryption middleware. Written. Verification depends on install.
-Sensitive fields: Candidate.passportNumber/nationalId/medicalResult, WorkPermitVisa.visaNumber.
+Session 05 — RLS + withTenant Proxy. Written but BLOCKED until isolation tests run green (needs DATABASE_URL + install).
+Do not start Session 06 until __tests__/isolation.test.ts is green.
 Only ApplicationService.changeStatus may write CandidateApplication.status.

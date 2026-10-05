@@ -1,12 +1,18 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { auth } from "@/core/auth/auth.config";
+import { withTenant } from "@/core/db/client";
 
 export type TrpcContext = {
   tenantId: string | null;
   userId: string | null;
 };
 
+/**
+ * Builds request context. Does NOT open a tenant transaction here —
+ * withTenant wraps the procedure body in protectedProcedure, otherwise
+ * the transaction would end before the procedure runs.
+ */
 export async function createTRPCContext(): Promise<TrpcContext> {
   const session = await auth();
   return {
@@ -22,14 +28,22 @@ const t = initTRPC.context<TrpcContext>().create({
 export const router = t.router;
 export const publicProcedure = t.procedure;
 
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+/**
+ * Requires session tenant + user, then runs the procedure inside withTenant
+ * so RLS set_config and the db Proxy share one transaction for the call.
+ */
+export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   if (!ctx.tenantId || !ctx.userId) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
-  return next({
-    ctx: {
-      tenantId: ctx.tenantId,
-      userId: ctx.userId,
-    },
-  });
+  const tenantId = ctx.tenantId;
+  const userId = ctx.userId;
+  return withTenant(tenantId, async () =>
+    next({
+      ctx: {
+        tenantId,
+        userId,
+      },
+    })
+  );
 });

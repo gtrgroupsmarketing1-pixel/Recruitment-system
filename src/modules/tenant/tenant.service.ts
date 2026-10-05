@@ -1,4 +1,4 @@
-import { db } from "@/core/db/client";
+import { basePrisma } from "@/core/db/client";
 import { ValidationError } from "@/lib/errors";
 import bcrypt from "bcryptjs";
 
@@ -10,24 +10,37 @@ export type SignupInput = {
   password: string;
 };
 
+/**
+ * Signup is pre-tenant: uses basePrisma, not the tenant-scoped db Proxy.
+ */
 export const TenantService = {
   async signup(input: SignupInput) {
     const tenantName = input.tenantName.trim();
     const slug = input.slug.trim().toLowerCase();
     const adminEmail = input.adminEmail.trim().toLowerCase();
     const adminName = input.adminName.trim();
-    if (!tenantName || !slug || !adminEmail || !adminName || input.password.length < 8) {
-      throw new ValidationError("Tenant name, slug, admin name, email, and an 8+ character password are required");
+    if (
+      !tenantName ||
+      !slug ||
+      !adminEmail ||
+      !adminName ||
+      input.password.length < 8
+    ) {
+      throw new ValidationError(
+        "Tenant name, slug, admin name, email, and an 8+ character password are required"
+      );
     }
 
-    const existing = await db.tenant.findFirst({ where: { slug, deletedAt: null } });
+    const existing = await basePrisma.tenant.findFirst({
+      where: { slug, deletedAt: null },
+    });
     if (existing) {
       throw new ValidationError("Slug already taken");
     }
 
     const passwordHash = await bcrypt.hash(input.password, 12);
     try {
-      return await db.$transaction(async (tx) => {
+      return await basePrisma.$transaction(async (tx) => {
         const tenant = await tx.tenant.create({
           data: { name: tenantName, slug },
         });

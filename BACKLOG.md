@@ -21,6 +21,8 @@ Ideas captured during sessions. Do not implement until a future planned session.
 - [ ] Session 03 written, unverified. node_modules unavailable; DATABASE_URL unset so migrate skipped. Application service tests are pure (mocked repo) and should run once vitest is installed.
 - [ ] Session 04 written, unverified. Crypto tests pure; middleware tests use in-memory query stubs. nested-write encryption deferred.
 - [ ] Session 04 deferral: nested-write encryption.
+- [ ] Session 05 BLOCKED — isolation tests written but DATABASE_URL unset and node_modules unavailable. Session 06 must not start until isolation tests run green at least once.
+- [ ] Session 05: prove passportNumber filter hits passportNumberBidx in real SQL under withTenant.
 - [ ] Middleware ALS may not cross into RSC. Header `x-tenant-id` is set as the fallback. Confirm `experimental.nodeMiddleware` on this Next version when install works.
 
 
