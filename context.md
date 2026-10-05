@@ -59,5 +59,5 @@ Layer order: Route → Router → Service → Repo → DB.
 10. No bypassing state machine, encryption middleware, or RLS.
 
 ## Session pointer
-Session 05b — dual roles authPrisma/app_tenant. Written. Isolation tests blocked until install+migrate green.
-Do not start Session 06 until isolation + rls-role tests are green.
+Session 05/05b — RLS verified at DB layer (psql). Session 06 unblocked.
+ORM-layer isolation tests pending Prisma install.
