@@ -58,6 +58,17 @@ Layer order: Route → Router → Service → Repo → DB.
 9. No business logic in routes, routers, or components.
 10. No bypassing state machine, encryption middleware, or RLS.
 
+## SLA computation (frozen)
+- targetOnboardingDate null → null
+- daysRemaining < 0 → RED
+- 0 ≤ daysRemaining < 30 → RED
+- 30 ≤ daysRemaining < 45 → AMBER
+- daysRemaining ≥ 45 → GREEN
+
+Boundary: RED is strictly fewer than 30 days remaining.
+Matches PRD §4 Phase 1 ("flag this requisition RED if fewer than 30 days remain").
+Source of truth for requisition.metrics.ts.
+
 ## Session pointer
 Session 08 — requisition module. Written. Vitest unavailable.
-HARD CHECKPOINT before Session 12: typecheck + one DB integration test + re-run Session 05 gate.
+SLA boundary locked above. HARD CHECKPOINT before Session 12.

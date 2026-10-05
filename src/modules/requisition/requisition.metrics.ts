@@ -1,10 +1,7 @@
 /**
  * SLA is computed at read time. Never stored.
- *
- * Days remaining = targetOnboardingDate - today (UTC calendar days).
- * Boundary (matches Session 08 tests): strictly fewer than 30 days → RED.
- * Exactly 30 through 44 → AMBER. 45 and above → GREEN.
- * (Prose said 31–45 AMBER; the listed cases mark 45 as GREEN. Tests win.)
+ * Frozen contract: context.md §SLA computation.
+ * RED if daysRemaining < 30; AMBER if 30 ≤ days < 45; GREEN if ≥ 45; null if no target.
  */
 export type SlaFlag = "RED" | "AMBER" | "GREEN";
 
