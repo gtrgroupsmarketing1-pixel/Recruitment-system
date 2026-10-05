@@ -59,6 +59,5 @@ Layer order: Route → Router → Service → Repo → DB.
 10. No bypassing state machine, encryption middleware, or RLS.
 
 ## Session pointer
-Session 07 — audit subscriber + PII-safe logger. Written.
-Session 06 outbox rollback proven via scripts/verify-outbox.sh when Postgres is up.
-Vitest suite still pending node_modules.
+Session 08 — requisition module. Written. Vitest unavailable.
+HARD CHECKPOINT before Session 12: typecheck + one DB integration test + re-run Session 05 gate.

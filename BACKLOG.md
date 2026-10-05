@@ -26,3 +26,11 @@ Ideas captured during sessions. Do not implement until a future planned session.
 - [x] Session 05 verified at DB layer via psql (scripts/verify-isolation.sh); ORM-layer verification pending Prisma install.
 - [ ] Session 06 written, unverified. Event bus unit tests need vitest + Prisma client. DomainEvent.dispatchedAt migration applied via psql.
 - [ ] Session 07 written. Logger + audit subscriber. verify-outbox.sh written; not run — this sandbox has no psql and apt cannot write package cache (permission denied). Vitest unverified.
+
+- [ ] Session 08 written, unverified. Req ID / SLA / fulfillment are pure. Migration not applied (no psql).
+
+## HARD CHECKPOINT — Before Session 12
+- [ ] node_modules working (pnpm, npm, or bun)
+- [ ] pnpm typecheck passes on Sessions 00–11
+- [ ] At least one DB integration test runs green (event bus rollback preferred)
+- [ ] Session 05 psql gate re-run on current schema

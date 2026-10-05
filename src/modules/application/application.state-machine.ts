@@ -95,7 +95,15 @@ export function transition(from: Status, to: Status): void {
   }
 }
 
-/** All statuses for exhaustive testing / UI. */
+/**
+ * Post-deployment statuses that count as requisition fulfillment.
+ * Additive constant — does not change TRANSITIONS.
+ */
+export const FILLED_STATUSES = [
+  STATUS.MOBILIZED,
+  STATUS.PROBATION,
+  STATUS.CONFIRMED,
+] as const;
 export const ALL_STATUSES = Object.values(STATUS);
 export function isTerminal(status: Status): boolean {
   return (

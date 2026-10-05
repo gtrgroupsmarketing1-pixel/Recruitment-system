@@ -124,8 +124,16 @@ model Candidate {
   @@index([tenantId, nationalIdBidx])
 }
 
+enum ReqStatus {
+  OPEN
+  IN_PROGRESS
+  FILLED
+  CANCELLED
+  ON_HOLD
+}
+
 model JobRequisition {
-  id                   String    @id @default(cuid())
+  id                   String     @id @default(cuid())
   tenantId             String
   clientCompanyId      String
   reqCode              String // {ClientCode}-{Country}-{RoleCat}-{YYYYMM}-{Seq}
@@ -134,9 +142,11 @@ model JobRequisition {
   vacancyTarget        Int
   location             String?
   targetOnboardingDate DateTime?
-  status               String    @default("OPEN")
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  status               ReqStatus  @default(OPEN)
+  assignedRecruiterId  String?
+  notes                String?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
   deletedAt            DateTime?
 
   tenant       Tenant                 @relation(fields: [tenantId], references: [id])
@@ -144,6 +154,8 @@ model JobRequisition {
 
   @@unique([tenantId, reqCode])
   @@index([tenantId, status])
+  @@index([tenantId, clientCompanyId])
+  @@index([tenantId, targetOnboardingDate])
 }
 
 enum ApplicationStatus {
