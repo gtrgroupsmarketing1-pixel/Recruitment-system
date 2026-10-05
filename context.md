@@ -70,5 +70,5 @@ Matches PRD §4 Phase 1 ("flag this requisition RED if fewer than 30 days remain
 Source of truth for requisition.metrics.ts.
 
 ## Session pointer
-Session 08 — requisition module. Written. Vitest unavailable.
-SLA boundary locked above. HARD CHECKPOINT before Session 12.
+Session 09 — requisition UI. Written unverified. SLA boundary locked above.
+HARD CHECKPOINT before Session 12. Recovery session before Session 12.
