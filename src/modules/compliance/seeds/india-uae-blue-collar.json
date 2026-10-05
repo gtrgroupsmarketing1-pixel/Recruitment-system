@@ -1,0 +1,50 @@
+{
+  "originCountry": "IN",
+  "destinationCountry": "AE",
+  "roleCategory": "BLUE",
+  "name": "India → UAE blue-collar",
+  "steps": [
+    {
+      "key": "wafid_medical_booked",
+      "name": "Wafid medical booked",
+      "order": 1,
+      "dependsOn": null
+    },
+    {
+      "key": "wafid_medical_cleared",
+      "name": "Wafid medical cleared",
+      "order": 2,
+      "dependsOn": "wafid_medical_booked"
+    },
+    {
+      "key": "passport_submitted_visa",
+      "name": "Passport submitted for visa stamping",
+      "order": 3,
+      "dependsOn": "wafid_medical_cleared"
+    },
+    {
+      "key": "ecr_emigration_clearance",
+      "name": "ECR emigration clearance",
+      "order": 4,
+      "dependsOn": "passport_submitted_visa"
+    },
+    {
+      "key": "visa_stamped",
+      "name": "Visa stamped",
+      "order": 5,
+      "dependsOn": "ecr_emigration_clearance"
+    },
+    {
+      "key": "ticket_booked",
+      "name": "Ticket booked",
+      "order": 6,
+      "dependsOn": "visa_stamped"
+    },
+    {
+      "key": "travel_confirmed",
+      "name": "Travel confirmed",
+      "order": 7,
+      "dependsOn": "ticket_booked"
+    }
+  ]
+}

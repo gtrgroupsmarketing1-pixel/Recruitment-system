@@ -15,12 +15,23 @@ model Tenant {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
-  users        User[]
-  branches     Branch[]
-  clients      ClientCompany[]
-  candidates   Candidate[]
-  requisitions JobRequisition[]
-  applications CandidateApplication[]
+  users              User[]
+  branches           Branch[]
+  clients            ClientCompany[]
+  candidates         Candidate[]
+  requisitions       JobRequisition[]
+  applications       CandidateApplication[]
+  screeningRecords   ScreeningRecord[]
+  complianceCases    ComplianceCase[]
+  checklistInstances ChecklistInstance[]
+  medicalClearances  MedicalClearance[]
+  attestationChains  AttestationChain[]
+  attestationSteps   AttestationStep[]
+  laborExitClearances LaborExitClearance[]
+  workPermitVisas    WorkPermitVisa[]
+  travelRecords      TravelRecord[]
+  deploymentRecords  DeploymentRecord[]
+  domainEvents       DomainEvent[]
 }
 
 enum UserRole {
@@ -169,13 +180,242 @@ model CandidateApplication {
   updatedAt     DateTime          @updatedAt
   deletedAt     DateTime?
 
-  tenant      Tenant         @relation(fields: [tenantId], references: [id])
-  candidate   Candidate      @relation(fields: [candidateId], references: [id])
-  requisition JobRequisition @relation(fields: [requisitionId], references: [id])
+  tenant             Tenant              @relation(fields: [tenantId], references: [id])
+  candidate          Candidate           @relation(fields: [candidateId], references: [id])
+  requisition        JobRequisition      @relation(fields: [requisitionId], references: [id])
+  screeningRecords   ScreeningRecord[]
+  complianceCases    ComplianceCase[]
+  medicalClearances  MedicalClearance[]
+  attestationChains  AttestationChain[]
+  laborExitClearances LaborExitClearance[]
+  workPermitVisas    WorkPermitVisa[]
+  travelRecords      TravelRecord[]
+  deploymentRecords  DeploymentRecord[]
 
   @@unique([tenantId, candidateId, requisitionId])
   @@index([tenantId, status])
   @@index([tenantId, requisitionId])
+}
+
+enum ScreeningPath {
+  BLUE
+  WHITE
+}
+
+enum ChecklistStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETE
+  SKIPPED
+  FAILED
+}
+
+model ScreeningRecord {
+  id            String        @id @default(cuid())
+  tenantId      String
+  applicationId String
+  stage         String
+  path          ScreeningPath
+  scorecard     Json?
+  result        String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  application CandidateApplication @relation(fields: [applicationId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, applicationId])
+}
+
+model ComplianceCase {
+  id            String          @id @default(cuid())
+  tenantId      String
+  applicationId String
+  templateRef   String
+  currentStep   String?
+  status        ChecklistStatus @default(PENDING)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deletedAt     DateTime?
+
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  application CandidateApplication @relation(fields: [applicationId], references: [id])
+  checklist   ChecklistInstance[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, applicationId])
+}
+
+model ChecklistInstance {
+  id           String          @id @default(cuid())
+  tenantId     String
+  caseId       String
+  stepKey      String
+  status       ChecklistStatus @default(PENDING)
+  completedAt  DateTime?
+  completedBy  String?
+  notes        String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
+
+  tenant Tenant         @relation(fields: [tenantId], references: [id])
+  case   ComplianceCase @relation(fields: [caseId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, caseId])
+  @@index([tenantId, status])
+}
+
+model MedicalClearance {
+  id              String    @id @default(cuid())
+  tenantId        String
+  applicationId   String
+  wafidGamcaId    String?
+  center          String?
+  appointmentDate DateTime?
+  result          String?
+  expiry          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  application CandidateApplication @relation(fields: [applicationId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, applicationId])
+}
+
+model AttestationChain {
+  id            String   @id @default(cuid())
+  tenantId      String
+  applicationId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  application CandidateApplication @relation(fields: [applicationId], references: [id])
+  steps       AttestationStep[]
+
+  @@index([tenantId])
+  @@index([tenantId, applicationId])
+}
+
+model AttestationStep {
+  id              String          @id @default(cuid())
+  tenantId        String
+  chainId         String
+  name            String
+  status          ChecklistStatus @default(PENDING)
+  completedAt     DateTime?
+  dependsOnStepId String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+
+  tenant    Tenant           @relation(fields: [tenantId], references: [id])
+  chain     AttestationChain @relation(fields: [chainId], references: [id])
+  dependsOn AttestationStep? @relation("AttestationStepDependency", fields: [dependsOnStepId], references: [id])
+  dependents AttestationStep[] @relation("AttestationStepDependency")
+
+  @@index([tenantId])
+  @@index([tenantId, chainId])
+  @@index([tenantId, status])
+}
+
+model LaborExitClearance {
+  id            String          @id @default(cuid())
+  tenantId      String
+  applicationId String
+  clearanceType String?
+  status        ChecklistStatus @default(PENDING)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deletedAt     DateTime?
+
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  application CandidateApplication @relation(fields: [applicationId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, applicationId])
+}
+
+model WorkPermitVisa {
+  id             String    @id @default(cuid())
+  tenantId       String
+  applicationId  String
+  visaNumber     String? // encrypted by Session 04 middleware
+  visaNumberBidx String?
+  appliedAt      DateTime?
+  stampedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  application CandidateApplication @relation(fields: [applicationId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, applicationId])
+  @@index([tenantId, visaNumberBidx])
+}
+
+model TravelRecord {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  applicationId       String
+  ticketRef           String?
+  flightNumber        String?
+  departureAt         DateTime?
+  arrivalConfirmedAt  DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  application CandidateApplication @relation(fields: [applicationId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, applicationId])
+}
+
+model DeploymentRecord {
+  id                String    @id @default(cuid())
+  tenantId          String
+  applicationId     String
+  mobilizedAt       DateTime?
+  site              String?
+  onSiteConfirmedAt DateTime?
+  probationEndsAt   DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  application CandidateApplication @relation(fields: [applicationId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, applicationId])
+}
+
+model DomainEvent {
+  id        String   @id @default(cuid())
+  tenantId  String
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, type])
+  @@index([tenantId, createdAt])
 }
 
 model AuditLog {

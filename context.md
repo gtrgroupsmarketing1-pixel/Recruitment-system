@@ -59,5 +59,6 @@ Layer order: Route → Router → Service → Repo → DB.
 10. No bypassing state machine, encryption middleware, or RLS.
 
 ## Session pointer
-Session 02 — tenancy + auth. Written. Verification depends on Pass B install.
-Session 00 state machine: SHORTLISTED goes only to CLIENT_INTERVIEWED. Exits are appended by nextStates(), not stored on TRANSITIONS.
+Session 03 — domain spine + application service. Written. Verification depends on install.
+Only ApplicationService.changeStatus may write CandidateApplication.status.
+Session 00 state machine: SHORTLISTED → CLIENT_INTERVIEWED only. Exits via nextStates().
