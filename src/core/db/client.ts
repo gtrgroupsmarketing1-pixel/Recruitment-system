@@ -5,6 +5,7 @@ import {
   appPlain,
   authPlain,
 } from "@/core/db/prisma-instances";
+import { logger } from "@/lib/logger";
 import { eventBus } from "@/core/events/event-bus";
 
 /**
@@ -82,8 +83,11 @@ export async function withTenant<T>(
   // Post-commit outbox drain. Failures are logged; rows stay pending for retry.
   try {
     await eventBus.dispatchPending(tenantId);
-  } catch {
-    // Avoid console.log of sensitive data; silent retain for retry.
+  } catch (err) {
+    logger.error(
+      { err: err instanceof Error ? err.message : "dispatch_failed", tenantId },
+      "event dispatch failed"
+    );
   }
   return result;
 }

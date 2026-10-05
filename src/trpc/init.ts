@@ -2,6 +2,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { auth } from "@/core/auth/auth.config";
 import { withTenant } from "@/core/db/client";
+import { logger } from "@/lib/logger";
 
 export type TrpcContext = {
   tenantId: string | null;
@@ -38,11 +39,13 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   }
   const tenantId = ctx.tenantId;
   const userId = ctx.userId;
+  const log = logger.child({ tenantId, userId });
   return withTenant(tenantId, async () =>
     next({
       ctx: {
         tenantId,
         userId,
+        log,
       },
     })
   );

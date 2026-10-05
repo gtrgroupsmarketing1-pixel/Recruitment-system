@@ -25,3 +25,4 @@ Ideas captured during sessions. Do not implement until a future planned session.
 - [ ] Middleware ALS may not cross into RSC. Header `x-tenant-id` is set as the fallback. Confirm `experimental.nodeMiddleware` on this Next version when install works.
 - [x] Session 05 verified at DB layer via psql (scripts/verify-isolation.sh); ORM-layer verification pending Prisma install.
 - [ ] Session 06 written, unverified. Event bus unit tests need vitest + Prisma client. DomainEvent.dispatchedAt migration applied via psql.
+- [ ] Session 07 written. Logger + audit subscriber. verify-outbox.sh written; not run — this sandbox has no psql and apt cannot write package cache (permission denied). Vitest unverified.

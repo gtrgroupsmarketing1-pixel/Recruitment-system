@@ -59,5 +59,6 @@ Layer order: Route → Router → Service → Repo → DB.
 10. No bypassing state machine, encryption middleware, or RLS.
 
 ## Session pointer
-Session 06 — event bus (transactional outbox). Written. Vitest suite unverified (no node_modules).
-DB migration for DomainEvent.dispatchedAt applied via psql when Postgres available.
+Session 07 — audit subscriber + PII-safe logger. Written.
+Session 06 outbox rollback proven via scripts/verify-outbox.sh when Postgres is up.
+Vitest suite still pending node_modules.
