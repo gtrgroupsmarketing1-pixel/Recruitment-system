@@ -19,6 +19,14 @@ describe("session claims", () => {
     const refreshed = withTenantClaims(token, null);
     expect(refreshed.tenantId).toBe("ten_1");
 
+    const partial = withTenantClaims(refreshed, {
+      id: "user_1",
+      email: "a@agency.test",
+      name: "Ada",
+    } as User);
+    expect(partial.tenantId).toBe("ten_1");
+    expect(partial.role).toBe("TENANT_ADMIN");
+
     const session = toSession(
       { user: { name: "Ada", email: "a@agency.test" }, expires: "2099-01-01" } as Session,
       refreshed

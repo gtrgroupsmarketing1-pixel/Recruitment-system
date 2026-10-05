@@ -15,13 +15,12 @@ export type AppUser = {
   role: string;
 };
 
-/** Copies tenant claims onto the JWT. On refresh, user is null and existing claims stay. */
+/** Copies tenant claims onto the JWT. Never overwrites an existing claim with undefined. */
 export function withTenantClaims(token: JWT, user: User | null): JWT {
   if (user) {
-    const appUser = user as User & { tenantId?: string; role?: string };
-    token.tenantId = appUser.tenantId;
-    token.role = appUser.role;
-    token.uid = user.id;
+    if (user.tenantId !== undefined) token.tenantId = user.tenantId;
+    if (user.role !== undefined) token.role = user.role;
+    if (user.id) token.uid = user.id;
   }
   return token;
 }
