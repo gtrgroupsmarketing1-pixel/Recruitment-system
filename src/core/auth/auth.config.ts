@@ -5,7 +5,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
-import { basePrisma } from "@/core/db/client";
+import { authPrisma } from "@/core/db/client";
 
 export type AppUser = {
   id: string;
@@ -45,9 +45,8 @@ const providers = [
       const email = String(credentials?.email ?? "").toLowerCase();
       const password = String(credentials?.password ?? "");
       if (!email || !password) return null;
-      // Pre-tenant: login lookup must use basePrisma (no withTenant yet).
-      // RLS on User requires a privileged/bypass path or session-23 policy for email login.
-      const user = await basePrisma.user.findFirst({
+      // Pre-tenant: login lookup uses authPrisma (app_auth BYPASSRLS).
+      const user = await authPrisma.user.findFirst({
         where: { email, deletedAt: null },
       });
       if (!user?.passwordHash) return null;
@@ -74,7 +73,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(basePrisma),
+  adapter: PrismaAdapter(authPrisma),
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers,

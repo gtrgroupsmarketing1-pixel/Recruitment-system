@@ -3,25 +3,45 @@ import { encryptionQueryHook } from "@/core/db/encryption.middleware";
 import { getActiveTx, txStorage } from "@/core/db/tx-context";
 
 const globalForPrisma = globalThis as unknown as {
-  prismaBase?: PrismaClient;
+  appPrisma?: PrismaClient;
+  authPrisma?: PrismaClient;
 };
 
+function requireUrl(name: "DATABASE_URL" | "AUTH_DATABASE_URL"): string {
+  const url = process.env[name];
+  if (!url) {
+    throw new Error(`${name} is not set`);
+  }
+  return url;
+}
+
 /**
- * Plain client — migrations / RLS admin only. Do not import in services.
- * WARNING: $queryRaw / $executeRaw bypass encryption middleware.
+ * Auth client — AUTH_DATABASE_URL (app_auth role, BYPASSRLS).
+ * Use only for Auth.js adapter, signup, migrations. Never for tenant-scoped data.
  */
-const plain =
-  globalForPrisma.prismaBase ??
+const authPlain =
+  globalForPrisma.authPrisma ??
   new PrismaClient({
-    // Never pass sensitive fields through $queryRaw / $executeRaw.
+    datasources: { db: { url: process.env.AUTH_DATABASE_URL ?? process.env.DATABASE_URL } },
+  });
+
+/**
+ * App client base — DATABASE_URL (app_tenant role, RLS enforced).
+ * RLS-enforced. Never import in auth flows or signup. Never call outside withTenant.
+ */
+const appPlain =
+  globalForPrisma.appPrisma ??
+  new PrismaClient({
+    datasources: { db: { url: process.env.DATABASE_URL } },
   });
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prismaBase = plain;
+  globalForPrisma.authPrisma = authPlain;
+  globalForPrisma.appPrisma = appPlain;
 }
 
-/** Extended client: encryption on every model operation (including txs started here). */
-const extended = plain.$extends({
+/** Encryption middleware on the app client (including txs started from it). */
+const appExtended = appPlain.$extends({
   query: {
     $allModels: {
       async $allOperations({ model, operation, args, query }) {
@@ -36,15 +56,26 @@ const extended = plain.$extends({
   },
 });
 
-export const basePrisma = plain;
+/**
+ * RLS bypassed. Auth.js adapter + signup + privileged test setup only.
+ * Never use for tenant-scoped service/repo queries — those must go through db inside withTenant.
+ */
+export const authPrisma = authPlain;
 
 /**
- * App-facing client. Routes to the active withTenant() transaction client when
- * one is in AsyncLocalStorage; otherwise the extended root client.
- *
- * In non-production, model access without an active tenant tx throws — wrap in withTenant().
+ * RLS-enforced plain app client (no Proxy). Isolation tests only.
+ * Services must use `db` inside withTenant, not this.
  */
-export const db = new Proxy(extended as unknown as PrismaClient, {
+export const appPrisma = appPlain;
+
+/** @deprecated Prefer authPrisma. Alias retained for one-release compatibility. */
+export const basePrisma = authPrisma;
+
+/**
+ * RLS-enforced app client. Routes to the active withTenant() transaction when present.
+ * Never import in auth flows or signup. Never call outside withTenant (throws in dev).
+ */
+export const db = new Proxy(appExtended as unknown as PrismaClient, {
   get(target, prop, receiver) {
     const tx = getActiveTx();
     if (
@@ -78,9 +109,11 @@ export async function withTenant<T>(
   if (getActiveTx()) {
     return fn();
   }
-  // Use extended so encryption middleware applies inside the transaction.
-  return (extended as unknown as PrismaClient).$transaction(async (tx) => {
+  return (appExtended as unknown as PrismaClient).$transaction(async (tx) => {
     await tx.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
     return txStorage.run(tx, fn);
   });
 }
+
+// Touch requireUrl in types/docs — callers must set env before runtime queries.
+void requireUrl;

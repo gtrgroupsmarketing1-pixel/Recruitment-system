@@ -4,7 +4,7 @@ import {
   createHmac,
   randomBytes,
 } from "node:crypto";
-import { parseEnv } from "@/core/config/env";
+import { parseEncryptionEnv } from "@/core/config/env";
 import { DecryptionError } from "@/lib/errors";
 
 const IV_LENGTH = 12;
@@ -12,7 +12,7 @@ const AUTH_TAG_LENGTH = 16;
 const ALGORITHM = "aes-256-gcm";
 
 function loadKeys() {
-  const env = parseEnv();
+  const env = parseEncryptionEnv();
   const current = Buffer.from(env.ENCRYPTION_KEY, "base64");
   const previous = env.ENCRYPTION_KEY_PREVIOUS
     ? Buffer.from(env.ENCRYPTION_KEY_PREVIOUS, "base64")

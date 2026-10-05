@@ -30,10 +30,37 @@ const envSchema = z.object({
       },
       "ENCRYPTION_KEY_PREVIOUS must be base64-encoded 32 bytes when set"
     ),
+  DATABASE_URL: z.string().min(1),
+  AUTH_DATABASE_URL: z.string().min(1),
+  DIRECT_URL: z.string().min(1).optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
 
+/** Encryption keys only — used by crypto module at load time. */
+export function parseEncryptionEnv(
+  source: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env
+) {
+  const result = envSchema
+    .pick({
+      ENCRYPTION_KEY: true,
+      BLIND_INDEX_KEY: true,
+      ENCRYPTION_KEY_PREVIOUS: true,
+    })
+    .safeParse({
+      ENCRYPTION_KEY: source.ENCRYPTION_KEY,
+      BLIND_INDEX_KEY: source.BLIND_INDEX_KEY,
+      ENCRYPTION_KEY_PREVIOUS: source.ENCRYPTION_KEY_PREVIOUS,
+    });
+  if (!result.success) {
+    throw new ValidationError(
+      `Invalid encryption env: ${result.error.issues.map((i) => i.message).join("; ")}`
+    );
+  }
+  return result.data;
+}
+
+/** Full app env including DB URLs. */
 export function parseEnv(
   source: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env
 ): AppEnv {
@@ -41,10 +68,13 @@ export function parseEnv(
     ENCRYPTION_KEY: source.ENCRYPTION_KEY,
     BLIND_INDEX_KEY: source.BLIND_INDEX_KEY,
     ENCRYPTION_KEY_PREVIOUS: source.ENCRYPTION_KEY_PREVIOUS,
+    DATABASE_URL: source.DATABASE_URL,
+    AUTH_DATABASE_URL: source.AUTH_DATABASE_URL,
+    DIRECT_URL: source.DIRECT_URL,
   });
   if (!result.success) {
     throw new ValidationError(
-      `Invalid encryption env: ${result.error.issues.map((i) => i.message).join("; ")}`
+      `Invalid env: ${result.error.issues.map((i) => i.message).join("; ")}`
     );
   }
   return result.data;

@@ -7,6 +7,6 @@
 - If `npx pnpm@9` fails with E502 on the tarball, try `npm install -g pnpm@9` (different path) then `pnpm install`. Do not loop retries in a session.
 - Encryption uses AES-256-GCM + HMAC-SHA256 blind indexes only. Nested-write encryption deferred (Session 04).
 - RLS is enabled on all tenant-scoped tables. Account, Session, VerificationToken are excluded so Auth.js can resolve sessions before tenant context exists.
-- App runtime DB role must not be a Postgres superuser / BYPASSRLS; otherwise RLS is decorative. Migrations may use a privileged role; the app connection must not.
-- withTenant opens a transaction-local set_config('app.tenant_id', ..., true). tRPC opens the tenant tx in protectedProcedure middleware, not createTRPCContext (context would close the tx before the procedure ran).
-- Pre-tenant paths (credentials authorize, TenantService.signup, PrismaAdapter) use basePrisma, not the db Proxy. Login email lookup vs RLS on User is an open tension — may need a security-definer function or Session 23 policy so non-bypass roles can resolve email → user.
+- **Dual DB roles (Session 05b):** `app_auth` (BYPASSRLS) via AUTH_DATABASE_URL for Auth.js + signup + migrations; `app_tenant` (RLS enforced) via DATABASE_URL for all tenant-scoped work. Disabling RLS on User is rejected.
+- App runtime must not connect as a Postgres superuser. Migrations may use DIRECT_URL / app_auth.
+- withTenant opens transaction-local set_config. tRPC opens the tenant tx in protectedProcedure middleware, not createTRPCContext.

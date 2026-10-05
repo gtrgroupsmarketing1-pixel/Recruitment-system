@@ -59,6 +59,5 @@ Layer order: Route → Router → Service → Repo → DB.
 10. No bypassing state machine, encryption middleware, or RLS.
 
 ## Session pointer
-Session 05 — RLS + withTenant Proxy. Written but BLOCKED until isolation tests run green (needs DATABASE_URL + install).
-Do not start Session 06 until __tests__/isolation.test.ts is green.
-Only ApplicationService.changeStatus may write CandidateApplication.status.
+Session 05b — dual roles authPrisma/app_tenant. Written. Isolation tests blocked until install+migrate green.
+Do not start Session 06 until isolation + rls-role tests are green.

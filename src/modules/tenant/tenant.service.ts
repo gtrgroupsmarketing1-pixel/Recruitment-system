@@ -1,4 +1,4 @@
-import { basePrisma } from "@/core/db/client";
+import { authPrisma } from "@/core/db/client";
 import { ValidationError } from "@/lib/errors";
 import bcrypt from "bcryptjs";
 
@@ -11,7 +11,7 @@ export type SignupInput = {
 };
 
 /**
- * Signup is pre-tenant: uses basePrisma, not the tenant-scoped db Proxy.
+ * Signup is pre-tenant: uses authPrisma, not the tenant-scoped db Proxy.
  */
 export const TenantService = {
   async signup(input: SignupInput) {
@@ -31,7 +31,7 @@ export const TenantService = {
       );
     }
 
-    const existing = await basePrisma.tenant.findFirst({
+    const existing = await authPrisma.tenant.findFirst({
       where: { slug, deletedAt: null },
     });
     if (existing) {
@@ -40,7 +40,7 @@ export const TenantService = {
 
     const passwordHash = await bcrypt.hash(input.password, 12);
     try {
-      return await basePrisma.$transaction(async (tx) => {
+      return await authPrisma.$transaction(async (tx) => {
         const tenant = await tx.tenant.create({
           data: { name: tenantName, slug },
         });

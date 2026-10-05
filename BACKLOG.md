@@ -26,3 +26,4 @@ Ideas captured during sessions. Do not implement until a future planned session.
 - [ ] Middleware ALS may not cross into RSC. Header `x-tenant-id` is set as the fallback. Confirm `experimental.nodeMiddleware` on this Next version when install works.
 
 
+- [ ] Session 05b written. Dual roles + authPrisma/appPrisma. Postgres roles created locally (app_auth BYPASSRLS, app_tenant). Isolation/rls-role tests not run — node_modules incomplete. Session 06 blocked until green.
