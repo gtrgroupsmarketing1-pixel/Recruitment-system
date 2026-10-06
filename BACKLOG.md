@@ -53,3 +53,25 @@ Ideas captured during sessions. Do not implement until a future planned session.
       Code review note (Session 11): client.ts withTenant → runInTenantTx →
       appExtended.$transaction — looks correct; must still prove at runtime.
 - [ ] Sessions 09–11 written unverified; recovery session mandatory before Session 12
+
+## Recovery attempt — 2026-10-06 (this sandbox)
+
+Environment: Grok sandbox (1.2Gi RAM, no swap, no psql, registry HTTP/2 200).
+Result: **NOT GREEN. Recovery incomplete.**
+
+Attempts:
+- npm install full → exit 137 (OOM) or hang mid-write
+- bun install → registry proxy 502 on many tarballs; hang
+- staged npm (typescript/prisma/vitest/zod) → hang at ~3–4 min, empty log, no .bin
+- Partial node_modules (~397 package dirs) without package-lock or .bin — unusable
+
+Blocked signals (all four still red):
+- [ ] npx tsc --noEmit
+- [ ] npx vitest run
+- [ ] verify-isolation.sh
+- [ ] encryption-in-transaction check
+
+Note: listUnlinkedForRequisition remains in candidate.repo (unwired). Correct for future bulk-link; not dead code.
+withTenant → appExtended.$transaction is code-correct; runtime encryption proof still required outside this sandbox.
+
+**Action required:** run recovery on laptop / Codespaces / GitHub Actions. Do not start Session 12 until the four greens exist.
