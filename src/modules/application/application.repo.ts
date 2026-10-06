@@ -19,6 +19,21 @@ export const ApplicationRepo = {
     });
   },
 
+  /** Projection for pipeline + bulk: includes candidate name/phone. */
+  async listByRequisitionGrouped(tenantId: string, requisitionId: string) {
+    return db.candidateApplication.findMany({
+      where: { tenantId, requisitionId, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        candidateId: true,
+        requisitionId: true,
+        status: true,
+        candidate: { select: { fullName: true, phone: true } },
+      },
+    });
+  },
+
   /** Writes ONLY status (and updatedAt via Prisma). */
   async updateStatus(
     tenantId: string,

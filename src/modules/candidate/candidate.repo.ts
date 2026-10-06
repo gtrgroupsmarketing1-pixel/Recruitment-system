@@ -64,4 +64,26 @@ export const CandidateRepo = {
       where: { tenantId, deletedAt: null, passportNumber: plaintext },
     });
   },
+
+  /**
+   * Candidates in the tenant with no application on this requisition.
+   * Capped at 200. Two-query pattern (linked ids, then notIn).
+   */
+  async listUnlinkedForRequisition(tenantId: string, requisitionId: string) {
+    const linked = await db.candidateApplication.findMany({
+      where: { tenantId, requisitionId, deletedAt: null },
+      select: { candidateId: true },
+    });
+    const linkedIds = linked.map((row) => row.candidateId);
+    return db.candidate.findMany({
+      where: {
+        tenantId,
+        deletedAt: null,
+        ...(linkedIds.length > 0 ? { id: { notIn: linkedIds } } : {}),
+      },
+      take: 200,
+      orderBy: { createdAt: "desc" },
+      select: { id: true, fullName: true, phone: true },
+    });
+  },
 };

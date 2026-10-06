@@ -70,5 +70,6 @@ Matches PRD §4 Phase 1 ("flag this requisition RED if fewer than 30 days remain
 Source of truth for requisition.metrics.ts.
 
 ## Session pointer
-Session 10 — candidate + application link. Written unverified.
-HARD CHECKPOINT before Session 12. Recovery session before Session 12.
+Session 11 — pipeline + bulk. Written unverified.
+HARD CHECKPOINT: recovery session mandatory before Session 12.
+Sessions 09–11 written unverified; recovery required before Session 12.

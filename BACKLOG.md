@@ -38,3 +38,18 @@ Ideas captured during sessions. Do not implement until a future planned session.
 - [ ] Sessions 09–11 written unverified; recovery session before Session 12.
 - [ ] Session 09: pages import withTenant from @/core/db/client (not on allowlist) so Session 05 proxy does not throw. Audit list matches entityId to requisition id; status events store applicationId, so the panel stays empty until a join exists.
 - [ ] Sessions 09–10 written unverified; recovery before Session 12. Audit join now uses application ids.
+
+## HARD CHECKPOINT — Before Session 12 (mandatory recovery)
+- [ ] node_modules working (pnpm, npm, or bun)
+- [ ] pnpm typecheck / npx tsc --noEmit passes on Sessions 00–11
+- [ ] At least state machine, SLA, format, and pipeline-order tests green under vitest
+- [ ] Session 05 psql gate re-run on current schema
+- [ ] Confirm withTenant opens $transaction on the EXTENDED client
+      (the one with encryption middleware), not on basePrisma/authPrisma.
+      Verify by: create a candidate with passportNumber "AB123456" via
+      a service inside withTenant, then query the raw column via psql
+      as app_auth. If it reads "AB123456" (plaintext), encryption is
+      bypassed. If it reads base64, encryption works.
+      Code review note (Session 11): client.ts withTenant → runInTenantTx →
+      appExtended.$transaction — looks correct; must still prove at runtime.
+- [ ] Sessions 09–11 written unverified; recovery session mandatory before Session 12

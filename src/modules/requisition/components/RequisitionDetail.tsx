@@ -1,10 +1,9 @@
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Tabs } from "@/components/ui/tabs";
 import type { RequisitionView } from "@/modules/requisition/requisition.service";
-import {
-  ApplicationList,
-  type ApplicationListItem,
-} from "@/modules/application/components/ApplicationList";
+import type { ApplicationListItem } from "@/modules/application/components/ApplicationList";
+import { PipelineBoard } from "@/modules/application/components/PipelineBoard";
 import { FulfillmentBar } from "./FulfillmentBar";
 import { ReqStatusBadge } from "./ReqStatusBadge";
 import { SlaBadge } from "./SlaBadge";
@@ -77,8 +76,16 @@ export function RequisitionDetail({ data, recentAudit, applications }: Props) {
             </ul>
           )}
           <div className="mt-6">
-            <h3 className="text-sm font-medium">Pipeline</h3>
-            <ApplicationList data={applications} />
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-medium">Pipeline</h3>
+              <Link
+                href={`/candidates/bulk?requisitionId=${data.id}`}
+                className="text-xs underline"
+              >
+                Bulk status
+              </Link>
+            </div>
+            <PipelineBoard applications={applications} />
           </div>
         </Card>
       </Tabs>
