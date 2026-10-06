@@ -1,0 +1,35 @@
+name: verify
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: dev
+          POSTGRES_DB: recruit
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx prisma generate
+      - name: typecheck (log only)
+        run: npx tsc --noEmit
+        continue-on-error: true
+      - name: typecheck (exit if errors)
+        run: npx tsc --noEmit
+      - name: vitest
+        run: npx vitest run
+        env:
+          DATABASE_URL: postgres://postgres:dev@localhost:5432/recruit
+          AUTH_DATABASE_URL: postgres://postgres:dev@localhost:5432/recruit
+          ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          BLIND_INDEX_KEY: BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=
