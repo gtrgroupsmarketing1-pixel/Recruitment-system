@@ -1,7 +1,10 @@
 import { db } from "@/core/db/client";
+import type { Prisma } from "@prisma/client";
 
 /**
  * Candidate data access. Tenant-scoped. No business logic.
+ * Sensitive fields pass through as plaintext — encryption middleware handles them.
+ * Never findUnique({ where: { id } }). Never import authPrisma.
  */
 export const CandidateRepo = {
   async findById(tenantId: string, id: string) {
@@ -10,10 +13,55 @@ export const CandidateRepo = {
     });
   },
 
-  async list(tenantId: string) {
+  async list(tenantId: string, filter?: { search?: string }) {
     return db.candidate.findMany({
-      where: { tenantId, deletedAt: null },
+      where: {
+        tenantId,
+        deletedAt: null,
+        ...(filter?.search
+          ? {
+              OR: [
+                { fullName: { contains: filter.search, mode: "insensitive" } },
+                { phone: { contains: filter.search, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      },
       orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        fullName: true,
+        phone: true,
+        createdAt: true,
+      },
+    });
+  },
+
+  async create(tenantId: string, data: Prisma.CandidateUncheckedCreateInput) {
+    return db.candidate.create({
+      data: { ...data, tenantId },
+    });
+  },
+
+  async update(
+    tenantId: string,
+    id: string,
+    data: Prisma.CandidateUncheckedUpdateInput
+  ) {
+    const result = await db.candidate.updateMany({
+      where: { id, tenantId, deletedAt: null },
+      data,
+    });
+    if (result.count === 0) return null;
+    return db.candidate.findFirst({
+      where: { id, tenantId, deletedAt: null },
+    });
+  },
+
+  /** Middleware rewrites passportNumber filter to passportNumberBidx. */
+  async findByPassport(tenantId: string, plaintext: string) {
+    return db.candidate.findFirst({
+      where: { tenantId, deletedAt: null, passportNumber: plaintext },
     });
   },
 };

@@ -1,8 +1,12 @@
 import { requireSession } from "@/core/auth/session";
 import { withTenant } from "@/core/db/client";
+import { nextStates } from "@/modules/application/application.state-machine";
+import { ApplicationService } from "@/modules/application/application.service";
+import { CandidateRepo } from "@/modules/candidate/candidate.repo";
 import { RequisitionDetail } from "@/modules/requisition/components/RequisitionDetail";
 import { listRequisitionAudit } from "@/modules/requisition/requisition.audit";
 import { RequisitionService } from "@/modules/requisition/requisition.service";
+import { ApplicationStatusSchema } from "@/modules/application/application.schema";
 
 type DetailProps = {
   params: Promise<{ id: string }>;
@@ -21,9 +25,30 @@ export default async function RequisitionDetailPage({ params }: DetailProps) {
   const recentAudit = await withTenant(tenantId, () =>
     listRequisitionAudit(tenantId, id)
   );
+  const applications = await withTenant(tenantId, async () => {
+    const rows = await ApplicationService.listByRequisition(tenantId, id);
+    const items = [];
+    for (const row of rows) {
+      const candidate = await CandidateRepo.findById(tenantId, row.candidateId);
+      const parsedStatus = ApplicationStatusSchema.safeParse(row.status);
+      items.push({
+        id: row.id,
+        candidateId: row.candidateId,
+        requisitionId: row.requisitionId,
+        status: row.status,
+        candidateName: candidate?.fullName ?? row.candidateId,
+        allowed: parsedStatus.success ? nextStates(parsedStatus.data) : [],
+      });
+    }
+    return items;
+  });
   return (
     <main className="p-8">
-      <RequisitionDetail data={data} recentAudit={recentAudit} />
+      <RequisitionDetail
+        data={data}
+        recentAudit={recentAudit}
+        applications={applications}
+      />
     </main>
   );
 }

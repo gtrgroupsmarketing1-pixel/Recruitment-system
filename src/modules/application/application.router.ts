@@ -1,14 +1,27 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "@/trpc/init";
 import { ApplicationService } from "./application.service";
-import { ApplicationStatus } from "@prisma/client";
-
-const statusSchema = z.nativeEnum(ApplicationStatus);
+import {
+  ApplicationStatusSchema,
+  CreateApplicationInput,
+} from "./application.schema";
 
 /**
  * Application tRPC router. Validate + delegate only.
  */
 export const applicationRouter = router({
+  create: protectedProcedure
+    .input(CreateApplicationInput)
+    .mutation(({ ctx, input }) =>
+      ApplicationService.create(ctx.tenantId, ctx.userId, input)
+    ),
+
+  listByCandidate: protectedProcedure
+    .input(z.object({ candidateId: z.string() }).strict())
+    .query(({ ctx, input }) =>
+      ApplicationService.listByCandidate(ctx.tenantId, input.candidateId)
+    ),
+
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -28,7 +41,7 @@ export const applicationRouter = router({
     .input(
       z.object({
         applicationId: z.string(),
-        toStatus: statusSchema,
+        toStatus: ApplicationStatusSchema,
         reason: z.string().optional(),
       })
     )

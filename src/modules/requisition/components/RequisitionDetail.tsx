@@ -1,6 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { Tabs } from "@/components/ui/tabs";
 import type { RequisitionView } from "@/modules/requisition/requisition.service";
+import {
+  ApplicationList,
+  type ApplicationListItem,
+} from "@/modules/application/components/ApplicationList";
 import { FulfillmentBar } from "./FulfillmentBar";
 import { ReqStatusBadge } from "./ReqStatusBadge";
 import { SlaBadge } from "./SlaBadge";
@@ -17,9 +21,10 @@ export type AuditLogEntry = {
 type Props = {
   data: RequisitionView;
   recentAudit: AuditLogEntry[];
+  applications: ApplicationListItem[];
 };
 
-export function RequisitionDetail({ data, recentAudit }: Props) {
+export function RequisitionDetail({ data, recentAudit, applications }: Props) {
   const onboard = data.targetOnboardingDate
     ? formatOnboarding(data.targetOnboardingDate.toISOString())
     : "—";
@@ -55,22 +60,26 @@ export function RequisitionDetail({ data, recentAudit }: Props) {
             />
           </div>
           <p className="mt-3 text-sm">{data.notes ?? "No notes."}</p>
-          <h3 className="mt-4 text-sm font-medium">Recent status changes</h3>
-          <ul className="mt-2 text-sm">
-            {recentAudit.length === 0 ? (
-              <li>None yet.</li>
-            ) : (
-              recentAudit.map((row) => (
-                <li key={row.id}>
-                  {row.oldValue ?? "—"} → {row.newValue ?? "—"} (
-                  {row.createdAt.toISOString().slice(0, 10)})
+          <h3 className="mt-4 text-sm font-medium">Recent activity</h3>
+          {recentAudit.length === 0 ? (
+            <p className="text-sm text-neutral-500">No status changes yet.</p>
+          ) : (
+            <ul className="mt-2 space-y-1 text-sm">
+              {recentAudit.map((entry) => (
+                <li key={entry.id}>
+                  <time dateTime={entry.createdAt.toISOString()}>
+                    {entry.createdAt.toISOString().slice(0, 16).replace("T", " ")}
+                  </time>
+                  {" — "}
+                  {entry.oldValue ?? "—"} → {entry.newValue ?? "—"}
                 </li>
-              ))
-            )}
-          </ul>
-          <p className="mt-4 text-xs text-neutral-500">
-            Pipeline, compliance, and tasks are empty until later sessions.
-          </p>
+              ))}
+            </ul>
+          )}
+          <div className="mt-6">
+            <h3 className="text-sm font-medium">Pipeline</h3>
+            <ApplicationList data={applications} />
+          </div>
         </Card>
       </Tabs>
     </div>

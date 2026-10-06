@@ -37,3 +37,4 @@ Ideas captured during sessions. Do not implement until a future planned session.
 
 - [ ] Sessions 09–11 written unverified; recovery session before Session 12.
 - [ ] Session 09: pages import withTenant from @/core/db/client (not on allowlist) so Session 05 proxy does not throw. Audit list matches entityId to requisition id; status events store applicationId, so the panel stays empty until a join exists.
+- [ ] Sessions 09–10 written unverified; recovery before Session 12. Audit join now uses application ids.

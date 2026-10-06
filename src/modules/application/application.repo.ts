@@ -38,4 +38,38 @@ export const ApplicationRepo = {
       where: { id: applicationId, tenantId, deletedAt: null },
     });
   },
+  async create(
+    tenantId: string,
+    data: {
+      candidateId: string;
+      requisitionId: string;
+      recruiterId?: string;
+    }
+  ) {
+    return db.candidateApplication.create({
+      data: {
+        tenantId,
+        candidateId: data.candidateId,
+        requisitionId: data.requisitionId,
+        status: "SOURCED",
+      },
+    });
+  },
+
+  async listByCandidate(tenantId: string, candidateId: string) {
+    return db.candidateApplication.findMany({
+      where: { tenantId, candidateId, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async findByCandidateAndRequisition(
+    tenantId: string,
+    candidateId: string,
+    requisitionId: string
+  ) {
+    return db.candidateApplication.findFirst({
+      where: { tenantId, candidateId, requisitionId, deletedAt: null },
+    });
+  },
 };
