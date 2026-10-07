@@ -42,13 +42,20 @@ jobs:
           ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO app_auth, app_tenant;
           SQL
 
-      - name: Apply migrations
-        run: npx prisma migrate deploy
+      # No baseline migration exists (Sessions 00–04 applied outside migrate history).
+      # db push materializes schema.prisma; then apply RLS policy SQL.
+      - name: Push schema
+        run: npx prisma db push --accept-data-loss --skip-generate
         env:
           DATABASE_URL: postgres://postgres:dev@localhost:5432/recruit
           DIRECT_URL: postgres://postgres:dev@localhost:5432/recruit
 
-      - name: Grant on migrated tables
+      - name: Apply RLS policies
+        run: |
+          PGPASSWORD=dev psql -h localhost -U postgres -d recruit -v ON_ERROR_STOP=1 \
+            -f prisma/migrations/20261005180000_session_05_rls/migration.sql
+
+      - name: Grant on tables
         run: |
           PGPASSWORD=dev psql -h localhost -U postgres -d recruit <<'SQL'
           GRANT ALL ON ALL TABLES IN SCHEMA public TO app_auth;
