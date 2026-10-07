@@ -40,6 +40,8 @@ const envObjectSchema = z.object({
   META_WHATSAPP_TOKEN: z.string().optional(),
   META_WHATSAPP_PHONE_ID: z.string().optional(),
   CRON_SECRET: z.string().optional(),
+  POSTMARK_WEBHOOK_USER: z.string().optional(),
+  POSTMARK_WEBHOOK_PASS: z.string().optional(),
 });
 
 /** Full schema with driver/credential cross-checks. */
@@ -49,6 +51,20 @@ const envSchema = envObjectSchema.superRefine((data, ctx) => {
       code: z.ZodIssueCode.custom,
       message: "POSTMARK_TOKEN required when EMAIL_DRIVER=postmark",
       path: ["POSTMARK_TOKEN"],
+    });
+  }
+  if (data.EMAIL_DRIVER === "postmark" && !data.POSTMARK_WEBHOOK_USER) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "POSTMARK_WEBHOOK_USER required when EMAIL_DRIVER=postmark",
+      path: ["POSTMARK_WEBHOOK_USER"],
+    });
+  }
+  if (data.EMAIL_DRIVER === "postmark" && !data.POSTMARK_WEBHOOK_PASS) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "POSTMARK_WEBHOOK_PASS required when EMAIL_DRIVER=postmark",
+      path: ["POSTMARK_WEBHOOK_PASS"],
     });
   }
   if (data.WHATSAPP_DRIVER === "meta") {
@@ -111,6 +127,8 @@ export function parseEnv(
     META_WHATSAPP_TOKEN: source.META_WHATSAPP_TOKEN,
     META_WHATSAPP_PHONE_ID: source.META_WHATSAPP_PHONE_ID,
     CRON_SECRET: source.CRON_SECRET,
+    POSTMARK_WEBHOOK_USER: source.POSTMARK_WEBHOOK_USER,
+    POSTMARK_WEBHOOK_PASS: source.POSTMARK_WEBHOOK_PASS,
   });
   if (!result.success) {
     throw new ValidationError(

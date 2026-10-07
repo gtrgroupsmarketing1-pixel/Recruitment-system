@@ -20,6 +20,9 @@ export const SENSITIVE_LOG_KEYS: ReadonlySet<string> = new Set([
   // Notification PII — body may contain names/IDs; never log recipient address
   "body",
   "recipientAddr",
+  // P1: logs are a separate leak path from the database
+  "email",
+  "phone",
 ]);
 
 export function isSensitiveLogKey(key: string): boolean {

@@ -1,4 +1,5 @@
 import type { NotificationChannel } from "@prisma/client";
+import { escapeHtml } from "@/lib/html";
 
 export type TemplateContext = Record<
   string,
@@ -8,12 +9,14 @@ export type TemplateContext = Record<
 export type RenderResult = {
   subject: string | null;
   body: string;
+  bodyHtml: string | null;
 };
 
 type Template = {
   channel: NotificationChannel;
   subject?: (ctx: TemplateContext) => string;
   body: (ctx: TemplateContext) => string;
+  bodyHtml?: (ctx: TemplateContext) => string;
 };
 
 /** Coerce context values for interpolation — never "undefined" string. */
@@ -25,6 +28,10 @@ export function field(
   const v = ctx[key];
   if (v === null || v === undefined) return fallback;
   return String(v);
+}
+
+function e(ctx: TemplateContext, key: string): string {
+  return escapeHtml(field(ctx, key));
 }
 
 export const TEMPLATES: Record<string, Template> = {
@@ -40,6 +47,12 @@ export const TEMPLATES: Record<string, Template> = {
     body: (ctx) =>
       `The ${field(ctx, "documentLabel")} for ${field(ctx, "candidateName")} expires on ${field(ctx, "expiresOn")} ` +
       `(${field(ctx, "daysRemaining")} days). Please renew.`,
+    bodyHtml: (ctx) =>
+      `<p>The <strong>${e(ctx, "documentLabel")}</strong> for ` +
+      `<strong>${e(ctx, "candidateName")}</strong> expires on ` +
+      `<strong>${e(ctx, "expiresOn")}</strong> ` +
+      `(${e(ctx, "daysRemaining")} days remaining).</p>` +
+      `<p>Please renew or upload a replacement.</p>`,
   },
   "task.overdue": {
     channel: "EMAIL",
@@ -47,6 +60,10 @@ export const TEMPLATES: Record<string, Template> = {
     body: (ctx) =>
       `Task "${field(ctx, "taskTitle")}" was due ${field(ctx, "dueDate")} and is assigned to you. ` +
       `Reference: ${field(ctx, "refType")} / ${field(ctx, "refId")}.`,
+    bodyHtml: (ctx) =>
+      `<p>Task <strong>${e(ctx, "taskTitle")}</strong> was due ` +
+      `<strong>${e(ctx, "dueDate")}</strong> and is assigned to you.</p>` +
+      `<p>Reference: ${e(ctx, "refType")} / ${e(ctx, "refId")}.</p>`,
   },
 };
 
@@ -62,6 +79,7 @@ export function renderTemplate(
     channel: tpl.channel,
     subject: tpl.subject ? tpl.subject(context) : null,
     body: tpl.body(context),
+    bodyHtml: tpl.bodyHtml ? tpl.bodyHtml(context) : null,
   };
 }
 

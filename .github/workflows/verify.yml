@@ -90,6 +90,11 @@ jobs:
           CREATE POLICY tenant_isolation ON "Notification"
             USING ("tenantId" = current_setting('app.tenant_id', true))
             WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
+          ALTER TABLE "TenantEmailConfig" ENABLE ROW LEVEL SECURITY;
+          DROP POLICY IF EXISTS tenant_isolation ON "TenantEmailConfig";
+          CREATE POLICY tenant_isolation ON "TenantEmailConfig"
+            USING ("tenantId" = current_setting('app.tenant_id', true))
+            WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
           SQL
 
       - name: Grant on tables

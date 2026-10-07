@@ -57,9 +57,23 @@ describe("logger", () => {
 
   it("redacts nested plain objects", () => {
     const spy = vi.spyOn(console, "log").mockImplementation(() => {});
-    logger.info({ user: { email: "a@b.c", passwordHash: "x" } }, "nested");
+    logger.info({ user: { email: "a@b.c", passwordHash: "x", name: "Alice" } }, "nested");
     const parsed = JSON.parse(String(spy.mock.calls[0][0]));
-    expect(parsed.user.email).toBe("a@b.c");
+    expect(parsed.user.email).toBe("[redacted]");
     expect(parsed.user.passwordHash).toBe("[redacted]");
+    expect(parsed.user.name).toBe("Alice");
+  });
+
+  it("redacts email and phone at any nesting level", () => {
+    const out = logger.format({
+      user: { email: "x@y.com", phone: "+911234567890", name: "X" },
+      meta: { nested: { email: "deep@z.com" } },
+    });
+    const user = out.user as { email: string; phone: string; name: string };
+    const meta = out.meta as { nested: { email: string } };
+    expect(user.email).toBe("[redacted]");
+    expect(user.phone).toBe("[redacted]");
+    expect(user.name).toBe("X");
+    expect(meta.nested.email).toBe("[redacted]");
   });
 });

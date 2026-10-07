@@ -3,10 +3,12 @@ import type {
   NotificationChannel,
   NotificationStatus,
 } from "@prisma/client";
-import { NotFoundError } from "@/lib/errors";
+import { NotFoundError, ValidationError } from "@/lib/errors";
 import { TEMPLATES, type TemplateContext } from "@/core/notifications/templates";
 import { getChannelDriver } from "@/core/notifications/drivers";
+import { renderEmailHtml } from "@/core/notifications/email.layout";
 import { NotificationRepo } from "./notification.repo";
+import { resolveSender } from "./sender.resolver";
 
 export type NotificationView = {
   id: string;
@@ -18,10 +20,14 @@ export type NotificationView = {
   recipientAddr: string;
   subject: string | null;
   body: string;
+  htmlBody: string | null;
   providerId: string | null;
   errorMessage: string | null;
+  bounceType: string | null;
+  bounceReason: string | null;
   sentAt: Date | null;
   deliveredAt: Date | null;
+  openedAt: Date | null;
   createdAt: Date;
 };
 
@@ -36,10 +42,14 @@ function toView(row: Notification): NotificationView {
     recipientAddr: row.recipientAddr,
     subject: row.subject,
     body: row.body,
+    htmlBody: row.htmlBody,
     providerId: row.providerId,
     errorMessage: row.errorMessage,
+    bounceType: row.bounceType,
+    bounceReason: row.bounceReason,
     sentAt: row.sentAt,
     deliveredAt: row.deliveredAt,
+    openedAt: row.openedAt,
     createdAt: row.createdAt,
   };
 }
@@ -60,6 +70,11 @@ export const NotificationService = {
     const channel = overrides?.channel ?? tpl.channel;
     const subject = tpl.subject ? tpl.subject(context) : null;
     const body = tpl.body(context);
+    const sender = await resolveSender(tenantId);
+    const htmlBody =
+      channel === "EMAIL" && tpl.bodyHtml
+        ? renderEmailHtml(tpl.bodyHtml(context), sender.signatureHtml)
+        : null;
 
     const queued = await NotificationRepo.createQueued(tenantId, {
       channel,
@@ -69,6 +84,7 @@ export const NotificationService = {
       recipientAddr: recipient.addr,
       subject,
       body,
+      htmlBody,
     });
 
     const driver = getChannelDriver(channel);
@@ -76,7 +92,13 @@ export const NotificationService = {
       to: recipient.addr,
       subject: subject ?? undefined,
       body,
-      metadata: { templateKey, tenantId },
+      htmlBody: htmlBody ?? undefined,
+      metadata: { templateKey, tenantId, notificationId: queued.id },
+      sender: {
+        fromName: sender.fromName,
+        fromEmail: sender.fromEmail,
+        replyToEmail: sender.replyToEmail,
+      },
     });
 
     const now = new Date();
@@ -89,6 +111,43 @@ export const NotificationService = {
     });
 
     return toView(updated ?? queued);
+  },
+
+  async listHardBounces(tenantId: string, since: Date): Promise<NotificationView[]> {
+    const rows = await NotificationRepo.list(tenantId, { status: "BOUNCED", limit: 50 });
+    return rows
+      .filter(
+        (r) =>
+          r.bounceType === "HardBounce" &&
+          r.createdAt.getTime() > since.getTime()
+      )
+      .map(toView);
+  },
+
+  async saveEmailConfig(
+    tenantId: string,
+    input: {
+      fromName: string;
+      fromEmail: string;
+      replyToEmail: string | null;
+      signatureHtml: string | null;
+    }
+  ) {
+    if (input.fromName.length === 0 || input.fromName.length > 100) {
+      throw new ValidationError("fromName must be 1–100 characters");
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.fromEmail)) {
+      throw new ValidationError("fromEmail must be a valid email");
+    }
+    if (input.signatureHtml && input.signatureHtml.length > 2000) {
+      throw new ValidationError("signatureHtml max 2000 characters");
+    }
+    const { db } = await import("@/core/db/client");
+    return db.tenantEmailConfig.upsert({
+      where: { tenantId },
+      create: { tenantId, ...input },
+      update: input,
+    });
   },
 
   async listForTenant(

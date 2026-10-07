@@ -6,13 +6,25 @@ import type {
   SendResult,
 } from "@/core/notifications/channel";
 import { CHANNEL_TIMEOUT_MS } from "@/core/notifications/channel";
+import { DEFAULT_SENDER, formatFrom } from "@/modules/notification/sender.resolver";
 
-/** Dev/CI driver — no external call. */
+function senderOf(input: SendInput) {
+  return input.sender ?? DEFAULT_SENDER;
+}
+
+/** Dev/CI driver — no external call. Returns a log provider id. */
 export const LogEmailChannel: NotificationChannelDriver = {
   async send(input: SendInput): Promise<SendResult> {
     const providerId = `log-${randomUUID()}`;
+    const sender = senderOf(input);
     logger.info(
-      { channel: "EMAIL", providerId, toPresent: Boolean(input.to) },
+      {
+        channel: "EMAIL",
+        providerId,
+        toPresent: Boolean(input.to),
+        fromEmail: sender.fromEmail,
+        hasHtml: Boolean(input.htmlBody),
+      },
       "email sent via log driver"
     );
     return { providerId, status: "SENT" };
@@ -30,6 +42,7 @@ export function createPostmarkEmailChannel(
     async send(input: SendInput): Promise<SendResult> {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), CHANNEL_TIMEOUT_MS);
+      const sender = senderOf(input);
       try {
         const res = await fetch("https://api.postmarkapp.com/email", {
           method: "POST",
@@ -39,11 +52,14 @@ export function createPostmarkEmailChannel(
             "X-Postmark-Server-Token": token,
           },
           body: JSON.stringify({
-            From: process.env.POSTMARK_FROM ?? "noreply@example.com",
+            From: formatFrom(sender),
             To: input.to,
+            ReplyTo: sender.replyToEmail ?? undefined,
             Subject: input.subject ?? "(no subject)",
             TextBody: input.body,
+            HtmlBody: input.htmlBody,
             MessageStream: "outbound",
+            Metadata: input.metadata,
           }),
           signal: controller.signal,
         });
@@ -76,5 +92,20 @@ export function createPostmarkEmailChannel(
         clearTimeout(timer);
       }
     },
+  };
+}
+
+/** Build the Postmark JSON body. Pure — used by tests. */
+export function buildPostmarkPayload(input: SendInput): Record<string, unknown> {
+  const sender = senderOf(input);
+  return {
+    From: formatFrom(sender),
+    To: input.to,
+    ReplyTo: sender.replyToEmail ?? undefined,
+    Subject: input.subject ?? "(no subject)",
+    TextBody: input.body,
+    HtmlBody: input.htmlBody,
+    MessageStream: "outbound",
+    Metadata: input.metadata,
   };
 }

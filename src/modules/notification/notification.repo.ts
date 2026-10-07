@@ -85,6 +85,7 @@ export const NotificationRepo = {
       recipientAddr: string;
       subject: string | null;
       body: string;
+      htmlBody?: string | null;
     }
   ): Promise<Notification> {
     return NotificationRepo.create(tenantId, {
@@ -96,6 +97,7 @@ export const NotificationRepo = {
       recipientAddr: input.recipientAddr,
       subject: input.subject,
       body: input.body,
+      htmlBody: input.htmlBody ?? null,
     });
   },
 };

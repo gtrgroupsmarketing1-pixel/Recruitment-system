@@ -48,6 +48,10 @@ function createLogger(bindings: LogFields) {
     child(extra: LogFields) {
       return createLogger({ ...bindings, ...extra });
     },
+    /** Redacted copy of fields. Does not emit. Used by tests and preview paths. */
+    format(fields: LogFields): LogFields {
+      return redact({ ...bindings, ...fields }) as LogFields;
+    },
   };
 }
 

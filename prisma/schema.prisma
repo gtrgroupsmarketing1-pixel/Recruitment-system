@@ -38,6 +38,7 @@ model Tenant {
   tasks              Task[]
   documents          Document[]
   notifications      Notification[]
+  emailConfig        TenantEmailConfig?
 }
 
 enum UserRole {
@@ -662,10 +663,14 @@ model Notification {
   recipientAddr String
   subject       String?
   body          String
+  htmlBody      String?
   providerId    String?
   errorMessage  String?
+  bounceType    String?
+  bounceReason  String?
   sentAt        DateTime?
   deliveredAt   DateTime?
+  openedAt      DateTime?
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
@@ -675,6 +680,20 @@ model Notification {
   @@index([tenantId, recipientId])
   @@index([tenantId, templateKey])
   @@index([tenantId, status])
+  @@index([providerId])
+}
+
+model TenantEmailConfig {
+  id            String   @id @default(cuid())
+  tenantId      String   @unique
+  fromName      String
+  fromEmail     String
+  replyToEmail  String?
+  signatureHtml String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 }
 
 

@@ -36,6 +36,18 @@ These are different concepts. Never collapse them.
 ## Schema edits are line-level, not block-level
 Three incidents (S00, S15, S16) dropped @relation backrefs. Never rewrite a whole model block. Before committing, run scripts/check-schema.sh and review every relation diff.
 
+## Env schema structure
+envObjectSchema is the base Zod object with primitive field definitions.
+envSchema = envObjectSchema.superRefine(...) is the full validator.
+Only the base schema supports .pick / .omit / .partial. When a subset
+of env vars needs validating (e.g., encryption-only parse), derive from
+envObjectSchema, not envSchema.
+
+## Logger denylist is a log-leak control
+Unencrypted-at-rest is not a reason to log a field. email, phone, body,
+and recipientAddr are denylisted. Audit trails that must record an address
+go to AuditLog, not stdout.
+
 ## Notifications (Session 18)
 - Delivery is best-effort inline in the outbox subscriber. Outbox provides retry; no BullMQ yet.
 - Templates are inline TypeScript pure functions (not DB). Per-tenant customization is Session 24+.

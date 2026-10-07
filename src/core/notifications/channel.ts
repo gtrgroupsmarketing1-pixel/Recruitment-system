@@ -4,7 +4,13 @@ export type SendInput = {
   to: string;
   subject?: string;
   body: string;
+  htmlBody?: string;
   metadata?: Record<string, string>;
+  sender?: {
+    fromName: string;
+    fromEmail: string;
+    replyToEmail: string | null;
+  };
 };
 
 export type SendResult = {

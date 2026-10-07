@@ -85,7 +85,13 @@ withTenant → appExtended.$transaction is code-correct; runtime encryption proo
 clientCompanyId is a column but not a @relation. Works via second query.
 Add the backref when a session needs Prisma-level include or cascade.
 
-## Notification volume control
+## Deferred: Ops admin section
+- /admin/notifications (done — Session 18/19)
+- /admin/jobs — background job status, last run, failures
+- /admin/connectors — portal connector health
+- /admin/webhooks — inbound webhook log
+Add when 3+ ops surfaces exist. Session 21 is the trigger.
+
 Every status change fires a notification. Real tenants will want per-tenant
 opt-out or status allowlist. Add in Session 23 or 24 when admin UI exists.
 

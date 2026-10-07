@@ -20,6 +20,12 @@ const STATUSES: NotificationStatus[] = [
   "SKIPPED",
 ];
 
+function maskAddr(addr: string): string {
+  const at = addr.indexOf("@");
+  if (at <= 1) return "***";
+  return `${addr.slice(0, 1)}***${addr.slice(at)}`;
+}
+
 export default async function NotificationsAdminPage({ searchParams }: Props) {
   const sp = await searchParams;
   const session = await requireSession();
@@ -34,22 +40,49 @@ export default async function NotificationsAdminPage({ searchParams }: Props) {
       : undefined;
   const templateKey = sp.templateKey || undefined;
 
-  const rows = await withTenant(tenantId, () =>
-    NotificationService.listForTenant(tenantId, {
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000);
+  const [rows, bounces] = await withTenant(tenantId, async () => {
+    const list = await NotificationService.listForTenant(tenantId, {
       status,
       templateKey,
       limit: 200,
-    })
-  );
+    });
+    const hard = await NotificationService.listHardBounces(tenantId, sevenDaysAgo);
+    return [list, hard] as const;
+  });
 
   return (
     <main className="mx-auto grid max-w-5xl gap-4 p-4 sm:p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Notification delivery log</h1>
+        <Link href="/admin/notifications/preview" className="text-sm underline">
+          Preview
+        </Link>
+        <Link href="/admin/email-config" className="text-sm underline">
+          Sender
+        </Link>
         <Link href="/" className="text-sm underline">
           Home
         </Link>
       </div>
+
+      {bounces.length > 0 ? (
+        <section className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">
+          <p className="font-medium">
+            {bounces.length} hard bounce{bounces.length === 1 ? "" : "s"} in last 7 days
+          </p>
+          <ul className="mt-2 space-y-1">
+            {bounces.slice(0, 3).map((b) => (
+              <li key={b.id}>
+                {maskAddr(b.recipientAddr)} | {b.templateKey} | {b.bounceReason ?? "—"}
+              </li>
+            ))}
+          </ul>
+          <Link href="/admin/notifications?status=BOUNCED" className="underline">
+            View all
+          </Link>
+        </section>
+      ) : null}
 
       <form method="get" className="flex flex-wrap gap-2 text-sm">
         <select
