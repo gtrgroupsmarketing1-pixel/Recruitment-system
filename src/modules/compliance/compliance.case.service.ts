@@ -112,7 +112,7 @@ export const ComplianceCaseService = {
   },
 };
 
-function decorate<T extends { checklists: Array<{ id: string; stepTemplateId: string; status: string; name: string }>; template: { steps: Array<{ id: string; dependsOnStepId: string | null; name: string }> } }>(row: T) {
+function decorate<T extends { checklists: Array<{ id: string; stepTemplateId: string; status: string; name: string; stepOrder: number }>; template: { steps: Array<{ id: string; dependsOnStepId: string | null; name: string; connectorId: string | null }> } }>(row: T) {
   const steps = row.checklists.map((c) => {
     const tmpl = row.template.steps.find((s) => s.id === c.stepTemplateId);
     const dep = tmpl?.dependsOnStepId
@@ -120,9 +120,14 @@ function decorate<T extends { checklists: Array<{ id: string; stepTemplateId: st
       : null;
     const locked = Boolean(dep) && dep?.status !== "COMPLETED";
     return {
-      ...c,
+      id: c.id,
+      stepTemplateId: c.stepTemplateId,
+      status: c.status,
+      name: c.name,
+      stepOrder: c.stepOrder,
       locked,
       waitingOn: locked ? dep?.name ?? "unknown" : null,
+      connectorId: tmpl?.connectorId ?? null,
     };
   });
   return { ...row, steps };
