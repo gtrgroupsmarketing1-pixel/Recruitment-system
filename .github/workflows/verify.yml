@@ -21,6 +21,41 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npx prisma generate
+
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Create Postgres roles
+        run: |
+          PGPASSWORD=dev psql -h localhost -U postgres -d recruit <<'SQL'
+          DO $$ BEGIN
+            CREATE ROLE app_auth NOINHERIT LOGIN PASSWORD 'auth' BYPASSRLS;
+          EXCEPTION WHEN duplicate_object THEN NULL;
+          END $$;
+          DO $$ BEGIN
+            CREATE ROLE app_tenant NOINHERIT LOGIN PASSWORD 'tenant';
+          EXCEPTION WHEN duplicate_object THEN NULL;
+          END $$;
+          GRANT USAGE ON SCHEMA public TO app_auth, app_tenant;
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO app_auth;
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_tenant;
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO app_auth, app_tenant;
+          SQL
+
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgres://postgres:dev@localhost:5432/recruit
+          DIRECT_URL: postgres://postgres:dev@localhost:5432/recruit
+
+      - name: Grant on migrated tables
+        run: |
+          PGPASSWORD=dev psql -h localhost -U postgres -d recruit <<'SQL'
+          GRANT ALL ON ALL TABLES IN SCHEMA public TO app_auth;
+          GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_tenant;
+          GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_auth, app_tenant;
+          SQL
+
       - name: typecheck (log only)
         run: npx tsc --noEmit
         continue-on-error: true
@@ -29,7 +64,9 @@ jobs:
       - name: vitest
         run: npx vitest run
         env:
-          DATABASE_URL: postgres://postgres:dev@localhost:5432/recruit
-          AUTH_DATABASE_URL: postgres://postgres:dev@localhost:5432/recruit
+          DATABASE_URL: postgres://app_tenant:tenant@localhost:5432/recruit
+          AUTH_DATABASE_URL: postgres://app_auth:auth@localhost:5432/recruit
+          DIRECT_URL: postgres://postgres:dev@localhost:5432/recruit
           ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
           BLIND_INDEX_KEY: BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=
+          NODE_ENV: test

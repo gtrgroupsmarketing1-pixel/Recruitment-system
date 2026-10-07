@@ -13,11 +13,25 @@ vi.mock("@/modules/application/application.repo", () => ({
   },
 }));
 
+vi.mock("@/core/events/event-bus", () => ({
+  eventBus: {
+    publish: vi.fn().mockResolvedValue(undefined),
+    dispatchPending: vi.fn().mockResolvedValue(undefined),
+    subscribe: vi.fn().mockReturnValue(() => {}),
+  },
+}));
+
 const tenantA = "ten_a";
 const tenantB = "ten_b";
 const userId = "user_1";
 
-function app(overrides: Partial<{ id: string; tenantId: string; status: ApplicationStatus }> = {}) {
+function app(
+  overrides: Partial<{
+    id: string;
+    tenantId: string;
+    status: ApplicationStatus;
+  }> = {}
+) {
   return {
     id: "app_1",
     tenantId: tenantA,
@@ -38,7 +52,9 @@ describe("ApplicationService.changeStatus", () => {
   });
 
   it("succeeds on a legal transition and persists via repo", async () => {
-    vi.mocked(ApplicationRepo.findById).mockResolvedValue(app({ status: "SOURCED" }));
+    vi.mocked(ApplicationRepo.findById).mockResolvedValue(
+      app({ status: "SOURCED" })
+    );
     vi.mocked(ApplicationRepo.updateStatus).mockResolvedValue(
       app({ status: "SCREENED" })
     );
@@ -61,7 +77,9 @@ describe("ApplicationService.changeStatus", () => {
   });
 
   it("throws IllegalTransitionError on an illegal transition", async () => {
-    vi.mocked(ApplicationRepo.findById).mockResolvedValue(app({ status: "SOURCED" }));
+    vi.mocked(ApplicationRepo.findById).mockResolvedValue(
+      app({ status: "SOURCED" })
+    );
 
     await expect(
       ApplicationService.changeStatus(tenantA, userId, "app_1", "SELECTED")
@@ -81,7 +99,6 @@ describe("ApplicationService.changeStatus", () => {
   });
 
   it("throws NotFoundError when application belongs to another tenant", async () => {
-    // Repo is tenant-scoped — another tenant's id resolves to null.
     vi.mocked(ApplicationRepo.findById).mockResolvedValue(null);
 
     await expect(

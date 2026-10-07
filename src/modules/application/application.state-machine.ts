@@ -31,7 +31,8 @@ export const STATUS = {
 
 export type Status = (typeof STATUS)[keyof typeof STATUS];
 
-const EXIT_STATES: readonly Status[] = [
+/** Exit / branch statuses. Reachable from any active state. */
+export const EXIT_STATES: readonly Status[] = [
   STATUS.REJECTED,
   STATUS.ON_HOLD,
   STATUS.MEDICAL_UNFIT,
@@ -40,7 +41,7 @@ const EXIT_STATES: readonly Status[] = [
 ] as const;
 
 /** Legal forward-progress edges only. Exit states are appended by nextStates(). */
-const TRANSITIONS: Record<Status, readonly Status[]> = {
+export const TRANSITIONS: Record<Status, readonly Status[]> = {
   [STATUS.SOURCED]: [STATUS.SCREENED],
   [STATUS.SCREENED]: [STATUS.SHORTLISTED],
   [STATUS.SHORTLISTED]: [STATUS.CLIENT_INTERVIEWED],
@@ -104,12 +105,21 @@ export const FILLED_STATUSES = [
   STATUS.PROBATION,
   STATUS.CONFIRMED,
 ] as const;
-export const ALL_STATUSES = Object.values(STATUS);
+
+export const ALL_STATUSES = Object.values(STATUS) as Status[];
+
+/** CONFIRMED + all exit states. */
+export const TERMINAL_STATES: readonly Status[] = [
+  STATUS.CONFIRMED,
+  ...EXIT_STATES,
+] as const;
+
+export function isExitState(status: Status): boolean {
+  return EXIT_STATES.includes(status);
+}
+
 export function isTerminal(status: Status): boolean {
-  return (
-    status === STATUS.CONFIRMED ||
-    EXIT_STATES.includes(status)
-  );
+  return status === STATUS.CONFIRMED || EXIT_STATES.includes(status);
 }
 
 /**
