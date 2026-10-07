@@ -111,7 +111,7 @@ export function createMicrosoftDriveClient(accessToken: string): ExternalDriveCl
         {
           method: "PUT",
           headers: { ...auth, "Content-Type": mimeType },
-          body: content,
+          body: new Uint8Array(content),
         }
       );
       const json = await readJson(res);

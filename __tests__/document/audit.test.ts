@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { authPrisma, withTenant } from "@/core/db/client";
 import { DocumentService } from "@/modules/document/document.service";
-import { storage } from "@/core/storage/storage.client";
+import { getStorage } from "@/core/storage/storage.client";
+
+const storage = getStorage();
 
 const hasDb = Boolean(process.env.DATABASE_URL && process.env.AUTH_DATABASE_URL);
 
