@@ -98,9 +98,16 @@ export const eventBus = {
         let allOk = true;
         if (handlers && handlers.size > 0) {
           for (const handler of handlers) {
+            // Per-handler savepoint: one SQL failure must not abort siblings
+            // or leave the outbox transaction unusable (25P02).
+            await tx.$executeRawUnsafe("SAVEPOINT subscriber_handler");
             try {
               await handler(event);
+              await tx.$executeRawUnsafe("RELEASE SAVEPOINT subscriber_handler");
             } catch {
+              await tx.$executeRawUnsafe(
+                "ROLLBACK TO SAVEPOINT subscriber_handler"
+              );
               allOk = false;
             }
           }
