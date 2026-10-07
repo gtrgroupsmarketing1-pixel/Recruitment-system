@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { storage, verifyStorageSig } from "@/core/storage/storage.client";
+import { getStorage, verifyStorageSig } from "@/core/storage/storage.client";
+
+const storage = getStorage();
 
 describe("local storage", () => {
   it("signs an upload url and reads head after write", async () => {
