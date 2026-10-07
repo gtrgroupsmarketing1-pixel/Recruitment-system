@@ -41,6 +41,9 @@ model Tenant {
   emailConfig        TenantEmailConfig?
   storageConnections TenantStorageConnection[]
   documentSyncStates DocumentSyncState[]
+  connectorConfigs   TenantConnectorConfig[]
+  connectorChecks    ConnectorCheck[]
+  connectorCheckLogs ConnectorCheckLog[]
 }
 
 enum UserRole {
@@ -342,6 +345,7 @@ model ChecklistInstance {
   travelRecord     TravelRecord?
   deploymentRecord DeploymentRecord?
   vaultDocuments   Document[]
+  connectorChecks  ConnectorCheck[]
 
   @@unique([caseId, stepTemplateId])
   @@index([tenantId, caseId, stepOrder])
@@ -763,6 +767,76 @@ model DocumentSyncState {
   @@index([status, attempts])
   @@index([nextAttemptAt])
 }
+
+enum ConnectorKind {
+  WAFID
+  MOHRE
+  DMW
+  MEA
+  EMBASSY
+}
+
+model TenantConnectorConfig {
+  id                     String        @id @default(cuid())
+  tenantId               String
+  connectorId            ConnectorKind
+  isEnabled              Boolean       @default(false)
+  credentialsCt          String?
+  pollingIntervalMinutes Int           @default(60)
+  interRequestDelayMs    Int           @default(3000)
+  lastPolledAt           DateTime?
+  lastError              String?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  deletedAt              DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, connectorId])
+  @@index([tenantId])
+  @@index([isEnabled, lastPolledAt])
+}
+
+model ConnectorCheck {
+  id                String        @id @default(cuid())
+  tenantId          String
+  connectorId       ConnectorKind
+  checklistId       String
+  trackingId        String
+  lastStatus        String        @default("PENDING")
+  lastRawStatus     String?
+  lastDetails       Json?
+  lastCheckedAt     DateTime?
+  lastChangedAt     DateTime?
+  checkCount        Int           @default(0)
+  consecutiveErrors Int           @default(0)
+  lastError         String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  tenant    Tenant            @relation(fields: [tenantId], references: [id])
+  checklist ChecklistInstance @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  @@unique([checklistId, connectorId])
+  @@index([tenantId, connectorId, lastCheckedAt])
+  @@index([lastStatus, lastCheckedAt])
+}
+
+model ConnectorCheckLog {
+  id               String   @id @default(cuid())
+  tenantId         String
+  connectorCheckId String
+  status           String
+  rawStatus        String?
+  rawPayload       Json?
+  errorMessage     String?
+  checkedAt        DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, connectorCheckId, checkedAt])
+}
+
 
 model JobRunLog {
   id             String   @id @default(cuid())

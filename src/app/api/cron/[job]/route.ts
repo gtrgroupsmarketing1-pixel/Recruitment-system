@@ -4,6 +4,7 @@ import { runDocumentExpiryJob } from "@/core/jobs/jobs/document-expiry.job";
 import { runTaskOverdueJob } from "@/core/jobs/jobs/task-overdue.job";
 import { runDocumentGcJob } from "@/core/jobs/jobs/document-gc.job";
 import { runDocumentSyncJob } from "@/core/jobs/jobs/document-sync.job";
+import { runConnectorPollJob } from "@/core/jobs/jobs/connector-poll.job";
 
 const JOBS: Record<string, () => Promise<unknown>> = {
   "document-expiry": runDocumentExpiryJob,
@@ -14,6 +15,7 @@ const JOBS: Record<string, () => Promise<unknown>> = {
     }),
   "document-gc": runDocumentGcJob,
   "document-sync": runDocumentSyncJob,
+  "connector-poll": runConnectorPollJob,
 };
 
 export function authorizeCron(authorization: string | null): boolean {

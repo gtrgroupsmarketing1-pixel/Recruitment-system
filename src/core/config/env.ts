@@ -63,6 +63,15 @@ const envObjectSchema = z.object({
   MS_OAUTH_REDIRECT_URI: z.string().optional(),
   OAUTH_STATE_SECRET: z.string().min(1).default("dev-oauth-state"),
   DRIVE_ENCRYPTION_KEY: z.string().optional(),
+  CONNECTOR_POLL_ENABLED: z
+    .union([z.boolean(), z.string()])
+    .optional()
+    .transform((v) => v === true || v === "true")
+    .default(false),
+  CONNECTOR_POLL_INTERVAL_MINUTES: z.coerce.number().int().positive().default(60),
+  CONNECTOR_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
+  CONNECTOR_INTER_REQUEST_DELAY_MS: z.coerce.number().int().nonnegative().default(3000),
+  CONNECTOR_USER_AGENT: z.string().min(1).default("RecruitmentSystem/1.0 (+https://app.example.com)"),
 });
 
 /** Full schema with driver/credential cross-checks. */
@@ -211,6 +220,12 @@ export function parseEnv(
     MS_OAUTH_CLIENT_SECRET: source.MS_OAUTH_CLIENT_SECRET,
     MS_OAUTH_REDIRECT_URI: source.MS_OAUTH_REDIRECT_URI,
     OAUTH_STATE_SECRET: source.OAUTH_STATE_SECRET ?? "dev-oauth-state",
+    CONNECTOR_POLL_ENABLED: source.CONNECTOR_POLL_ENABLED ?? false,
+    CONNECTOR_POLL_INTERVAL_MINUTES: source.CONNECTOR_POLL_INTERVAL_MINUTES ?? 60,
+    CONNECTOR_REQUEST_TIMEOUT_MS: source.CONNECTOR_REQUEST_TIMEOUT_MS ?? 15000,
+    CONNECTOR_INTER_REQUEST_DELAY_MS: source.CONNECTOR_INTER_REQUEST_DELAY_MS ?? 3000,
+    CONNECTOR_USER_AGENT:
+      source.CONNECTOR_USER_AGENT ?? "RecruitmentSystem/1.0 (+https://app.example.com)",
     DRIVE_ENCRYPTION_KEY: source.DRIVE_ENCRYPTION_KEY,
   });
   if (!result.success) {

@@ -70,5 +70,5 @@ Matches PRD §4 Phase 1 ("flag this requisition RED if fewer than 30 days remain
 Source of truth for requisition.metrics.ts.
 
 ## Session pointer
-Session 21 — Drive/OneDrive push mirror (OAuth, DocumentSyncState, retry job).
-CI is the verification path. Sessions 12–20 green on GitHub Actions.
+Session 22 — Government portal connectors (Wafid parser + MOHRE/DMW stubs, poll job).
+CI is the verification path. Sessions 12–21 green on GitHub Actions.

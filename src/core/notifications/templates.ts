@@ -65,6 +65,23 @@ export const TEMPLATES: Record<string, Template> = {
       `<strong>${e(ctx, "dueDate")}</strong> and is assigned to you.</p>` +
       `<p>Reference: ${e(ctx, "refType")} / ${e(ctx, "refId")}.</p>`,
   },
+  "compliance.connector_status_changed": {
+    channel: "EMAIL",
+    subject: (ctx) =>
+      `${field(ctx, "connectorName")}: ${field(ctx, "stepName")} is now ${field(ctx, "newStatus")}`,
+    body: (ctx) =>
+      `Hi ${field(ctx, "officerName")},\n\n` +
+      `${field(ctx, "connectorName")} reports that step "${field(ctx, "stepName")}" has moved from ` +
+      `${field(ctx, "previousStatus")} to ${field(ctx, "newStatus")}.\n\n` +
+      `Suggested action: ${field(ctx, "suggestedAction")}.\n\n` +
+      `Open the case to review.`,
+    bodyHtml: (ctx) =>
+      `<p>Hi ${e(ctx, "officerName")},</p>` +
+      `<p>${e(ctx, "connectorName")} reports that step <strong>${e(ctx, "stepName")}</strong> ` +
+      `has moved from ${e(ctx, "previousStatus")} to <strong>${e(ctx, "newStatus")}</strong>.</p>` +
+      `<p>Suggested action: ${e(ctx, "suggestedAction")}.</p>` +
+      `<p>Open the case to review.</p>`,
+  },
 };
 
 export function renderTemplate(

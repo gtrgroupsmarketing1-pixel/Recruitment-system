@@ -74,3 +74,12 @@ go to AuditLog, not stdout.
 - Tokens use the Session 04 encryption middleware with no blind index. DRIVE_ENCRYPTION_KEY is accepted in env but not a second cipher — dual keys would make decrypt ambiguous. Tokens use ENCRYPTION_KEY.
 - AWS SDK stays at the lockfile resolution 3.687.0. .npmrc sets save-exact=true so later installs do not float minors. package.json keeps the existing caret so npm ci still matches the lock.
 - getStorage() is the only storage entry point. The legacy storage export is removed.
+
+
+## Session 22 — Government portal connectors
+- Poll-only; no government push webhooks.
+- Notification on status change; never auto-complete checklist steps.
+- Wafid is the only shipped parser (fixture-backed regex). MOHRE/DMW return UNKNOWN / NOT_IMPLEMENTED.
+- TenantConnectorConfig.credentialsCt is encrypted bidx-less (same pattern as Drive tokens).
+- COMPLIANCE_OFFICER queried by role string; Session 23 formalizes RBAC enforcement.
+- Interface changes ripple to every mock (Session 21 lesson). Prefer pure fixtures over structural mocks when possible.

@@ -114,9 +114,46 @@ export function registerNotificationSubscribers(): () => void {
     );
   });
 
+
+  const unsub4 = eventBus.subscribe("compliance.connector_status_changed", async (event) => {
+    const officers = await db.user.findMany({
+      where: {
+        tenantId: event.tenantId,
+        role: "COMPLIANCE_OFFICER",
+        deletedAt: null,
+      },
+      select: { id: true, email: true, name: true },
+    });
+
+    const checklist = await db.checklistInstance.findFirst({
+      where: { tenantId: event.tenantId, id: event.payload.checklistId },
+      select: { name: true, caseId: true },
+    });
+
+    for (const officer of officers) {
+      if (!officer.email) continue;
+      await NotificationService.send(
+        event.tenantId,
+        "compliance.connector_status_changed",
+        { type: "USER", id: officer.id, addr: officer.email },
+        {
+          officerName: officer.name,
+          stepName: checklist?.name ?? "Unknown",
+          connectorName: event.payload.connectorId,
+          previousStatus: event.payload.previousStatus,
+          newStatus: event.payload.newStatus,
+          suggestedAction: event.payload.suggestedAction ?? "review the case",
+        },
+        { channel: "EMAIL" }
+      );
+    }
+  });
+
   return () => {
+
     unsub1();
     unsub2();
     unsub3();
+    unsub4();
   };
 }

@@ -9,6 +9,11 @@ import { computeChecklistOverdue } from "@/modules/compliance/compliance.overdue
 import { assessRisk } from "@/modules/compliance/compliance.risk";
 import { RiskBadge } from "@/modules/compliance/components/dashboard/RiskBadge";
 import { db } from "@/core/db/client";
+import { ConnectorCheckService } from "@/modules/connector/connector.check.service";
+import { getConnector } from "@/core/connectors/registry";
+import { ConnectorStatusPanel } from "@/modules/compliance/components/connector/ConnectorStatusPanel";
+import { StartTrackingForm } from "@/modules/compliance/components/connector/StartTrackingForm";
+import { startTrackingAction } from "./start-tracking.action";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -17,10 +22,17 @@ export default async function CasePage({ params }: Props) {
   const session = await requireSession();
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return <main className="p-8">Missing tenant</main>;
-  const [case_, audit] = await withTenant(tenantId, async () => {
+  const [case_, audit, checks] = await withTenant(tenantId, async () => {
     const row = await ComplianceCaseService.getCase(tenantId, id);
     const trail = await listCaseAudit(tenantId, id, 20);
-    return [row, trail] as const;
+    const connectorChecks = await Promise.all(
+      row.steps.map(async (step) => {
+        if (!step.connectorId) return [step.id, null] as const;
+        const check = await ConnectorCheckService.getByChecklist(tenantId, step.id);
+        return [step.id, check] as const;
+      })
+    );
+    return [row, trail, new Map(connectorChecks)] as const;
   });
   const requisition = await withTenant(tenantId, () =>
     db.jobRequisition.findFirst({ where: { id: case_.requisitionId, tenantId, deletedAt: null } })
@@ -58,6 +70,26 @@ export default async function CasePage({ params }: Props) {
               />
               {step.locked ? (
                 <p className="text-xs">Waiting on: {step.waitingOn}</p>
+              ) : null}
+              {step.connectorId ? (
+                (() => {
+                  const check = checks.get(step.id);
+                  const connector = getConnector(step.connectorId.toLowerCase());
+                  if (!connector) return null;
+                  if (check) {
+                    return (
+                      <ConnectorStatusPanel
+                        connectorId={connector.id}
+                        connectorName={connector.displayName}
+                        checklistId={step.id}
+                        check={check}
+                      />
+                    );
+                  }
+                  return (
+                    <StartTrackingForm checklistId={step.id} action={startTrackingAction} />
+                  );
+                })()
               ) : null}
             </div>
             <div>

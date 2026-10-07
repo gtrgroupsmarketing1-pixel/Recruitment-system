@@ -43,6 +43,15 @@ export type DomainEventPayloads = {
     daysOverdue: number;
     assigneeId: string | null;
   };
+  "compliance.connector_status_changed": {
+    caseId: string;
+    checklistId: string;
+    connectorId: string;
+    trackingId: string;
+    previousStatus: string;
+    newStatus: string;
+    suggestedAction: "COMPLETE_STEP" | "REVIEW" | null;
+  };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;
