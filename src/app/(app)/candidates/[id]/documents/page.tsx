@@ -9,6 +9,7 @@ export default async function CandidateDocumentsPage({ params }: Props) {
   const { id } = await params;
   const session = await requireSession();
   const tenantId = session.user.tenantId || session.tenantId;
+  if (!tenantId) throw new Error("Missing tenant");
   const documents = await withTenant(tenantId, () => DocumentService.listForCandidate(tenantId, id));
   return (
     <main className="mx-auto max-w-3xl p-4">
