@@ -6,6 +6,9 @@ import { ComplianceCaseService } from "@/modules/compliance/compliance.case.serv
 import { ChecklistSlaBadge } from "@/modules/compliance/components/ChecklistSlaBadge";
 import { listCaseAudit } from "@/modules/compliance/compliance.audit.repo";
 import { computeChecklistOverdue } from "@/modules/compliance/compliance.overdue";
+import { assessRisk } from "@/modules/compliance/compliance.risk";
+import { RiskBadge } from "@/modules/compliance/components/dashboard/RiskBadge";
+import { db } from "@/core/db/client";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -18,6 +21,19 @@ export default async function CasePage({ params }: Props) {
     const row = await ComplianceCaseService.getCase(tenantId, id);
     const trail = await listCaseAudit(tenantId, id, 20);
     return [row, trail] as const;
+  });
+  const requisition = await withTenant(tenantId, () =>
+    db.jobRequisition.findFirst({ where: { id: case_.requisitionId, tenantId, deletedAt: null } })
+  );
+  const risk = assessRisk({
+    caseCreatedAt: case_.createdAt,
+    targetOnboardingDate: requisition?.targetOnboardingDate ?? null,
+    checklists: case_.steps.map((step) => ({
+      stepOrder: step.stepOrder,
+      name: step.name,
+      status: step.status,
+      dueDate: step.dueDate,
+    })),
   });
   const now = Date.now();
   return (

@@ -32,3 +32,6 @@ Local filesystem driver only. AWS SDK deferred to Session 20. No bytes in Postgr
 - requiredDocuments (JSON on ChecklistInstance): template-derived list of what SHOULD be uploaded.
 - vaultDocuments (relation ChecklistInstance → Document[]): what HAS been uploaded.
 These are different concepts. Never collapse them.
+
+## Schema edits are line-level, not block-level
+Three incidents (S00, S15, S16) dropped @relation backrefs. Never rewrite a whole model block. Before committing, run scripts/check-schema.sh and review every relation diff.
