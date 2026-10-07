@@ -27,3 +27,8 @@ Never rewrite a whole model block when adding a field. Edit in place. A broad re
 
 ## Document storage (Session 16)
 Local filesystem driver only. AWS SDK deferred to Session 20. No bytes in Postgres.
+
+## Document domain vocabulary
+- requiredDocuments (JSON on ChecklistInstance): template-derived list of what SHOULD be uploaded.
+- vaultDocuments (relation ChecklistInstance → Document[]): what HAS been uploaded.
+These are different concepts. Never collapse them.
