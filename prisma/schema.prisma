@@ -125,7 +125,6 @@ model Candidate {
 
   tenant       Tenant                 @relation(fields: [tenantId], references: [id])
   applications CandidateApplication[]
-  vaultDocuments Document[]
 
   @@index([tenantId])
   @@index([tenantId, passportNumberBidx])
@@ -159,7 +158,6 @@ model JobRequisition {
 
   tenant       Tenant                 @relation(fields: [tenantId], references: [id])
   applications CandidateApplication[]
-  vaultDocuments Document[]
 
   @@unique([tenantId, reqCode])
   @@index([tenantId, status])
