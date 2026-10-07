@@ -66,3 +66,14 @@ export class EventBusError extends AppError {
   }
 }
 
+
+export class StageLockedError extends AppError {
+  constructor(stepName: string, waitingOn: string) {
+    super(
+      `Step "${stepName}" is locked. Waiting on: ${waitingOn}`,
+      "STAGE_LOCKED",
+      409
+    );
+    this.name = "StageLockedError";
+  }
+}

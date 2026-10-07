@@ -25,3 +25,9 @@ See `scripts/setup-roles.sql`.
 ## §4.3 Encryption
 
 Field-level AES-256-GCM + HMAC blind indexes via Prisma `$extends` on the **app** client. Nested-write encryption deferred. Registry: `src/core/db/encryption.registry.ts`.
+
+
+### §6.5 Multi-subscriber dispatch
+The outbox dispatcher wraps each subscriber in SAVEPOINT/ROLLBACK TO SAVEPOINT.
+A failing subscriber rolls back its own writes but does not abort the
+enclosing transaction. Every future subscriber gets this safety for free.

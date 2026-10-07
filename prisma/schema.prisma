@@ -23,8 +23,10 @@ model Tenant {
   requisitions       JobRequisition[]
   applications       CandidateApplication[]
   screeningRecords   ScreeningRecord[]
-  complianceCases    ComplianceCase[]
-  checklistInstances ChecklistInstance[]
+  complianceTemplates     ComplianceTemplate[]
+  complianceStepTemplates ComplianceStepTemplate[]
+  complianceCases         ComplianceCase[]
+  checklistInstances      ChecklistInstance[]
   medicalClearances  MedicalClearance[]
   attestationChains  AttestationChain[]
   attestationSteps   AttestationStep[]
@@ -114,6 +116,7 @@ model Candidate {
   nationalIdBidx     String?
   medicalResult      String?
   medicalResultBidx  String?
+  nationality        String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   deletedAt          DateTime?
@@ -199,7 +202,7 @@ model CandidateApplication {
   candidate          Candidate           @relation(fields: [candidateId], references: [id])
   requisition        JobRequisition      @relation(fields: [requisitionId], references: [id])
   screeningRecords   ScreeningRecord[]
-  complianceCases    ComplianceCase[]
+  complianceCase     ComplianceCase?
   medicalClearances  MedicalClearance[]
   attestationChains  AttestationChain[]
   laborExitClearances LaborExitClearance[]
@@ -244,44 +247,95 @@ model ScreeningRecord {
   @@index([tenantId, applicationId])
 }
 
+model ComplianceTemplate {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  originCountry      String
+  destinationCountry String
+  roleCategory       String
+  name               String
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  deletedAt          DateTime?
+
+  tenant Tenant                   @relation(fields: [tenantId], references: [id])
+  steps  ComplianceStepTemplate[]
+  cases  ComplianceCase[]
+
+  @@unique([tenantId, originCountry, destinationCountry, roleCategory, name])
+  @@index([tenantId, originCountry, destinationCountry, roleCategory])
+}
+
+model ComplianceStepTemplate {
+  id                String   @id @default(cuid())
+  tenantId          String
+  templateId        String
+  stepOrder         Int
+  name              String
+  responsibleParty  String
+  requiredDocuments Json
+  slaDays           Int
+  dependsOnStepId   String?
+  connectorId       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant     Tenant                  @relation(fields: [tenantId], references: [id])
+  template   ComplianceTemplate      @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  dependsOn  ComplianceStepTemplate? @relation("StepDependsOn", fields: [dependsOnStepId], references: [id])
+  dependents ComplianceStepTemplate[] @relation("StepDependsOn")
+  checklists ChecklistInstance[]
+
+  @@unique([templateId, stepOrder])
+  @@index([tenantId, templateId])
+}
+
 model ComplianceCase {
-  id            String          @id @default(cuid())
-  tenantId      String
-  applicationId String
-  templateRef   String
-  currentStep   String?
-  status        ChecklistStatus @default(PENDING)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  deletedAt     DateTime?
+  id             String    @id @default(cuid())
+  tenantId       String
+  applicationId  String    @unique
+  candidateId    String
+  requisitionId  String
+  templateId     String
+  status         String    @default("PENDING")
+  currentStepId  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
   application CandidateApplication @relation(fields: [applicationId], references: [id])
-  checklist   ChecklistInstance[]
+  template    ComplianceTemplate   @relation(fields: [templateId], references: [id])
+  checklists  ChecklistInstance[]
 
-  @@index([tenantId])
+  @@unique([tenantId, applicationId])
   @@index([tenantId, status])
-  @@index([tenantId, applicationId])
+  @@index([tenantId, requisitionId])
 }
 
 model ChecklistInstance {
-  id           String          @id @default(cuid())
-  tenantId     String
-  caseId       String
-  stepKey      String
-  status       ChecklistStatus @default(PENDING)
-  completedAt  DateTime?
-  completedBy  String?
-  notes        String?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  deletedAt    DateTime?
+  id             String    @id @default(cuid())
+  tenantId       String
+  caseId         String
+  stepTemplateId String
+  stepOrder      Int
+  name           String
+  status         String    @default("PENDING")
+  completedAt    DateTime?
+  completedBy    String?
+  documents      Json      @default("[]")
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
 
-  tenant Tenant         @relation(fields: [tenantId], references: [id])
-  case   ComplianceCase @relation(fields: [caseId], references: [id])
+  tenant       Tenant                 @relation(fields: [tenantId], references: [id])
+  case         ComplianceCase         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  stepTemplate ComplianceStepTemplate @relation(fields: [stepTemplateId], references: [id])
 
-  @@index([tenantId])
-  @@index([tenantId, caseId])
+  @@unique([caseId, stepTemplateId])
+  @@index([tenantId, caseId, stepOrder])
   @@index([tenantId, status])
 }
 

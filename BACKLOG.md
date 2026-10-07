@@ -75,3 +75,8 @@ Note: listUnlinkedForRequisition remains in candidate.repo (unwired). Correct fo
 withTenant → appExtended.$transaction is code-correct; runtime encryption proof still required outside this sandbox.
 
 **Action required:** run recovery on laptop / Codespaces / GitHub Actions. Do not start Session 12 until the four greens exist.
+
+
+## Pre-production
+- [ ] Generate baseline migration (`prisma migrate diff --from-empty`) and append RLS SQL
+- [ ] Switch CI from `db push` to `migrate deploy` before any tenant goes live
