@@ -45,10 +45,14 @@ export const ComplianceDashboardService = {
     });
     const requisitions = await db.jobRequisition.findMany({
       where: { tenantId, id: { in: requisitionIds }, deletedAt: null },
-      include: { clientCompany: true },
+    });
+    const clientIds = [...new Set(requisitions.map((row) => row.clientCompanyId))];
+    const clients = await db.clientCompany.findMany({
+      where: { tenantId, id: { in: clientIds }, deletedAt: null },
     });
     const candidateById = new Map(candidates.map((row) => [row.id, row]));
     const requisitionById = new Map(requisitions.map((row) => [row.id, row]));
+    const clientById = new Map(clients.map((row) => [row.id, row]));
     const views = cases.map((row) => {
       const requisition = requisitionById.get(row.requisitionId);
       const risk = assessRisk({
@@ -67,7 +71,7 @@ export const ComplianceDashboardService = {
         candidateName: candidateById.get(row.candidateId)?.fullName ?? "Unknown",
         candidateId: row.candidateId,
         requisitionCode: requisition?.reqCode ?? "",
-        clientName: requisition?.clientCompany.name ?? "",
+        clientName: requisition ? clientById.get(requisition.clientCompanyId)?.name ?? "" : "",
         originCountry: row.template.originCountry,
         destinationCountry: row.template.destinationCountry,
         caseCreatedAt: row.createdAt,
