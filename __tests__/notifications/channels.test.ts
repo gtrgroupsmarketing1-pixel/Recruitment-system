@@ -43,10 +43,16 @@ describe("notification channels", () => {
 
   it("postmark driver times out → FAILED status", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          // never resolves before abort
-          setTimeout(() => resolve(new Response("ok")), 30_000);
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          const signal = init?.signal;
+          if (signal?.aborted) {
+            reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+            return;
+          }
+          signal?.addEventListener("abort", () => {
+            reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+          });
         })
     );
     const channel = createPostmarkEmailChannel("tok");
@@ -58,5 +64,5 @@ describe("notification channels", () => {
     expect(result.status).toBe("FAILED");
     expect(result.errorMessage).toBe("timeout");
     fetchSpy.mockRestore();
-  }, 15_000);
+  }, 12_000);
 });
