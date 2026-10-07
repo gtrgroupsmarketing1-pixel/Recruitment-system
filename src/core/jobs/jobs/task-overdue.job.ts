@@ -6,6 +6,7 @@
 import { authPrisma, withTenant, db } from "@/core/db/client";
 import { eventBus } from "@/core/events/event-bus";
 import { logger } from "@/lib/logger";
+import { runJob } from "@/core/jobs/run-job";
 
 export async function runTaskOverdueJob(): Promise<{ processed: number }> {
   const now = new Date();

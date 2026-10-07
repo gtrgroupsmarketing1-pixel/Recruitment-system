@@ -36,7 +36,19 @@ These are different concepts. Never collapse them.
 ## Schema edits are line-level, not block-level
 Three incidents (S00, S15, S16) dropped @relation backrefs. Never rewrite a whole model block. Before committing, run scripts/check-schema.sh and review every relation diff.
 
-## Env schema structure
+## AWS SDK v3 dependency
+@aws-sdk/client-s3 + @aws-sdk/s3-request-presigner added Session 20.
+Used only by the S3/R2 storage driver. Imported from s3.driver.ts (server-only).
+Client is lazily constructed on first use. CI stays on STORAGE_DRIVER=local.
+
+## Cross-tenant admin pages
+/admin/jobs is a page that reads cross-tenant. It uses authPrisma deliberately
+because job runs are platform-level, not tenant-scoped. JobRunLog has no RLS.
+Any future cross-tenant page must document the same justification.
+
+## Drive/OneDrive deferred
+Session 20 is S3/R2 + GC + cron only. Drive/OneDrive OAuth is Session 21.
+
 envObjectSchema is the base Zod object with primitive field definitions.
 envSchema = envObjectSchema.superRefine(...) is the full validator.
 Only the base schema supports .pick / .omit / .partial. When a subset

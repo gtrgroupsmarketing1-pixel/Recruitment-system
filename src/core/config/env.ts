@@ -42,6 +42,19 @@ const envObjectSchema = z.object({
   CRON_SECRET: z.string().optional(),
   POSTMARK_WEBHOOK_USER: z.string().optional(),
   POSTMARK_WEBHOOK_PASS: z.string().optional(),
+  STORAGE_DRIVER: z.enum(["local", "s3", "r2"]).default("local"),
+  S3_BUCKET: z.string().optional(),
+  S3_REGION: z.string().default("us-east-1"),
+  S3_ENDPOINT: z.string().optional(),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
+  S3_FORCE_PATH_STYLE: z
+    .string()
+    .optional()
+    .transform((v) => v === "true"),
+  STORAGE_SSE: z.enum(["NONE", "AES256", "aws:kms"]).default("AES256"),
+  STORAGE_KMS_KEY_ID: z.string().optional(),
+  NODE_ENV: z.string().optional(),
 });
 
 /** Full schema with driver/credential cross-checks. */
@@ -82,6 +95,50 @@ const envSchema = envObjectSchema.superRefine((data, ctx) => {
         path: ["META_WHATSAPP_PHONE_ID"],
       });
     }
+  }
+  if (data.STORAGE_DRIVER === "s3" || data.STORAGE_DRIVER === "r2") {
+    if (!data.S3_BUCKET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "S3_BUCKET required when STORAGE_DRIVER is s3 or r2",
+        path: ["S3_BUCKET"],
+      });
+    }
+    if (!data.S3_ACCESS_KEY_ID) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "S3_ACCESS_KEY_ID required when STORAGE_DRIVER is s3 or r2",
+        path: ["S3_ACCESS_KEY_ID"],
+      });
+    }
+    if (!data.S3_SECRET_ACCESS_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "S3_SECRET_ACCESS_KEY required when STORAGE_DRIVER is s3 or r2",
+        path: ["S3_SECRET_ACCESS_KEY"],
+      });
+    }
+  }
+  if (data.STORAGE_DRIVER === "r2" && !data.S3_ENDPOINT) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "S3_ENDPOINT required when STORAGE_DRIVER=r2",
+      path: ["S3_ENDPOINT"],
+    });
+  }
+  if (data.STORAGE_SSE === "aws:kms" && !data.STORAGE_KMS_KEY_ID) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "STORAGE_KMS_KEY_ID required when STORAGE_SSE=aws:kms",
+      path: ["STORAGE_KMS_KEY_ID"],
+    });
+  }
+  if (data.NODE_ENV === "production" && !data.CRON_SECRET) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "CRON_SECRET required in production",
+      path: ["CRON_SECRET"],
+    });
   }
 });
 
@@ -129,6 +186,16 @@ export function parseEnv(
     CRON_SECRET: source.CRON_SECRET,
     POSTMARK_WEBHOOK_USER: source.POSTMARK_WEBHOOK_USER,
     POSTMARK_WEBHOOK_PASS: source.POSTMARK_WEBHOOK_PASS,
+    STORAGE_DRIVER: source.STORAGE_DRIVER ?? "local",
+    S3_BUCKET: source.S3_BUCKET,
+    S3_REGION: source.S3_REGION ?? "us-east-1",
+    S3_ENDPOINT: source.S3_ENDPOINT,
+    S3_ACCESS_KEY_ID: source.S3_ACCESS_KEY_ID,
+    S3_SECRET_ACCESS_KEY: source.S3_SECRET_ACCESS_KEY,
+    S3_FORCE_PATH_STYLE: source.S3_FORCE_PATH_STYLE,
+    STORAGE_SSE: source.STORAGE_SSE ?? "AES256",
+    STORAGE_KMS_KEY_ID: source.STORAGE_KMS_KEY_ID,
+    NODE_ENV: source.NODE_ENV,
   });
   if (!result.success) {
     throw new ValidationError(

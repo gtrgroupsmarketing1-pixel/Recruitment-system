@@ -531,6 +531,7 @@ model Document {
   expiryDate     DateTime?
   confirmed      Boolean      @default(false)
   uploadedBy     String
+  notifiedExpiryAt DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
@@ -696,6 +697,19 @@ model TenantEmailConfig {
   tenant Tenant @relation(fields: [tenantId], references: [id])
 }
 
+model JobRunLog {
+  id             String   @id @default(cuid())
+  jobName        String
+  startedAt      DateTime
+  finishedAt     DateTime
+  status         String
+  itemsProcessed Int
+  itemsFailed    Int
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([jobName, startedAt])
+}
 
 model Account {
   id                String  @id @default(cuid())
