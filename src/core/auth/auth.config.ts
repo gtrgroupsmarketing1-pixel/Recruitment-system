@@ -3,6 +3,7 @@ import type { Session, User } from "next-auth";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
+import type { Provider } from "next-auth/providers";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { authPrisma } from "@/core/db/client";
@@ -35,7 +36,7 @@ export function toSession(session: Session, token: JWT): Session {
   return session;
 }
 
-const providers = [
+const providers: Provider[] = [
   Credentials({
     credentials: {
       email: { label: "Email", type: "email" },

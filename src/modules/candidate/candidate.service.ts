@@ -39,6 +39,7 @@ export const CandidateService = {
   async create(tenantId: string, userId: string, input: CreateCandidateInput) {
     void userId;
     return CandidateRepo.create(tenantId, {
+      tenantId,
       fullName: input.fullName.trim(),
       email: input.email,
       phone: input.phone,

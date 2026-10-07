@@ -81,6 +81,7 @@ export const RequisitionService = {
         seq,
       });
       return RequisitionRepo.create(tenantId, {
+        tenantId,
         clientCompanyId: input.clientCompanyId,
         reqCode,
         roleCategory: input.roleCategory,

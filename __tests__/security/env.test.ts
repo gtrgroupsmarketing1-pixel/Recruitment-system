@@ -9,7 +9,7 @@ describe("parseEncryptionEnv", () => {
     expect(() =>
       parseEncryptionEnv({
         BLIND_INDEX_KEY: good,
-      } as NodeJS.ProcessEnv)
+      })
     ).toThrow(ValidationError);
   });
 
@@ -18,7 +18,7 @@ describe("parseEncryptionEnv", () => {
       parseEncryptionEnv({
         ENCRYPTION_KEY: Buffer.alloc(16, 1).toString("base64"),
         BLIND_INDEX_KEY: good,
-      } as NodeJS.ProcessEnv)
+      })
     ).toThrow(ValidationError);
   });
 
@@ -27,7 +27,7 @@ describe("parseEncryptionEnv", () => {
       ENCRYPTION_KEY: good,
       BLIND_INDEX_KEY: good,
       ENCRYPTION_KEY_PREVIOUS: "",
-    } as NodeJS.ProcessEnv);
+    });
     expect(env.ENCRYPTION_KEY).toBe(good);
     expect(env.ENCRYPTION_KEY_PREVIOUS).toBeUndefined();
   });
@@ -41,7 +41,7 @@ describe("parseEnv", () => {
       parseEnv({
         ENCRYPTION_KEY: good,
         BLIND_INDEX_KEY: good,
-      } as NodeJS.ProcessEnv)
+      })
     ).toThrow(ValidationError);
   });
 
@@ -52,7 +52,7 @@ describe("parseEnv", () => {
       DATABASE_URL: "postgres://app_tenant:x@localhost:5432/recruit",
       AUTH_DATABASE_URL: "postgres://app_auth:x@localhost:5432/recruit",
       DIRECT_URL: "postgres://app_auth:x@localhost:5432/recruit",
-    } as NodeJS.ProcessEnv);
+    });
     expect(env.DATABASE_URL).toContain("app_tenant");
     expect(env.AUTH_DATABASE_URL).toContain("app_auth");
   });

@@ -39,7 +39,7 @@ export type AppEnv = z.infer<typeof envSchema>;
 
 /** Encryption keys only — used by crypto module at load time. */
 export function parseEncryptionEnv(
-  source: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env
+  source: Record<string, string | undefined> = process.env
 ) {
   const result = envSchema
     .pick({
@@ -62,7 +62,7 @@ export function parseEncryptionEnv(
 
 /** Full app env including DB URLs. */
 export function parseEnv(
-  source: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env
+  source: Record<string, string | undefined> = process.env
 ): AppEnv {
   const result = envSchema.safeParse({
     ENCRYPTION_KEY: source.ENCRYPTION_KEY,
