@@ -225,6 +225,7 @@ enum ChecklistStatus {
 model ScreeningRecord {
   id            String        @id @default(cuid())
   tenantId      String
+  applicationId String
   stage         String
   path          ScreeningPath
   scorecard     Json?
@@ -234,8 +235,10 @@ model ScreeningRecord {
   deletedAt     DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  application CandidateApplication @relation(fields: [applicationId], references: [id])
 
   @@index([tenantId])
+  @@index([tenantId, applicationId])
 }
 
 model ComplianceTemplate {
@@ -296,6 +299,7 @@ model ComplianceCase {
   deletedAt      DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  application CandidateApplication @relation(fields: [applicationId], references: [id])
   template    ComplianceTemplate   @relation(fields: [templateId], references: [id])
   checklists  ChecklistInstance[]
 
