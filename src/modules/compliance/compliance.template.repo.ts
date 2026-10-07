@@ -60,14 +60,14 @@ export const ComplianceTemplateRepo = {
 
   async createTemplate(
     tenantId: string,
-    data: Prisma.ComplianceTemplateUncheckedCreateInput
+    data: Omit<Prisma.ComplianceTemplateUncheckedCreateInput, "tenantId">
   ) {
     return db.complianceTemplate.create({ data: { ...data, tenantId } });
   },
 
   async createStep(
     tenantId: string,
-    data: Prisma.ComplianceStepTemplateUncheckedCreateInput
+    data: Omit<Prisma.ComplianceStepTemplateUncheckedCreateInput, "tenantId">
   ) {
     return db.complianceStepTemplate.create({ data: { ...data, tenantId } });
   },

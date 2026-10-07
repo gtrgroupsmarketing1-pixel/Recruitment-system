@@ -36,14 +36,14 @@ export const ComplianceCaseRepo = {
 
   async createCase(
     tenantId: string,
-    data: Prisma.ComplianceCaseUncheckedCreateInput
+    data: Omit<Prisma.ComplianceCaseUncheckedCreateInput, "tenantId">
   ) {
     return db.complianceCase.create({ data: { ...data, tenantId } });
   },
 
   async createChecklist(
     tenantId: string,
-    data: Prisma.ChecklistInstanceUncheckedCreateInput
+    data: Omit<Prisma.ChecklistInstanceUncheckedCreateInput, "tenantId">
   ) {
     return db.checklistInstance.create({ data: { ...data, tenantId } });
   },
