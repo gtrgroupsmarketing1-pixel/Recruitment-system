@@ -38,6 +38,8 @@ export async function runDocumentSyncJob(): Promise<JobResult> {
           where: { id: state.id },
           data: {
             status: "FAILED",
+            // Increment lives in the tenant tx and rolls back with the failed sync.
+            attempts: state.attempts + 1,
             lastError: err instanceof Error ? err.message : "sync_failed",
             nextAttemptAt: when,
           },
