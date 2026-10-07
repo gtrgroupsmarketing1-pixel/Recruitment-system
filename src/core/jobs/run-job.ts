@@ -39,7 +39,7 @@ export async function runJob(
         status: "FAILED",
         itemsProcessed: 0,
         itemsFailed: 0,
-        metadata: { error: err instanceof Error ? err.message : "job_failed" },
+        metadata: { error: err instanceof Error ? err.message : "job_failed" } as Prisma.InputJsonValue,
       },
     });
     logger.error(

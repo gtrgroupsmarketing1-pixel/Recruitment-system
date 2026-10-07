@@ -17,7 +17,6 @@ vi.mock("@/core/jobs/run-job", () => ({
 describe("cron auth", () => {
   it("wrong bearer → 401", async () => {
     process.env.CRON_SECRET = "secret";
-    process.env.NODE_ENV = "test";
     expect(authorizeCron("Bearer nope")).toBe(false);
     const res = await GET(new Request("http://localhost/api/cron/task-overdue"), {
       params: Promise.resolve({ job: "task-overdue" }),
