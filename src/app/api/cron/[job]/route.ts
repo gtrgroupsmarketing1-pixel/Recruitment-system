@@ -3,6 +3,7 @@ import { runJob } from "@/core/jobs/run-job";
 import { runDocumentExpiryJob } from "@/core/jobs/jobs/document-expiry.job";
 import { runTaskOverdueJob } from "@/core/jobs/jobs/task-overdue.job";
 import { runDocumentGcJob } from "@/core/jobs/jobs/document-gc.job";
+import { runDocumentSyncJob } from "@/core/jobs/jobs/document-sync.job";
 
 const JOBS: Record<string, () => Promise<unknown>> = {
   "document-expiry": runDocumentExpiryJob,
@@ -12,6 +13,7 @@ const JOBS: Record<string, () => Promise<unknown>> = {
       return { processed: result.processed, failed: 0 };
     }),
   "document-gc": runDocumentGcJob,
+  "document-sync": runDocumentSyncJob,
 };
 
 export function authorizeCron(authorization: string | null): boolean {

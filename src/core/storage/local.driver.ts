@@ -43,6 +43,13 @@ export const localDriver: StorageClient = {
     await writeFile(file, bytes);
     await writeFile(file + ".meta", contentType);
   },
+  async getObject(key) {
+    try {
+      return await readFile(path.join(root, key));
+    } catch {
+      return null;
+    }
+  },
   async headBucket() {
     return { ok: true, latencyMs: 0 };
   },

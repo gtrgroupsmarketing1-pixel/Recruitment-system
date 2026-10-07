@@ -55,6 +55,14 @@ const envObjectSchema = z.object({
   STORAGE_SSE: z.enum(["NONE", "AES256", "aws:kms"]).default("AES256"),
   STORAGE_KMS_KEY_ID: z.string().optional(),
   NODE_ENV: z.string().optional(),
+  GOOGLE_OAUTH_CLIENT_ID: z.string().optional(),
+  GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_OAUTH_REDIRECT_URI: z.string().optional(),
+  MS_OAUTH_CLIENT_ID: z.string().optional(),
+  MS_OAUTH_CLIENT_SECRET: z.string().optional(),
+  MS_OAUTH_REDIRECT_URI: z.string().optional(),
+  OAUTH_STATE_SECRET: z.string().min(1).default("dev-oauth-state"),
+  DRIVE_ENCRYPTION_KEY: z.string().optional(),
 });
 
 /** Full schema with driver/credential cross-checks. */
@@ -196,6 +204,14 @@ export function parseEnv(
     STORAGE_SSE: source.STORAGE_SSE ?? "AES256",
     STORAGE_KMS_KEY_ID: source.STORAGE_KMS_KEY_ID,
     NODE_ENV: source.NODE_ENV,
+    GOOGLE_OAUTH_CLIENT_ID: source.GOOGLE_OAUTH_CLIENT_ID,
+    GOOGLE_OAUTH_CLIENT_SECRET: source.GOOGLE_OAUTH_CLIENT_SECRET,
+    GOOGLE_OAUTH_REDIRECT_URI: source.GOOGLE_OAUTH_REDIRECT_URI,
+    MS_OAUTH_CLIENT_ID: source.MS_OAUTH_CLIENT_ID,
+    MS_OAUTH_CLIENT_SECRET: source.MS_OAUTH_CLIENT_SECRET,
+    MS_OAUTH_REDIRECT_URI: source.MS_OAUTH_REDIRECT_URI,
+    OAUTH_STATE_SECRET: source.OAUTH_STATE_SECRET ?? "dev-oauth-state",
+    DRIVE_ENCRYPTION_KEY: source.DRIVE_ENCRYPTION_KEY,
   });
   if (!result.success) {
     throw new ValidationError(

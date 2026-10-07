@@ -67,3 +67,10 @@ go to AuditLog, not stdout.
 - External HTTP calls use AbortController 5s timeout.
 - Notification.body and recipientAddr are denylisted in the logger; not encrypted at rest (searchable delivery log).
 - task.overdue dedup uses Task.notifiedOverdueAt, not a DomainEvent scan.
+
+## Session 21 — Drive mirror
+- Push-only. No two-way sync. Disconnect sets deletedAt and does not delete provider files.
+- Google scope is drive.file plus userinfo.email (display only). Microsoft is Files.ReadWrite.AppFolder plus offline_access and User.Read so refresh and the connected email work. No googleapis or Graph SDK.
+- Tokens use the Session 04 encryption middleware with no blind index. DRIVE_ENCRYPTION_KEY is accepted in env but not a second cipher — dual keys would make decrypt ambiguous. Tokens use ENCRYPTION_KEY.
+- AWS SDK stays at the lockfile resolution 3.687.0. .npmrc sets save-exact=true so later installs do not float minors. package.json keeps the existing caret so npm ci still matches the lock.
+- getStorage() is the only storage entry point. The legacy storage export is removed.

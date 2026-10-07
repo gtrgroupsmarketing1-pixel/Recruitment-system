@@ -39,6 +39,8 @@ model Tenant {
   documents          Document[]
   notifications      Notification[]
   emailConfig        TenantEmailConfig?
+  storageConnections TenantStorageConnection[]
+  documentSyncStates DocumentSyncState[]
 }
 
 enum UserRole {
@@ -540,6 +542,7 @@ model Document {
   candidate Candidate?         @relation(fields: [candidateId], references: [id])
   checklist ChecklistInstance? @relation(fields: [checklistId], references: [id])
   uploader  User               @relation("DocumentUploader", fields: [uploadedBy], references: [id])
+  syncStates DocumentSyncState[]
 
   @@index([tenantId, candidateId])
   @@index([tenantId, checklistId])
@@ -695,6 +698,70 @@ model TenantEmailConfig {
   updatedAt     DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+enum ExternalProvider {
+  GOOGLE_DRIVE
+  ONEDRIVE
+}
+
+enum SyncStatus {
+  PENDING
+  SYNCING
+  SYNCED
+  FAILED
+  SKIPPED
+  DELETED
+}
+
+model TenantStorageConnection {
+  id                String           @id @default(cuid())
+  tenantId          String
+  provider          ExternalProvider
+  externalAccountId String
+  externalEmail     String
+  accessToken       String
+  refreshToken      String
+  tokenExpiresAt    DateTime
+  rootFolderId      String
+  rootFolderName    String
+  scopes            String
+  connectedAt       DateTime         @default(now())
+  connectedBy       String
+  lastSyncAt        DateTime?
+  lastError         String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, provider])
+  @@index([tenantId])
+}
+
+model DocumentSyncState {
+  id             String           @id @default(cuid())
+  tenantId       String
+  documentId     String
+  provider       ExternalProvider
+  status         SyncStatus       @default(PENDING)
+  externalFileId String?
+  externalUrl    String?
+  lastAttemptAt  DateTime?
+  nextAttemptAt  DateTime?
+  lastError      String?
+  attempts       Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, provider])
+  @@index([tenantId, status])
+  @@index([status, attempts])
+  @@index([nextAttemptAt])
 }
 
 model JobRunLog {

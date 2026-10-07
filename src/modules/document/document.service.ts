@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { db, authPrisma } from "@/core/db/client";
-import { storage } from "@/core/storage/storage.client";
+import { db, authPrisma, runInTenantTx } from "@/core/db/client";
+import { getStorage } from "@/core/storage/storage.client";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { eventBus } from "@/core/events/event-bus";
 import { isMimeAllowed } from "./document.mime";
 import { storageKeyFor } from "./document.sanitize";
 import { daysRemaining } from "./document.expiry";
+import { DocumentSyncService } from "./document.sync.service";
 import type { DocumentType } from "@prisma/client";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -35,7 +36,7 @@ export const DocumentService = {
       candidateId: input.candidateId,
       checklistId: input.checklistId,
     });
-    const uploadUrl = await storage.getSignedUploadUrl(storageKey, input.mimeType, 900);
+    const uploadUrl = await getStorage().getSignedUploadUrl(storageKey, input.mimeType, 900);
     await db.document.create({
       data: {
         id: documentId,
@@ -60,11 +61,14 @@ export const DocumentService = {
   async confirmUpload(tenantId: string, _userId: string, documentId: string, checksumSha256: string) {
     const row = await db.document.findFirst({ where: { id: documentId, tenantId, deletedAt: null } });
     if (!row) throw new NotFoundError("Document", documentId);
-    const head = await storage.headObject(row.storageKey);
+    const head = await getStorage().headObject(row.storageKey);
     if (!head) throw new ValidationError("Upload not found");
-    await db.document.updateMany({
-      where: { id: documentId, tenantId },
-      data: { confirmed: true, checksumSha256, sizeBytes: head.size },
+    await runInTenantTx(tenantId, async () => {
+      await db.document.updateMany({
+        where: { id: documentId, tenantId },
+        data: { confirmed: true, checksumSha256, sizeBytes: head.size },
+      });
+      await DocumentSyncService.enqueueSync(tenantId, documentId);
     });
     return db.document.findFirst({ where: { id: documentId, tenantId } });
   },
@@ -73,6 +77,12 @@ export const DocumentService = {
     return db.document.findMany({
       where: { tenantId, candidateId, deletedAt: null, confirmed: true },
       orderBy: { createdAt: "desc" },
+      include: {
+        syncStates: {
+          where: { status: "SYNCED" },
+          select: { externalUrl: true, provider: true },
+        },
+      },
     });
   },
 
@@ -104,7 +114,7 @@ export const DocumentService = {
         newValue: null,
       },
     });
-    const url = await storage.getSignedDownloadUrl(row.storageKey, 900);
+    const url = await getStorage().getSignedDownloadUrl(row.storageKey, 900);
     return { url, expiresIn: 900 };
   },
 

@@ -3,7 +3,9 @@
  * Adding a field here is the only way to enable encryption on it.
  * Nested writes are NOT handled by the middleware (Session 04 deferral).
  */
-export const SENSITIVE_FIELDS = {
+export type SensitiveField = { bidx?: string };
+
+export const SENSITIVE_FIELDS: Record<string, Record<string, SensitiveField>> = {
   Candidate: {
     passportNumber: { bidx: "passportNumberBidx" },
     nationalId: { bidx: "nationalIdBidx" },
@@ -12,6 +14,10 @@ export const SENSITIVE_FIELDS = {
   WorkPermitVisa: {
     visaNumber: { bidx: "visaNumberBidx" },
   },
-} as const;
+  TenantStorageConnection: {
+    accessToken: {},
+    refreshToken: {},
+  },
+};
 
 export type SensitiveModel = keyof typeof SENSITIVE_FIELDS;

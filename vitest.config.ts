@@ -15,6 +15,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // server-only throws if imported outside a React Server Component.
+      // Vitest is not that runtime. This stub keeps s3.driver importable in tests.
+      // Do not remove it — the real package still guards client bundles.
       "server-only": path.resolve(__dirname, "./src/test/server-only-stub.ts"),
     },
   },

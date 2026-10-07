@@ -62,12 +62,12 @@ function encryptDataFields(
     const value = data[field];
     if (value === undefined) continue;
     if (value === null) {
-      data[meta.bidx] = null;
+      if (meta.bidx) data[meta.bidx] = null;
       continue;
     }
     if (typeof value === "string") {
       data[field] = encrypt(value);
-      data[meta.bidx] = blindIndex(value);
+      if (meta.bidx) data[meta.bidx] = blindIndex(value);
     }
   }
 }
@@ -79,6 +79,7 @@ function rewriteWhere(
   if (!where || typeof where !== "object") return;
   const fields = SENSITIVE_FIELDS[model];
   for (const [field, meta] of Object.entries(fields)) {
+    if (!meta.bidx) continue;
     if (!(field in where)) continue;
     const value = where[field];
     if (typeof value === "string") {

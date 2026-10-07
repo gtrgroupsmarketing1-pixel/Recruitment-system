@@ -10,6 +10,7 @@ let cached: StorageClient | null = null;
  * Lazy driver. STORAGE_DRIVER=local (default, CI) uses the filesystem driver.
  * s3/r2 load the AWS client only on first use.
  */
+/** Sole storage entry point. Do not reintroduce `export const storage`. */
 export function getStorage(): StorageClient {
   if (cached) return cached;
   const driver = process.env.STORAGE_DRIVER ?? "local";
@@ -23,13 +24,3 @@ export function getStorage(): StorageClient {
   cached = localDriver;
   return cached;
 }
-
-/** Session 16 callers import `storage`. Resolves through getStorage(). */
-export const storage: StorageClient = {
-  getSignedUploadUrl: (key, mime, exp) => getStorage().getSignedUploadUrl(key, mime, exp),
-  getSignedDownloadUrl: (key, exp) => getStorage().getSignedDownloadUrl(key, exp),
-  deleteObject: (key) => getStorage().deleteObject(key),
-  headObject: (key) => getStorage().headObject(key),
-  writeObject: (key, bytes, type) => getStorage().writeObject(key, bytes, type),
-  headBucket: () => getStorage().headBucket(),
-};

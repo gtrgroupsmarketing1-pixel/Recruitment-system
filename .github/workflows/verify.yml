@@ -95,6 +95,16 @@ jobs:
           CREATE POLICY tenant_isolation ON "TenantEmailConfig"
             USING ("tenantId" = current_setting('app.tenant_id', true))
             WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
+          ALTER TABLE "TenantStorageConnection" ENABLE ROW LEVEL SECURITY;
+          DROP POLICY IF EXISTS tenant_isolation ON "TenantStorageConnection";
+          CREATE POLICY tenant_isolation ON "TenantStorageConnection"
+            USING ("tenantId" = current_setting('app.tenant_id', true))
+            WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
+          ALTER TABLE "DocumentSyncState" ENABLE ROW LEVEL SECURITY;
+          DROP POLICY IF EXISTS tenant_isolation ON "DocumentSyncState";
+          CREATE POLICY tenant_isolation ON "DocumentSyncState"
+            USING ("tenantId" = current_setting('app.tenant_id', true))
+            WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
           SQL
 
       - name: Grant on tables

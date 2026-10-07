@@ -116,6 +116,22 @@ export const s3Driver: StorageClient = {
     );
   },
 
+  async getObject(key) {
+    const env = storageEnv();
+    try {
+      const out = await getS3Client().send(
+        new GetObjectCommand({ Bucket: env.bucket, Key: key })
+      );
+      const body = out.Body;
+      if (!body) return null;
+      const bytes = await body.transformToByteArray();
+      return Buffer.from(bytes);
+    } catch (err) {
+      if (isNotFound(err)) return null;
+      throw err;
+    }
+  },
+
   async headBucket() {
     const env = storageEnv();
     const start = Date.now();
