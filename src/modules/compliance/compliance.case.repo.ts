@@ -71,7 +71,7 @@ export const ComplianceCaseRepo = {
     const result = await db.checklistInstance.updateMany({
       where: { id: checklistId, tenantId, deletedAt: null },
       data: {
-        status: "COMPLETED",
+        status: "COMPLETE",
         completedAt: new Date(),
         completedBy: userId,
         documents: docs,
@@ -92,8 +92,8 @@ export const ComplianceCaseRepo = {
       where: { id: checklistId, tenantId, deletedAt: null },
       data: {
         status,
-        completedAt: status === "COMPLETED" ? new Date() : null,
-        completedBy: status === "COMPLETED" ? undefined : null,
+        completedAt: status === "COMPLETE" ? new Date() : null,
+        completedBy: status === "COMPLETE" ? undefined : null,
       },
     });
     if (result.count === 0) return null;

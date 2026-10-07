@@ -51,7 +51,7 @@ export function assertStepUnlocked(input: {
   dependsOnStatus: string | null;
 }): void {
   if (input.dependsOnName === null && input.dependsOnStatus === null) return;
-  if (input.dependsOnStatus !== "COMPLETED") {
+  if (input.dependsOnStatus !== "COMPLETE") {
     throw new StageLockedError(input.stepName, input.dependsOnName ?? "unknown");
   }
 }

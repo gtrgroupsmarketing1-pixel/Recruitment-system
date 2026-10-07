@@ -203,12 +203,6 @@ model CandidateApplication {
   requisition        JobRequisition      @relation(fields: [requisitionId], references: [id])
   screeningRecords   ScreeningRecord[]
   complianceCase     ComplianceCase?
-  medicalClearances  MedicalClearance[]
-  attestationChains  AttestationChain[]
-  laborExitClearances LaborExitClearance[]
-  workPermitVisas    WorkPermitVisa[]
-  travelRecords      TravelRecord[]
-  deploymentRecords  DeploymentRecord[]
 
   @@unique([tenantId, candidateId, requisitionId])
   @@index([tenantId, status])
@@ -231,7 +225,6 @@ enum ChecklistStatus {
 model ScreeningRecord {
   id            String        @id @default(cuid())
   tenantId      String
-  applicationId String
   stage         String
   path          ScreeningPath
   scorecard     Json?
@@ -241,10 +234,8 @@ model ScreeningRecord {
   deletedAt     DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
-  application CandidateApplication @relation(fields: [applicationId], references: [id])
 
   @@index([tenantId])
-  @@index([tenantId, applicationId])
 }
 
 model ComplianceTemplate {
@@ -305,7 +296,6 @@ model ComplianceCase {
   deletedAt      DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
-  application CandidateApplication @relation(fields: [applicationId], references: [id])
   template    ComplianceTemplate   @relation(fields: [templateId], references: [id])
   checklists  ChecklistInstance[]
 
@@ -326,6 +316,7 @@ model ChecklistInstance {
   completedBy    String?
   documents      Json      @default("[]")
   notes          String?
+  dueDate        DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
@@ -343,6 +334,7 @@ model ChecklistInstance {
   @@unique([caseId, stepTemplateId])
   @@index([tenantId, caseId, stepOrder])
   @@index([tenantId, status])
+  @@index([tenantId, status, dueDate])
 }
 
 model MedicalClearance {
@@ -353,7 +345,6 @@ model MedicalClearance {
   centerCountry   String?
   resultDate      DateTime?
   notes           String?
-  applicationId   String
   wafidGamcaId    String?
   center          String?
   appointmentDate DateTime?
@@ -364,11 +355,9 @@ model MedicalClearance {
   deletedAt       DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
-  application CandidateApplication @relation(fields: [applicationId], references: [id])
 
   checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
-  @@index([tenantId, applicationId])
 }
 
 model AttestationChain {
@@ -376,18 +365,15 @@ model AttestationChain {
   tenantId      String
   checklistId   String?  @unique
   status        String   @default("PENDING")
-  applicationId String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   deletedAt     DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
-  application CandidateApplication @relation(fields: [applicationId], references: [id])
   steps       AttestationStep[]
 
   checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
-  @@index([tenantId, applicationId])
 }
 
 model AttestationStep {
@@ -424,7 +410,6 @@ model LaborExitClearance {
   issuedDate    DateTime?
   expiryDate    DateTime?
   notes         String?
-  applicationId String
   clearanceType String?
   status        ChecklistStatus @default(PENDING)
   createdAt     DateTime        @default(now())
@@ -432,12 +417,10 @@ model LaborExitClearance {
   deletedAt     DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
-  application CandidateApplication @relation(fields: [applicationId], references: [id])
 
   checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
   @@index([tenantId, status])
-  @@index([tenantId, applicationId])
 }
 
 model WorkPermitVisa {
@@ -448,7 +431,6 @@ model WorkPermitVisa {
   expiryDate     DateTime?
   sponsorName    String?
   notes          String?
-  applicationId  String
   visaNumber     String? // encrypted by Session 04 middleware
   visaNumberBidx String?
   appliedAt      DateTime?
@@ -458,11 +440,9 @@ model WorkPermitVisa {
   deletedAt      DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
-  application CandidateApplication @relation(fields: [applicationId], references: [id])
 
   checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
-  @@index([tenantId, applicationId])
   @@index([tenantId, visaNumberBidx])
 }
 
@@ -474,7 +454,6 @@ model TravelRecord {
   departureCity       String?
   arrivalCity         String?
   notes               String?
-  applicationId       String
   ticketRef           String?
   flightNumber        String?
   departureAt         DateTime?
@@ -484,11 +463,9 @@ model TravelRecord {
   deletedAt           DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
-  application CandidateApplication @relation(fields: [applicationId], references: [id])
 
   checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
-  @@index([tenantId, applicationId])
 }
 
 model DeploymentRecord {
@@ -498,7 +475,6 @@ model DeploymentRecord {
   clientContact     String?
   onSiteConfirmed   Boolean   @default(false)
   notes             String?
-  applicationId     String
   mobilizedAt       DateTime?
   site              String?
   onSiteConfirmedAt DateTime?
@@ -508,11 +484,9 @@ model DeploymentRecord {
   deletedAt         DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
-  application CandidateApplication @relation(fields: [applicationId], references: [id])
 
   checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
-  @@index([tenantId, applicationId])
 }
 
 model DomainEvent {

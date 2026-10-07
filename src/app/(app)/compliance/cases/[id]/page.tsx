@@ -3,6 +3,9 @@ import { withTenant } from "@/core/db/client";
 import { CompleteStepButton } from "@/modules/compliance/components/CompleteStepButton";
 import { DetailsFormForStep } from "@/modules/compliance/components/DetailsFormForStep";
 import { ComplianceCaseService } from "@/modules/compliance/compliance.case.service";
+import { ChecklistSlaBadge } from "@/modules/compliance/components/ChecklistSlaBadge";
+import { listCaseAudit } from "@/modules/compliance/compliance.audit.repo";
+import { computeChecklistOverdue } from "@/modules/compliance/compliance.overdue";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -11,9 +14,12 @@ export default async function CasePage({ params }: Props) {
   const session = await requireSession();
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return <main className="p-8">Missing tenant</main>;
-  const case_ = await withTenant(tenantId, () =>
-    ComplianceCaseService.getCase(tenantId, id)
-  );
+  const [case_, audit] = await withTenant(tenantId, async () => {
+    const row = await ComplianceCaseService.getCase(tenantId, id);
+    const trail = await listCaseAudit(tenantId, id, 20);
+    return [row, trail] as const;
+  });
+  const now = Date.now();
   return (
     <main className="mx-auto max-w-2xl p-4 sm:p-8">
       <h1 className="text-xl font-semibold">Compliance case</h1>
@@ -26,9 +32,14 @@ export default async function CasePage({ params }: Props) {
           >
             <div>
               <p>
-                {step.status === "COMPLETED" ? "[done]" : step.locked ? "[locked]" : "[ ]"}{" "}
+                {step.status === "COMPLETE" ? "[done]" : step.locked ? "[locked]" : "[ ]"}{" "}
                 {step.name}
               </p>
+              <ChecklistSlaBadge
+                dueDate={step.dueDate}
+                completed={step.status === "COMPLETE"}
+                isOverdue={computeChecklistOverdue(step.status, step.dueDate, now)}
+              />
               {step.locked ? (
                 <p className="text-xs">Waiting on: {step.waitingOn}</p>
               ) : null}
@@ -37,7 +48,7 @@ export default async function CasePage({ params }: Props) {
               <CompleteStepButton
                 caseId={case_.id}
                 checklistId={step.id}
-                locked={step.locked || step.status === "COMPLETED"}
+                locked={step.locked || step.status === "COMPLETE"}
                 waitingOn={step.waitingOn}
               />
               <DetailsFormForStep
@@ -49,6 +60,16 @@ export default async function CasePage({ params }: Props) {
           </li>
         ))}
       </ol>
+      <section className="mt-6">
+        <h2 className="text-sm font-medium">Audit trail</h2>
+        <ul className="mt-2 text-xs text-neutral-600">
+          {audit.length === 0 ? <li>No audit rows yet.</li> : audit.map((row) => (
+            <li key={row.id}>
+              {row.createdAt.toISOString().slice(0, 16)} {row.entity} {row.field}: {row.oldValue} → {row.newValue}
+            </li>
+          ))}
+        </ul>
+      </section>
     </main>
   );
 }

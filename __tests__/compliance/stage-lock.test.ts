@@ -28,7 +28,7 @@ describe("stage lock", () => {
       assertStepUnlocked({
         stepName: "Passport",
         dependsOnName: "Wafid",
-        dependsOnStatus: "COMPLETED",
+        dependsOnStatus: "COMPLETE",
       })
     ).not.toThrow();
   });

@@ -111,8 +111,8 @@ describe.skipIf(!hasDb)("compliance case flow", () => {
     const done = await withTenant(tenant.id, () =>
       ComplianceCaseService.getCase(tenant.id, detail.id)
     );
-    expect(done.status).toBe("COMPLETED");
-    expect(done.steps.every((s) => s.status === "COMPLETED")).toBe(true);
+    expect(done.status).toBe("COMPLETE");
+    expect(done.steps.every((s) => s.status === "COMPLETE")).toBe(true);
 
     await withTenant(tenant.id, () =>
       ComplianceCaseService.uncompleteStep(tenant.id, user.id, detail.id, detail.steps[2].id)
@@ -123,6 +123,6 @@ describe.skipIf(!hasDb)("compliance case flow", () => {
     const step3 = corrected.steps.find((s) => s.stepOrder === 3);
     const step4 = corrected.steps.find((s) => s.stepOrder === 4);
     expect(step3?.status).toBe("PENDING");
-    expect(step4?.status).toBe("COMPLETED");
+    expect(step4?.status).toBe("COMPLETE");
   });
 });

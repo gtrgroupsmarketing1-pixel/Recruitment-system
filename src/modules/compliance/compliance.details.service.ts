@@ -42,7 +42,6 @@ export const ComplianceDetailsService = {
       data: {
         tenantId,
         checklistId,
-        applicationId: checklist.case.applicationId,
         centerName: input.centerName,
         result: input.result,
         wafidGamcaId: input.wafidGamcaId,
@@ -69,7 +68,6 @@ export const ComplianceDetailsService = {
       data: {
         tenantId,
         checklistId,
-        applicationId: checklist.case.applicationId,
         clearanceType: input.clearanceType,
         referenceNo: input.referenceNo,
       },
@@ -95,7 +93,6 @@ export const ComplianceDetailsService = {
       data: {
         tenantId,
         checklistId,
-        applicationId: checklist.case.applicationId,
         visaNumber: input.visaNumber,
         visaType: input.visaType,
         sponsorName: input.sponsorName,
@@ -119,7 +116,6 @@ export const ComplianceDetailsService = {
       data: {
         tenantId,
         checklistId,
-        applicationId: checklist.case.applicationId,
         flightNumber: input.flightNumber,
         airline: input.airline,
         ticketRef: input.ticketRef,
@@ -143,7 +139,6 @@ export const ComplianceDetailsService = {
       data: {
         tenantId,
         checklistId,
-        applicationId: checklist.case.applicationId,
         site: input.site,
         clientContact: input.clientContact,
       },
@@ -161,7 +156,6 @@ export const ComplianceDetailsService = {
       data: {
         tenantId,
         checklistId,
-        applicationId: checklist.case.applicationId,
         status: "PENDING",
       },
     });

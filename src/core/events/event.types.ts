@@ -10,7 +10,26 @@ export type DomainEventPayloads = {
     actorId: string;
     reason?: string;
   };
-  // future events: Sessions 07, 12, 13, 18, 19...
+  "compliance.step_completed": {
+    caseId: string;
+    checklistId: string;
+    applicationId: string;
+    stepName: string;
+    actorId: string;
+  };
+  "compliance.step_reopened": {
+    caseId: string;
+    checklistId: string;
+    applicationId: string;
+    stepName: string;
+    actorId: string;
+    reason: string;
+  };
+  "compliance.case_completed": {
+    caseId: string;
+    applicationId: string;
+    templateName: string;
+  };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;

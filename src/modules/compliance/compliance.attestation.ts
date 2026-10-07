@@ -7,7 +7,7 @@ export function assertAttestationOrder(input: {
   previousAuthority: string | null;
 }): void {
   if (input.order <= 1) return;
-  if (input.previousStatus !== "COMPLETED" && input.previousStatus !== "COMPLETE") {
+  if (input.previousStatus !== "COMPLETE" && input.previousStatus !== "COMPLETE") {
     throw new StageLockedError(
       input.authority,
       input.previousAuthority ?? "previous"
