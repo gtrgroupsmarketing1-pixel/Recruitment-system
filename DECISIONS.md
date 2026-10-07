@@ -15,3 +15,9 @@
 ## 2026-10-07 — subscriber savepoints
 Outbox dispatch wraps each subscriber in SAVEPOINT / ROLLBACK TO SAVEPOINT.
 Postgres 25P02 aborts the whole transaction after one failed statement; savepoints keep sibling subscribers (audit, tasks, compliance, later notifications) independent.
+
+## Prisma create-input typing
+Repo methods that inject tenantId should type their create input as `Omit<Prisma.XUncheckedCreateInput, "tenantId">`. Callers omit tenantId; the repo still passes a complete UncheckedCreateInput.
+
+## Compliance has two sequential locks
+Checklist steps lock on dependsOnStepId. Attestation steps lock on the previous authority (Notary → State/HRD → MEA → Embassy → MOFA). Both are enforced in services, not only in the UI.

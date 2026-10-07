@@ -333,6 +333,12 @@ model ChecklistInstance {
   tenant       Tenant                 @relation(fields: [tenantId], references: [id])
   case         ComplianceCase         @relation(fields: [caseId], references: [id], onDelete: Cascade)
   stepTemplate ComplianceStepTemplate @relation(fields: [stepTemplateId], references: [id])
+  medicalClearance MedicalClearance?
+  attestationChain AttestationChain?
+  laborExit        LaborExitClearance?
+  workPermitVisa   WorkPermitVisa?
+  travelRecord     TravelRecord?
+  deploymentRecord DeploymentRecord?
 
   @@unique([caseId, stepTemplateId])
   @@index([tenantId, caseId, stepOrder])
@@ -342,6 +348,11 @@ model ChecklistInstance {
 model MedicalClearance {
   id              String    @id @default(cuid())
   tenantId        String
+  checklistId     String?   @unique
+  centerName      String?
+  centerCountry   String?
+  resultDate      DateTime?
+  notes           String?
   applicationId   String
   wafidGamcaId    String?
   center          String?
@@ -355,6 +366,7 @@ model MedicalClearance {
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
   application CandidateApplication @relation(fields: [applicationId], references: [id])
 
+  checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
   @@index([tenantId, applicationId])
 }
@@ -362,6 +374,8 @@ model MedicalClearance {
 model AttestationChain {
   id            String   @id @default(cuid())
   tenantId      String
+  checklistId   String?  @unique
+  status        String   @default("PENDING")
   applicationId String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -371,6 +385,7 @@ model AttestationChain {
   application CandidateApplication @relation(fields: [applicationId], references: [id])
   steps       AttestationStep[]
 
+  checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
   @@index([tenantId, applicationId])
 }
@@ -379,6 +394,10 @@ model AttestationStep {
   id              String          @id @default(cuid())
   tenantId        String
   chainId         String
+  stepOrder       Int?
+  authority       String?
+  referenceNo     String?
+  notes           String?
   name            String
   status          ChecklistStatus @default(PENDING)
   completedAt     DateTime?
@@ -400,6 +419,11 @@ model AttestationStep {
 model LaborExitClearance {
   id            String          @id @default(cuid())
   tenantId      String
+  checklistId   String?   @unique
+  referenceNo   String?
+  issuedDate    DateTime?
+  expiryDate    DateTime?
+  notes         String?
   applicationId String
   clearanceType String?
   status        ChecklistStatus @default(PENDING)
@@ -410,6 +434,7 @@ model LaborExitClearance {
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
   application CandidateApplication @relation(fields: [applicationId], references: [id])
 
+  checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([tenantId, applicationId])
@@ -418,6 +443,11 @@ model LaborExitClearance {
 model WorkPermitVisa {
   id             String    @id @default(cuid())
   tenantId       String
+  checklistId    String?   @unique
+  visaType       String?
+  expiryDate     DateTime?
+  sponsorName    String?
+  notes          String?
   applicationId  String
   visaNumber     String? // encrypted by Session 04 middleware
   visaNumberBidx String?
@@ -430,6 +460,7 @@ model WorkPermitVisa {
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
   application CandidateApplication @relation(fields: [applicationId], references: [id])
 
+  checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
   @@index([tenantId, applicationId])
   @@index([tenantId, visaNumberBidx])
@@ -438,6 +469,11 @@ model WorkPermitVisa {
 model TravelRecord {
   id                  String    @id @default(cuid())
   tenantId            String
+  checklistId         String?   @unique
+  airline             String?
+  departureCity       String?
+  arrivalCity         String?
+  notes               String?
   applicationId       String
   ticketRef           String?
   flightNumber        String?
@@ -450,6 +486,7 @@ model TravelRecord {
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
   application CandidateApplication @relation(fields: [applicationId], references: [id])
 
+  checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
   @@index([tenantId, applicationId])
 }
@@ -457,6 +494,10 @@ model TravelRecord {
 model DeploymentRecord {
   id                String    @id @default(cuid())
   tenantId          String
+  checklistId       String?   @unique
+  clientContact     String?
+  onSiteConfirmed   Boolean   @default(false)
+  notes             String?
   applicationId     String
   mobilizedAt       DateTime?
   site              String?
@@ -469,6 +510,7 @@ model DeploymentRecord {
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
   application CandidateApplication @relation(fields: [applicationId], references: [id])
 
+  checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
   @@index([tenantId, applicationId])
 }

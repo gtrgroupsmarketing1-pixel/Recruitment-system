@@ -20,7 +20,7 @@ export const INDIA_UAE_BLUE_COLLAR = {
       requiredDocuments: ["passport_original"],
       slaDays: 3,
       dependsOnStepOrder: 1,
-      connectorId: null,
+      connectorId: "attestation",
     },
     {
       stepOrder: 3,
@@ -47,7 +47,7 @@ export const INDIA_UAE_BLUE_COLLAR = {
       requiredDocuments: ["ticket_copy"],
       slaDays: 2,
       dependsOnStepOrder: 4,
-      connectorId: null,
+      connectorId: "travel",
     },
     {
       stepOrder: 6,
@@ -56,7 +56,7 @@ export const INDIA_UAE_BLUE_COLLAR = {
       requiredDocuments: ["boarding_pass"],
       slaDays: 1,
       dependsOnStepOrder: 5,
-      connectorId: null,
+      connectorId: "deployment",
     },
   ],
 };

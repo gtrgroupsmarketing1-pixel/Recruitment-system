@@ -1,6 +1,7 @@
 import { requireSession } from "@/core/auth/session";
 import { withTenant } from "@/core/db/client";
 import { CompleteStepButton } from "@/modules/compliance/components/CompleteStepButton";
+import { DetailsFormForStep } from "@/modules/compliance/components/DetailsFormForStep";
 import { ComplianceCaseService } from "@/modules/compliance/compliance.case.service";
 
 type Props = { params: Promise<{ id: string }> };
@@ -32,12 +33,19 @@ export default async function CasePage({ params }: Props) {
                 <p className="text-xs">Waiting on: {step.waitingOn}</p>
               ) : null}
             </div>
-            <CompleteStepButton
-              caseId={case_.id}
-              checklistId={step.id}
-              locked={step.locked || step.status === "COMPLETED"}
-              waitingOn={step.waitingOn}
-            />
+            <div>
+              <CompleteStepButton
+                caseId={case_.id}
+                checklistId={step.id}
+                locked={step.locked || step.status === "COMPLETED"}
+                waitingOn={step.waitingOn}
+              />
+              <DetailsFormForStep
+                caseId={case_.id}
+                checklistId={step.id}
+                connectorId={step.connectorId}
+              />
+            </div>
           </li>
         ))}
       </ol>
