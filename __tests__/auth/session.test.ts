@@ -1,4 +1,24 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+vi.mock("next-auth", () => ({
+  default: () => ({ handlers: {}, auth: {}, signIn: {}, signOut: {} }),
+}));
+vi.mock("next-auth/providers/credentials", () => ({
+  default: () => ({}),
+}));
+vi.mock("next-auth/providers/google", () => ({
+  default: () => ({}),
+}));
+vi.mock("@auth/prisma-adapter", () => ({
+  PrismaAdapter: () => ({}),
+}));
+vi.mock("@/core/db/client", () => ({
+  authPrisma: {},
+}));
+vi.mock("bcryptjs", () => ({
+  default: { compare: vi.fn() },
+}));
+
 import { withTenantClaims, toSession } from "@/core/auth/auth.config";
 import type { JWT } from "next-auth/jwt";
 import type { Session, User } from "next-auth";
@@ -28,7 +48,10 @@ describe("session claims", () => {
     expect(partial.role).toBe("TENANT_ADMIN");
 
     const session = toSession(
-      { user: { name: "Ada", email: "a@agency.test" }, expires: "2099-01-01" } as Session,
+      {
+        user: { name: "Ada", email: "a@agency.test" },
+        expires: "2099-01-01",
+      } as Session,
       refreshed
     );
     expect(session.tenantId).toBe("ten_1");
