@@ -30,6 +30,13 @@ export type DomainEventPayloads = {
     applicationId: string;
     templateName: string;
   };
+  "document.expiring": {
+    documentId: string;
+    candidateId: string | null;
+    type: string;
+    expiresOn: string;
+    daysRemaining: number;
+  };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;

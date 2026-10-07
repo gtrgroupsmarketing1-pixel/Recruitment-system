@@ -36,6 +36,7 @@ model Tenant {
   deploymentRecords  DeploymentRecord[]
   domainEvents       DomainEvent[]
   tasks              Task[]
+  documents          Document[]
 }
 
 enum UserRole {
@@ -66,6 +67,7 @@ model User {
   accounts Account[]
   sessions Session[]
   assignedTasks Task[] @relation("TaskAssignee")
+  uploadedDocuments Document[] @relation("DocumentUploader")
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -123,6 +125,7 @@ model Candidate {
 
   tenant       Tenant                 @relation(fields: [tenantId], references: [id])
   applications CandidateApplication[]
+  vaultDocuments Document[]
 
   @@index([tenantId])
   @@index([tenantId, passportNumberBidx])
@@ -156,6 +159,7 @@ model JobRequisition {
 
   tenant       Tenant                 @relation(fields: [tenantId], references: [id])
   applications CandidateApplication[]
+  vaultDocuments Document[]
 
   @@unique([tenantId, reqCode])
   @@index([tenantId, status])
@@ -334,6 +338,7 @@ model ChecklistInstance {
   workPermitVisa   WorkPermitVisa?
   travelRecord     TravelRecord?
   deploymentRecord DeploymentRecord?
+  vaultDocuments   Document[]
 
   @@unique([caseId, stepTemplateId])
   @@index([tenantId, caseId, stepOrder])
@@ -491,6 +496,53 @@ model DeploymentRecord {
 
   checklist   ChecklistInstance?   @relation(fields: [checklistId], references: [id], onDelete: Cascade)
   @@index([tenantId])
+}
+
+
+enum DocumentType {
+  PASSPORT
+  NATIONAL_ID
+  PHOTO
+  MEDICAL_CERTIFICATE
+  VISA
+  ATTESTATION_PROOF
+  LABOR_CLEARANCE
+  TICKET
+  BOARDING_PASS
+  OFFER_LETTER
+  CONTRACT
+  OTHER
+}
+
+model Document {
+  id             String       @id @default(cuid())
+  tenantId       String
+  candidateId    String?
+  checklistId    String?
+  type           DocumentType
+  label          String
+  fileName       String
+  mimeType       String
+  sizeBytes      Int
+  storageKey     String
+  storageBucket  String
+  checksumSha256 String?
+  expiryDate     DateTime?
+  confirmed      Boolean      @default(false)
+  uploadedBy     String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  tenant    Tenant             @relation(fields: [tenantId], references: [id])
+  candidate Candidate?         @relation(fields: [candidateId], references: [id])
+  checklist ChecklistInstance? @relation(fields: [checklistId], references: [id])
+  uploader  User               @relation("DocumentUploader", fields: [uploadedBy], references: [id])
+
+  @@index([tenantId, candidateId])
+  @@index([tenantId, checklistId])
+  @@index([tenantId, expiryDate])
+  @@index([tenantId, type])
 }
 
 model DomainEvent {

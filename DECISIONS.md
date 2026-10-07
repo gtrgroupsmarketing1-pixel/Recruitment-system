@@ -21,3 +21,9 @@ Repo methods that inject tenantId should type their create input as `Omit<Prisma
 
 ## Compliance has two sequential locks
 Checklist steps lock on dependsOnStepId. Attestation steps lock on the previous authority (Notary → State/HRD → MEA → Embassy → MOFA). Both are enforced in services, not only in the UI.
+
+## Prisma schema edits are surgical
+Never rewrite a whole model block when adding a field. Edit in place. A broad replace can drop @relation backrefs.
+
+## Document storage (Session 16)
+Local filesystem driver only. AWS SDK deferred to Session 20. No bytes in Postgres.

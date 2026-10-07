@@ -1,0 +1,2 @@
+-- Session 16 document vault metadata. Bytes stay out of Postgres.
+-- Applied in CI via prisma db push. RLS added in verify.yml.
