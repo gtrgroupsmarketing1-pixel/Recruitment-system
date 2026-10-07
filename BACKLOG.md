@@ -80,3 +80,15 @@ withTenant → appExtended.$transaction is code-correct; runtime encryption proo
 ## Pre-production
 - [ ] Generate baseline migration (`prisma migrate diff --from-empty`) and append RLS SQL
 - [ ] Switch CI from `db push` to `migrate deploy` before any tenant goes live
+
+## Deferred: JobRequisition → ClientCompany relation
+clientCompanyId is a column but not a @relation. Works via second query.
+Add the backref when a session needs Prisma-level include or cascade.
+
+## Notification volume control
+Every status change fires a notification. Real tenants will want per-tenant
+opt-out or status allowlist. Add in Session 23 or 24 when admin UI exists.
+
+## Notification body sensitivity
+Notification.body is considered sensitive (may contain candidate names, IDs).
+Accessible via tenant-scoped admin UI; never logged or exported bulk.

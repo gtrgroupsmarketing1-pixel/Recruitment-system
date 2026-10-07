@@ -37,6 +37,12 @@ export type DomainEventPayloads = {
     expiresOn: string;
     daysRemaining: number;
   };
+  "task.overdue": {
+    taskId: string;
+    dueDate: string;
+    daysOverdue: number;
+    assigneeId: string | null;
+  };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;

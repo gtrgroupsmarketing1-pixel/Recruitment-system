@@ -17,6 +17,11 @@ export const SENSITIVE_LOG_KEYS: ReadonlySet<string> = new Set([
   "visaNumber",
   "bankAccount",
   "iban",
+  // Notification PII — body may contain names/IDs; never log recipientAddr
+  "body",
+  "recipientAddr",
+  "email",
+  "phone",
 ]);
 
 export function isSensitiveLogKey(key: string): boolean {

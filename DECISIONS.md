@@ -35,3 +35,11 @@ These are different concepts. Never collapse them.
 
 ## Schema edits are line-level, not block-level
 Three incidents (S00, S15, S16) dropped @relation backrefs. Never rewrite a whole model block. Before committing, run scripts/check-schema.sh and review every relation diff.
+
+## Notifications (Session 18)
+- Delivery is best-effort inline in the outbox subscriber. Outbox provides retry; no BullMQ yet.
+- Templates are inline TypeScript pure functions (not DB). Per-tenant customization is Session 24+.
+- Channel drivers default to LogChannel. Postmark/Meta selected only when env credentials exist; boot fails if a real driver is set without credentials.
+- External HTTP calls use AbortController 5s timeout.
+- Notification.body and recipientAddr are denylisted in the logger; not encrypted at rest (searchable delivery log).
+- task.overdue dedup uses Task.notifiedOverdueAt, not a DomainEvent scan.

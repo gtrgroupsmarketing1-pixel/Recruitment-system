@@ -70,6 +70,5 @@ Matches PRD §4 Phase 1 ("flag this requisition RED if fewer than 30 days remain
 Source of truth for requisition.metrics.ts.
 
 ## Session pointer
-Session 11 — pipeline + bulk. Written unverified.
-HARD CHECKPOINT: recovery session mandatory before Session 12.
-Sessions 09–11 written unverified; recovery required before Session 12.
+Session 18 — notifications (delivery log, channels, templates, task.overdue job).
+CI is the verification path. Sessions 12–17 green on GitHub Actions.
