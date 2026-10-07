@@ -1,5 +1,5 @@
 -- Session 05: Row Level Security on tenant-scoped tables.
--- Account / Session / VerificationToken intentionally excluded (Auth.js pre-tenant).
+-- Prisma maps fields as "tenantId" (quoted camelCase), not tenant_id.
 
 ALTER TABLE "Tenant" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "User" ENABLE ROW LEVEL SECURITY;
@@ -21,12 +21,11 @@ ALTER TABLE "DeploymentRecord" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "DomainEvent" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "AuditLog" ENABLE ROW LEVEL SECURITY;
 
--- Tenant table: id IS the tenant identity
+DROP POLICY IF EXISTS tenant_self ON "Tenant";
 CREATE POLICY tenant_self ON "Tenant"
   USING (id = current_setting('app.tenant_id', true))
   WITH CHECK (id = current_setting('app.tenant_id', true));
 
--- All other tenant-scoped tables filter on tenant_id
 DO $$
 DECLARE
   t text;
@@ -40,10 +39,11 @@ BEGIN
       'TravelRecord','DeploymentRecord','DomainEvent','AuditLog'
     ])
   LOOP
+    EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I', t);
     EXECUTE format(
       'CREATE POLICY tenant_isolation ON %I
-         USING (tenant_id = current_setting(''app.tenant_id'', true))
-         WITH CHECK (tenant_id = current_setting(''app.tenant_id'', true))',
+         USING ("tenantId" = current_setting(''app.tenant_id'', true))
+         WITH CHECK ("tenantId" = current_setting(''app.tenant_id'', true))',
       t
     );
   END LOOP;
