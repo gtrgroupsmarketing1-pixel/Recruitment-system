@@ -2,19 +2,21 @@
  * Boot-time subscriber registration. Idempotent.
  */
 import { registerAuditSubscriber } from "@/core/audit/audit.subscriber";
+import { registerTaskSubscriber } from "@/modules/task/task.subscriber";
 
 let registered = false;
-let unsubscribe: (() => void) | null = null;
+const unsubs: Array<() => void> = [];
 
 export function registerSubscribers(): void {
   if (registered) return;
-  unsubscribe = registerAuditSubscriber();
+  unsubs.push(registerAuditSubscriber());
+  unsubs.push(registerTaskSubscriber());
   registered = true;
 }
 
 /** Test-only reset. */
 export function resetSubscriberRegistration(): void {
-  unsubscribe?.();
-  unsubscribe = null;
+  for (const u of unsubs) u();
+  unsubs.length = 0;
   registered = false;
 }

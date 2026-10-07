@@ -54,6 +54,13 @@ jobs:
         run: |
           PGPASSWORD=dev psql -h localhost -U postgres -d recruit -v ON_ERROR_STOP=1 \
             -f prisma/migrations/20261005180000_session_05_rls/migration.sql
+          PGPASSWORD=dev psql -h localhost -U postgres -d recruit -v ON_ERROR_STOP=1 <<'SQL'
+          ALTER TABLE "Task" ENABLE ROW LEVEL SECURITY;
+          DROP POLICY IF EXISTS tenant_isolation ON "Task";
+          CREATE POLICY tenant_isolation ON "Task"
+            USING ("tenantId" = current_setting('app.tenant_id', true))
+            WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
+          SQL
 
       - name: Grant on tables
         run: |
