@@ -1,11 +1,16 @@
 import { authPrisma } from "@/core/db/client";
 import { logger } from "@/lib/logger";
+import type { Prisma } from "@prisma/client";
 
 export type JobResult = {
   processed: number;
   failed: number;
   metadata?: Record<string, unknown>;
 };
+
+function asJson(value: Record<string, unknown> | undefined): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value ?? {})) as Prisma.InputJsonValue;
+}
 
 export async function runJob(
   name: string,
@@ -22,7 +27,7 @@ export async function runJob(
         status: result.failed > 0 ? "PARTIAL" : "OK",
         itemsProcessed: result.processed,
         itemsFailed: result.failed,
-        metadata: result.metadata ?? {},
+        metadata: asJson(result.metadata),
       },
     });
     logger.info(
@@ -39,7 +44,9 @@ export async function runJob(
         status: "FAILED",
         itemsProcessed: 0,
         itemsFailed: 0,
-        metadata: { error: err instanceof Error ? err.message : "job_failed" } as Prisma.InputJsonValue,
+        metadata: asJson({
+          error: err instanceof Error ? err.message : "job_failed",
+        }),
       },
     });
     logger.error(
