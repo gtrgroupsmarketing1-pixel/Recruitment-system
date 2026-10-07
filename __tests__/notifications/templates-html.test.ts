@@ -20,7 +20,7 @@ describe("email template html", () => {
     }).bodyHtml;
     expect(html).toBeTruthy();
     expect(html).not.toContain("<script>");
-    expect(html).toContain("&");
-    expect(html).toContain("<script>");
+    expect(html).toContain("\u0026amp;");
+    expect(html).toContain("\u0026lt;script\u0026gt;");
   });
 });
