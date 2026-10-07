@@ -27,6 +27,9 @@ export async function resolveSender(tenantId: string): Promise<ResolvedSender> {
   };
 }
 
-export function formatFrom(sender: ResolvedSender): string {
+export function formatFrom(sender: {
+  fromName: string;
+  fromEmail: string;
+}): string {
   return `${sender.fromName} <${sender.fromEmail}>`;
 }
