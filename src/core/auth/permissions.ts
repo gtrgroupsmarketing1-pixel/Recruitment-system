@@ -165,6 +165,7 @@ export const PERMISSIONS = {
   "client:comment_candidate": ["CLIENT_USER"],
   "client:view_documents": ["CLIENT_USER"],
   "client:view_deployments": ["CLIENT_USER"],
+  "client_user:manage": ["TENANT_ADMIN"],
 } as const satisfies Record<string, readonly UserRole[]>;
 
 export type PermissionKey = keyof typeof PERMISSIONS;

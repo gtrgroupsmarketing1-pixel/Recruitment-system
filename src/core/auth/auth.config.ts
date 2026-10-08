@@ -6,7 +6,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import type { Provider } from "next-auth/providers";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import bcrypt from "bcryptjs";
+import { authorizeCredentials } from "@/core/auth/credentials";
 import { authPrisma } from "@/core/db/client";
 
 export type AppUser = {
@@ -72,25 +72,11 @@ const providers: Provider[] = [
       password: { label: "Password", type: "password" },
     },
     authorize: async (credentials) => {
-      const email = String(credentials?.email ?? "").toLowerCase();
-      const password = String(credentials?.password ?? "");
-      if (!email || !password) return null;
-      // Pre-tenant: login lookup uses authPrisma (app_auth BYPASSRLS).
-      const user = await authPrisma.user.findFirst({
-        where: { email, deletedAt: null },
-      });
-      if (!user?.passwordHash) return null;
-      const ok = await bcrypt.compare(password, user.passwordHash);
-      if (!ok) return null;
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        tenantId: user.tenantId,
-        role: user.role,
-        branchId: user.branchId ?? null,
-        clientCompanyId: user.clientCompanyId ?? null,
-      };
+      // Pre-tenant: login lookup uses authPrisma (app_auth BYPASSRLS) and deletedAt: null.
+      return authorizeCredentials(
+        String(credentials?.email ?? ""),
+        String(credentials?.password ?? "")
+      );
     },
   }),
 ];

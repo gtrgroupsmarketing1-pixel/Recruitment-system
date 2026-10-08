@@ -1,5 +1,6 @@
 import { authPrisma } from "@/core/db/client";
 import { ValidationError } from "@/lib/errors";
+import { assertUserScope } from "@/modules/user/user.scope.guard";
 import bcrypt from "bcryptjs";
 
 export type SignupInput = {
@@ -44,6 +45,7 @@ export const TenantService = {
         const tenant = await tx.tenant.create({
           data: { name: tenantName, slug },
         });
+        assertUserScope({ role: "TENANT_ADMIN", branchId: null, clientCompanyId: null });
         const user = await tx.user.create({
           data: {
             tenantId: tenant.id,

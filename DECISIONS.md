@@ -122,3 +122,6 @@ state machine.
 CLIENT_USER is scoped by clientCompanyId, fail-closed if missing.
 Client decisions never call changeStatus. Documents stay clientVisible false until staff opt in.
 Portal lives in (portal)/client and redirects away from the staff shell.
+
+## Session 25b — Client user admin
+CLIENT_USER must have clientCompanyId and no branchId. Staff cannot carry clientCompanyId. Enforced by assertUserScope and Postgres user_scope_exclusive. Deactivated users keep rows and cannot log in.

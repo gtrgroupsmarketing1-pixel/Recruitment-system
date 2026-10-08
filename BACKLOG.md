@@ -111,3 +111,5 @@ A clickable slot grid for the next 7 days is Session 25+ polish.
 
 ## Session 24b — status-gated application:change_status — SHIPPED
 `requireChangeStatusPermission` gates MOBILIZATION (>= TRAVELED) and COMPLIANCE (>= MEDICAL_BOOKED). Exit states remain allowed.
+
+- [ ] Document visibility toggle stays on the candidate documents page (Session 25); not moved to a separate card.

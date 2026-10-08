@@ -147,6 +147,11 @@ jobs:
             WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
           SQL
 
+      - name: Apply user scope constraint
+        run: |
+          PGPASSWORD=dev psql -h localhost -U postgres -d recruit -v ON_ERROR_STOP=1 \
+            -f prisma/migrations/20261008130000_session_25b_user_scope_constraint/migration.sql
+
       - name: Grant on tables
         run: |
           PGPASSWORD=dev psql -h localhost -U postgres -d recruit <<'SQL'
