@@ -74,6 +74,7 @@ export const ApplicationRepo = {
         tenantId,
         candidateId: data.candidateId,
         requisitionId: data.requisitionId,
+        recruiterId: data.recruiterId,
         status: "SOURCED",
       },
     });
