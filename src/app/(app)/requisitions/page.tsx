@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { RequisitionFilters } from "@/modules/requisition/components/RequisitionFilters";
 import { RequisitionList } from "@/modules/requisition/components/RequisitionList";
 import { RequisitionService } from "@/modules/requisition/requisition.service";
@@ -19,7 +19,7 @@ export default async function RequisitionsPage({ searchParams }: ListProps) {
     return <main className="p-8">Missing tenant</main>;
   }
   const status = STATUSES.find((s) => s === sp.status);
-  const data = await withTenant(tenantId, () =>
+  const data = await withSessionScope((_scope) =>
     RequisitionService.list(tenantId, {
       status,
       clientCompanyId: sp.client,

@@ -1,5 +1,5 @@
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { CompleteStepButton } from "@/modules/compliance/components/CompleteStepButton";
 import { DetailsFormForStep } from "@/modules/compliance/components/DetailsFormForStep";
 import { ComplianceCaseService } from "@/modules/compliance/compliance.case.service";
@@ -22,7 +22,7 @@ export default async function CasePage({ params }: Props) {
   const session = await requireSession();
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return <main className="p-8">Missing tenant</main>;
-  const [case_, audit, checks] = await withTenant(tenantId, async () => {
+  const [case_, audit, checks] = await withSessionScope(async (_scope) => {
     const row = await ComplianceCaseService.getCase(tenantId, id);
     const trail = await listCaseAudit(tenantId, id, 20);
     const connectorChecks = await Promise.all(
@@ -34,7 +34,7 @@ export default async function CasePage({ params }: Props) {
     );
     return [row, trail, new Map(connectorChecks)] as const;
   });
-  const requisition = await withTenant(tenantId, () =>
+  const requisition = await withSessionScope((_scope) =>
     db.jobRequisition.findFirst({ where: { id: case_.requisitionId, tenantId, deletedAt: null } })
   );
   const risk = assessRisk({

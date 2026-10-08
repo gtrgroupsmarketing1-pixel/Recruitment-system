@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { ValidationError } from "@/lib/errors";
 import { ComplianceDashboardService } from "@/modules/compliance/compliance.dashboard.service";
 import { AtRiskTable } from "@/modules/compliance/components/dashboard/AtRiskTable";
@@ -10,7 +10,7 @@ export default async function ComplianceDashboardPage() {
   const session = await requireSession();
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) throw new ValidationError("Missing session tenant");
-  const [riskCases, bottlenecks, expiring] = await withTenant(tenantId, () =>
+  const [riskCases, bottlenecks, expiring] = await withSessionScope((_scope) =>
     Promise.all([
       ComplianceDashboardService.listAtRiskCases(tenantId, { limit: 50 }),
       ComplianceDashboardService.listBottlenecks(tenantId),

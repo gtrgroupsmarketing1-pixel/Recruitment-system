@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { getConnector } from "@/core/connectors/registry";
 import { connectorIdToKind } from "@/core/connectors/kind";
 import { ConnectorConfigService } from "@/modules/connector/connector.config.service";
@@ -23,7 +23,7 @@ export default async function ConnectorConfigPage({ params, searchParams }: Prop
   const kind = connectorIdToKind(id);
   if (!kind) return <main className="p-8">Unknown connector</main>;
 
-  const cfg = await withTenant(tenantId, () => ConnectorConfigService.get(tenantId, kind));
+  const cfg = await withSessionScope((_scope) => ConnectorConfigService.get(tenantId, kind));
 
   return (
     <main className="mx-auto grid max-w-xl gap-4 p-4 sm:p-8">

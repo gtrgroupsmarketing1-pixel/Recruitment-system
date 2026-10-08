@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ApplicationService } from "@/modules/application/application.service";
 import { ApplicationStatusSchema } from "@/modules/application/application.schema";
@@ -30,7 +30,7 @@ export default async function BulkPage({ searchParams }: Props) {
     );
   }
 
-  const rows: BulkRow[] = await withTenant(tenantId, async () => {
+  const rows: BulkRow[] = await withSessionScope(async (_scope) => {
     const apps = await ApplicationService.listByRequisition(
       tenantId,
       requisitionId

@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { ComplianceTemplateService } from "@/modules/compliance/compliance.template.service";
 
 export default async function TemplatesPage() {
   const session = await requireSession();
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return <main className="p-8">Missing tenant</main>;
-  const rows = await withTenant(tenantId, () =>
+  const rows = await withSessionScope((_scope) =>
     ComplianceTemplateService.listTemplates(tenantId, { active: true })
   );
   return (

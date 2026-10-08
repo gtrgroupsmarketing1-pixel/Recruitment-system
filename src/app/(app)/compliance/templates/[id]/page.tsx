@@ -1,5 +1,5 @@
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { ComplianceTemplateService } from "@/modules/compliance/compliance.template.service";
 
 type Props = { params: Promise<{ id: string }> };
@@ -9,7 +9,7 @@ export default async function TemplateDetailPage({ params }: Props) {
   const session = await requireSession();
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return <main className="p-8">Missing tenant</main>;
-  const template = await withTenant(tenantId, () =>
+  const template = await withSessionScope((_scope) =>
     ComplianceTemplateService.getTemplate(tenantId, id)
   );
   return (

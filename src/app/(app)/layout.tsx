@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 
 export default async function AppLayout({
   children,
@@ -16,7 +16,7 @@ export default async function AppLayout({
   if (!session.tenantId) {
     redirect("/login");
   }
-  // Tenant-scoped entry for the app shell. Child server components that
-  // query db must also wrap in withTenant (or receive data from here).
-  return withTenant(session.tenantId, async () => <div>{children}</div>);
+  // Tenant + USER scope for the app shell. Child server components that
+  // query db open their own withSessionScope (layout tx ends before children render).
+  return withSessionScope(async (_scope) => <div>{children}</div>);
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { resolveSender } from "@/modules/notification/sender.resolver";
 import { saveEmailConfigAction } from "./save.action";
 
@@ -12,7 +12,7 @@ export default async function EmailConfigPage({ searchParams }: Props) {
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return <main className="p-8">Missing tenant</main>;
 
-  const sender = await withTenant(tenantId, () => resolveSender(tenantId));
+  const sender = await withSessionScope((_scope) => resolveSender(tenantId));
 
   return (
     <main className="mx-auto grid max-w-xl gap-4 p-4 sm:p-8">

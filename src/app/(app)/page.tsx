@@ -1,5 +1,5 @@
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { RequisitionService } from "@/modules/requisition/requisition.service";
 import { TaskHome } from "@/modules/task/components/TaskHome";
 import { TaskService } from "@/modules/task/task.service";
@@ -11,7 +11,7 @@ export default async function AppHome() {
     return <main className="p-8">Missing tenant</main>;
   }
   const userId = session.user.id;
-  const [tasks, counts, requisitions] = await withTenant(tenantId, async () => {
+  const [tasks, counts, requisitions] = await withSessionScope(async (_scope) => {
     const t = await TaskService.listForUser(tenantId, userId, {
       status: "OPEN",
     });

@@ -108,3 +108,9 @@ requisition + candidate + application + compliance case. Session 22 suites un-sk
 ## Availability slot grid (UI polish)
 Session 23 ships pure computeCandidateSlots + datetime form.
 A clickable slot grid for the next 7 days is Session 25+ polish.
+
+## Session 24b — status-gated application:change_status
+MOBILIZATION_OFFICER may only change status when current ≥ TRAVELED.
+COMPLIANCE_OFFICER may only change status when current ≥ MEDICAL_BOOKED.
+Role gate alone is insufficient (Session 24). Add `requireStatusPermission`
+(~30 lines) before Session 25 / client portal.

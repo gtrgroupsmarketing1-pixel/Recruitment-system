@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant, db } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
+import { db } from "@/core/db/client";
 import { disconnectDriveAction, retryFailedSyncsAction } from "./actions";
 
 export default async function IntegrationsPage() {
@@ -8,7 +9,7 @@ export default async function IntegrationsPage() {
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return <main className="p-8">Missing tenant</main>;
 
-  const [connections, counts] = await withTenant(tenantId, async () => {
+  const [connections, counts] = await withSessionScope(async (_scope) => {
     const rows = await db.tenantStorageConnection.findMany({
       where: { tenantId, deletedAt: null },
     });

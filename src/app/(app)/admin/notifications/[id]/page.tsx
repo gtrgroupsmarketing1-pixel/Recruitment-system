@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { NotificationService } from "@/modules/notification/notification.service";
 import { retryNotificationAction } from "./retry.action";
 
@@ -16,7 +16,7 @@ export default async function NotificationDetailPage({ params }: Props) {
     return <main className="p-8">Missing tenant</main>;
   }
 
-  const n = await withTenant(tenantId, () =>
+  const n = await withSessionScope((_scope) =>
     NotificationService.getById(tenantId, id)
   );
 

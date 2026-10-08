@@ -1,5 +1,5 @@
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { CandidateDetail } from "@/modules/candidate/components/CandidateDetail";
 import { CandidateService } from "@/modules/candidate/candidate.service";
 
@@ -12,7 +12,7 @@ export default async function CandidateDetailPage({ params }: DetailProps) {
   const session = await requireSession();
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return <main className="p-8">Missing tenant</main>;
-  const data = await withTenant(tenantId, () =>
+  const data = await withSessionScope((_scope) =>
     CandidateService.getById(tenantId, id)
   );
   return (

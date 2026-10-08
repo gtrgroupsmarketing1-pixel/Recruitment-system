@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { OverdueBadge } from "@/modules/task/components/OverdueBadge";
 import { TaskService } from "@/modules/task/task.service";
 
@@ -13,7 +13,7 @@ export default async function TaskDetailPage({ params }: Props) {
   const session = await requireSession();
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return <main className="p-8">Missing tenant</main>;
-  const task = await withTenant(tenantId, () =>
+  const task = await withSessionScope((_scope) =>
     TaskService.getById(tenantId, id)
   );
   return (

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { listConnectors } from "@/core/connectors/registry";
 import { connectorIdToKind } from "@/core/connectors/kind";
 import { ConnectorConfigService } from "@/modules/connector/connector.config.service";
@@ -10,7 +10,7 @@ export default async function ConnectorsAdminPage() {
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return <main className="p-8">Missing tenant</main>;
 
-  const configs = await withTenant(tenantId, () => ConnectorConfigService.list(tenantId));
+  const configs = await withSessionScope((_scope) => ConnectorConfigService.list(tenantId));
   const byKind = new Map(configs.map((c) => [c.connectorId, c]));
 
   return (

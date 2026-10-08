@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { TaskList } from "@/modules/task/components/TaskList";
 import { TaskService } from "@/modules/task/task.service";
 
@@ -23,7 +23,7 @@ export default async function TasksPage({ searchParams }: Props) {
     sp.status === "CANCELLED"
       ? sp.status
       : undefined;
-  const tasks = await withTenant(tenantId, () =>
+  const tasks = await withSessionScope((_scope) =>
     TaskService.listForUser(tenantId, session.user.id, {
       status,
       includeCompleted: status === "COMPLETED",

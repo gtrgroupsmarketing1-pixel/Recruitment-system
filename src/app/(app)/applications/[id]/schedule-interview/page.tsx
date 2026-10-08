@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant, db } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
+import { db } from "@/core/db/client";
 import { ScheduleInterviewForm } from "./ScheduleInterviewForm";
 
 type Props = { params: Promise<{ id: string }> };
@@ -11,7 +12,7 @@ export default async function ScheduleInterviewPage({ params }: Props) {
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return <main className="p-8">Missing tenant</main>;
 
-  const app = await withTenant(tenantId, () =>
+  const app = await withSessionScope((_scope) =>
     db.candidateApplication.findFirst({
       where: { id, tenantId, deletedAt: null },
       include: { candidate: true },

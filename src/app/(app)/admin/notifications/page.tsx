@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
 import { NotificationService } from "@/modules/notification/notification.service";
 import type { NotificationStatus } from "@prisma/client";
 
@@ -41,7 +41,7 @@ export default async function NotificationsAdminPage({ searchParams }: Props) {
   const templateKey = sp.templateKey || undefined;
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000);
-  const [rows, bounces] = await withTenant(tenantId, async () => {
+  const [rows, bounces] = await withSessionScope(async (_scope) => {
     const list = await NotificationService.listForTenant(tenantId, {
       status,
       templateKey,
