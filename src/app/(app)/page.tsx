@@ -3,6 +3,7 @@ import { withSessionScope } from "@/core/auth/action-scope";
 import { RequisitionService } from "@/modules/requisition/requisition.service";
 import { TaskHome } from "@/modules/task/components/TaskHome";
 import { TaskService } from "@/modules/task/task.service";
+import { RealtimeRefresher } from "@/components/realtime/RealtimeRefresher";
 
 export default async function AppHome() {
   const session = await requireSession();
@@ -22,6 +23,8 @@ export default async function AppHome() {
   const firstName =
     (session.user.name ?? "there").trim().split(/\s+/)[0] || "there";
   return (
+    <>
+    <RealtimeRefresher eventTypes={["candidate.status_changed", "task.overdue"]} />
     <main>
       <TaskHome
         firstName={firstName}
@@ -30,5 +33,6 @@ export default async function AppHome() {
         requisitions={requisitions}
       />
     </main>
+    </>
   );
 }

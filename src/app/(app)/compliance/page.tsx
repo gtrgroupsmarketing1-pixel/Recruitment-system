@@ -4,6 +4,7 @@ import { withSessionScope } from "@/core/auth/action-scope";
 import { ValidationError } from "@/lib/errors";
 import { ComplianceDashboardService } from "@/modules/compliance/compliance.dashboard.service";
 import { AtRiskTable } from "@/modules/compliance/components/dashboard/AtRiskTable";
+import { RealtimeRefresher } from "@/components/realtime/RealtimeRefresher";
 import { BottleneckHeatmap } from "@/modules/compliance/components/dashboard/BottleneckHeatmap";
 
 export default async function ComplianceDashboardPage() {
@@ -23,6 +24,8 @@ export default async function ComplianceDashboardPage() {
     MEDIUM: riskCases.filter((row) => row.risk.level === "MEDIUM").length,
   };
   return (
+    <>
+    <RealtimeRefresher eventTypes={["compliance.step_completed", "compliance.connector_status_changed", "candidate.status_changed"]} />
     <main className="mx-auto max-w-5xl p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Compliance Dashboard</h1>
@@ -48,5 +51,6 @@ export default async function ComplianceDashboardPage() {
         <Link href="/documents">Open vault</Link>
       </section>
     </main>
+    </>
   );
 }

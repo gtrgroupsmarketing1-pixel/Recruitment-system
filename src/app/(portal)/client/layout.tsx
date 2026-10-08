@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LanguageSwitcher } from "@/components/shell/LanguageSwitcher";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/core/auth/session";
 
@@ -15,6 +16,7 @@ export default async function ClientPortalLayout({
     <div className="min-h-screen bg-neutral-50">
       <header className="flex items-center justify-between border-b bg-white px-6 py-3">
         <strong>Client portal</strong>
+        <LanguageSwitcher />
         <nav className="flex gap-4 text-sm">
           <Link href="/client/dashboard">Dashboard</Link>
           <Link href="/client/requisitions">Requisitions</Link>

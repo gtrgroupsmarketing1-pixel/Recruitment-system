@@ -68,6 +68,12 @@ export const eventBus = {
         dispatchedAt: null,
       },
     });
+    await tx.$executeRaw`SELECT pg_notify('domain_events', ${JSON.stringify({
+      type: event.type,
+      tenantId: event.tenantId,
+      payload: event.payload,
+      publishedAt: new Date().toISOString(),
+    })})`;
   },
 
   /**

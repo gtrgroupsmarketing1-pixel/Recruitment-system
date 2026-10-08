@@ -1,3 +1,4 @@
+import { RealtimeRefresher } from "@/components/realtime/RealtimeRefresher";
 import { requireSession } from "@/core/auth/session";
 import { withSessionScope } from "@/core/auth/action-scope";
 import { nextStates } from "@/modules/application/application.state-machine";
@@ -43,6 +44,8 @@ export default async function RequisitionDetailPage({ params }: DetailProps) {
     return items;
   });
   return (
+    <>
+    <RealtimeRefresher eventTypes={["candidate.status_changed"]} />
     <main className="p-8">
       <RequisitionDetail
         data={data}
@@ -50,5 +53,6 @@ export default async function RequisitionDetailPage({ params }: DetailProps) {
         applications={applications}
       />
     </main>
+    </>
   );
 }

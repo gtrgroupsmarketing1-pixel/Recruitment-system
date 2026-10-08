@@ -131,3 +131,6 @@ Candidates are not User rows. Magic-link sessions use a separate cookie and scop
 
 ## Session 27 — White label
 Tenant id comes from the host via middleware. Credentials login rejects a missing x-tenant-id. Locale is cookie, then tenant default, then en. dir is set on html.
+
+## Session 28 — SSE
+Staff realtime is a signal stream. pg_notify runs inside the publish transaction. Clients refresh; payloads are not the source of truth.
