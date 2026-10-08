@@ -11,6 +11,7 @@ export type TrpcContext = {
   userId: string | null;
   role: UserRole | null;
   branchId: string | null;
+  clientCompanyId: string | null;
 };
 
 /**
@@ -25,6 +26,7 @@ export async function createTRPCContext(): Promise<TrpcContext> {
     userId: session?.user?.id ?? null,
     role: (session?.user?.role ?? session?.role ?? null) as UserRole | null,
     branchId: session?.user?.branchId ?? session?.branchId ?? null,
+    clientCompanyId: session?.user?.clientCompanyId ?? session?.clientCompanyId ?? null,
   };
 }
 
@@ -57,6 +59,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   const userId = ctx.userId;
   const role = ctx.role;
   const branchId = ctx.branchId;
+  const clientCompanyId = ctx.clientCompanyId;
   const log = logger.child({ tenantId, userId, role });
   return withUserScope(
     {
@@ -65,6 +68,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
       userId,
       role,
       branchId,
+      clientCompanyId,
     },
     async () =>
       next({
@@ -73,6 +77,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
           userId,
           role,
           branchId,
+          clientCompanyId,
           log,
         },
       })

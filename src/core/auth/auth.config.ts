@@ -16,6 +16,7 @@ export type AppUser = {
   tenantId: string;
   role: string;
   branchId?: string | null;
+  clientCompanyId?: string | null;
 };
 
 /** Copies tenant claims onto the JWT. Never overwrites an existing claim with undefined. */
@@ -25,6 +26,7 @@ export function withTenantClaims(token: JWT, user: User | null): JWT {
     if (user.role !== undefined) token.role = user.role;
     if (user.id) token.uid = user.id;
     if (user.branchId !== undefined) token.branchId = user.branchId;
+    if (user.clientCompanyId !== undefined) token.clientCompanyId = user.clientCompanyId;
   }
   return token;
 }
@@ -35,6 +37,12 @@ export function toSession(session: Session, token: JWT): Session {
   session.role = typeof token.role === "string" ? (token.role as UserRole) : undefined;
   session.branchId =
     typeof token.branchId === "string" ? token.branchId : token.branchId === null ? null : undefined;
+  session.clientCompanyId =
+    typeof token.clientCompanyId === "string"
+      ? token.clientCompanyId
+      : token.clientCompanyId === null
+        ? null
+        : undefined;
   if (session.user) {
     session.user.id = typeof token.uid === "string" ? token.uid : session.user.id;
     session.user.tenantId =
@@ -47,6 +55,12 @@ export function toSession(session: Session, token: JWT): Session {
         : token.branchId === null
           ? null
           : session.user.branchId;
+    session.user.clientCompanyId =
+      typeof token.clientCompanyId === "string"
+        ? token.clientCompanyId
+        : token.clientCompanyId === null
+          ? null
+          : session.user.clientCompanyId;
   }
   return session;
 }
@@ -75,6 +89,7 @@ const providers: Provider[] = [
         tenantId: user.tenantId,
         role: user.role,
         branchId: user.branchId ?? null,
+        clientCompanyId: user.clientCompanyId ?? null,
       };
     },
   }),

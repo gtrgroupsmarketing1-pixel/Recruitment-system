@@ -11,7 +11,7 @@ function scope(role: UserRole): SessionScope {
     tenantId: "t",
     userId: "u",
     role,
-    branchId: null,
+    branchId: null, clientCompanyId: null,
   };
 }
 

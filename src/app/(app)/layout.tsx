@@ -16,6 +16,9 @@ export default async function AppLayout({
   if (!session.tenantId) {
     redirect("/login");
   }
+  if (session.user.role === "CLIENT_USER" || session.role === "CLIENT_USER") {
+    redirect("/client/dashboard");
+  }
   // Tenant + USER scope for the app shell. Child server components that
   // query db open their own withSessionScope (layout tx ends before children render).
   return withSessionScope(async (_scope) => <div>{children}</div>);

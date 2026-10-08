@@ -156,6 +156,15 @@ export const PERMISSIONS = {
   "user:invite": ["TENANT_ADMIN"],
   "user:update_role": ["TENANT_ADMIN"],
   "user:deactivate": ["TENANT_ADMIN"],
+
+  "joborder:submit": ["CLIENT_USER"],
+  "joborder:view": ["TENANT_ADMIN", "BRANCH_MANAGER", "CLIENT_USER"],
+  "joborder:review": ["TENANT_ADMIN", "BRANCH_MANAGER"],
+  "client:view_requisitions": ["CLIENT_USER"],
+  "client:view_candidates": ["CLIENT_USER"],
+  "client:comment_candidate": ["CLIENT_USER"],
+  "client:view_documents": ["CLIENT_USER"],
+  "client:view_deployments": ["CLIENT_USER"],
 } as const satisfies Record<string, readonly UserRole[]>;
 
 export type PermissionKey = keyof typeof PERMISSIONS;

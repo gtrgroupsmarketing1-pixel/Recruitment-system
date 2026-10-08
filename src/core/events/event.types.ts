@@ -64,6 +64,21 @@ export type DomainEventPayloads = {
     applicationId: string | null;
     reason: string;
   };
+  "client.candidate_decision": {
+    applicationId: string;
+    candidateId: string;
+    requisitionId: string;
+    clientCompanyId: string;
+    decision: "APPROVED" | "REJECTED" | "SHORTLISTED";
+    comment: string | null;
+    authorUserId: string;
+  };
+  "joborder.submitted": {
+    jobOrderId: string;
+    clientCompanyId: string;
+    roleTitle: string;
+    submittedBy: string;
+  };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;

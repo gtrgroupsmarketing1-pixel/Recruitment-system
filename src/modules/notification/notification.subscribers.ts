@@ -9,6 +9,39 @@ import { resolveChannel } from "@/core/notifications/channel-resolver";
  * DomainEvent.dispatchedAt null for retry (Session 06 outbox contract).
  */
 export function registerNotificationSubscribers(): () => void {
+  const unsubClient = eventBus.subscribe("client.candidate_decision", async (event) => {
+    const app = await db.candidateApplication.findFirst({
+      where: { id: event.payload.applicationId, tenantId: event.tenantId },
+      select: { recruiterId: true },
+    });
+    if (!app?.recruiterId) return;
+    const user = await db.user.findFirst({
+      where: { id: app.recruiterId, tenantId: event.tenantId },
+      select: { email: true },
+    });
+    if (!user?.email) return;
+    await NotificationService.send(
+      event.tenantId,
+      "client.candidate_decision",
+      { type: "USER", id: app.recruiterId, addr: user.email },
+      { decision: event.payload.decision, applicationId: event.payload.applicationId }
+    );
+  });
+  const unsubOrder = eventBus.subscribe("joborder.submitted", async (event) => {
+    const admins = await db.user.findMany({
+      where: { tenantId: event.tenantId, role: "TENANT_ADMIN", deletedAt: null },
+      select: { id: true, email: true },
+      take: 5,
+    });
+    for (const admin of admins) {
+      await NotificationService.send(
+        event.tenantId,
+        "joborder.submitted",
+        { type: "USER", id: admin.id, addr: admin.email },
+        { roleTitle: event.payload.roleTitle }
+      );
+    }
+  });
   const unsub1 = eventBus.subscribe("candidate.status_changed", async (event) => {
     const candidate = await db.candidate.findFirst({
       where: {
@@ -154,6 +187,8 @@ export function registerNotificationSubscribers(): () => void {
   });
 
   return () => {
+    unsubClient();
+    unsubOrder();
 
     unsub1();
     unsub2();

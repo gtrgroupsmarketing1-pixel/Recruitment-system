@@ -14,7 +14,7 @@ async function asRole(
   fn: () => Promise<void>
 ) {
   await withUserScope(
-    { kind: "USER", tenantId, userId, role, branchId },
+    { kind: "USER", tenantId, userId, role, branchId, clientCompanyId: null },
     fn
   );
 }
@@ -89,6 +89,7 @@ describe("role enforcement", () => {
         name: "Mgr A",
         role: "BRANCH_MANAGER",
         branchId: branchA.id,
+        clientCompanyId: null,
       },
     });
     const recA = await authPrisma.user.create({
@@ -99,6 +100,7 @@ describe("role enforcement", () => {
         name: "Rec A",
         role: "RECRUITER",
         branchId: branchA.id,
+        clientCompanyId: null,
       },
     });
     const recB = await authPrisma.user.create({
@@ -124,6 +126,7 @@ describe("role enforcement", () => {
         userId: recA.id,
         role: "RECRUITER",
         branchId: branchA.id,
+        clientCompanyId: null,
       },
       async () => {
         const c = await CandidateService.create(seed.tenantId, recA.id, {
@@ -148,6 +151,7 @@ describe("role enforcement", () => {
         userId: mgrA.id,
         role: "BRANCH_MANAGER",
         branchId: branchA.id,
+        clientCompanyId: null,
       },
       async () => CandidateService.list(seed.tenantId, {})
     );

@@ -7,6 +7,7 @@ export type SessionScope = {
   userId: string;
   role: UserRole;
   branchId: string | null;
+  clientCompanyId: string | null;
 };
 
 export type SystemScope = {

@@ -117,3 +117,8 @@ are always allowed for roles that already passed application:change_status.
 Order source is PIPELINE_ORDER. Gate lives in router/action, before the
 state machine.
 
+
+## Session 25 — Client portal
+CLIENT_USER is scoped by clientCompanyId, fail-closed if missing.
+Client decisions never call changeStatus. Documents stay clientVisible false until staff opt in.
+Portal lives in (portal)/client and redirects away from the staff shell.

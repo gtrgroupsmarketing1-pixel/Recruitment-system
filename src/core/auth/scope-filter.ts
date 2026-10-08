@@ -133,3 +133,32 @@ export async function loadBranchUserIds(
   });
   return users.map((u) => u.id);
 }
+
+export function clientRequisitionFilter(
+  scope: Scope
+): Prisma.JobRequisitionWhereInput {
+  if (!isUserScope(scope) || scope.role !== "CLIENT_USER") return {};
+  if (!scope.clientCompanyId) return { id: "__never__" };
+  return { clientCompanyId: scope.clientCompanyId };
+}
+
+export function clientApplicationFilter(
+  scope: Scope
+): Prisma.CandidateApplicationWhereInput {
+  if (!isUserScope(scope) || scope.role !== "CLIENT_USER") return {};
+  if (!scope.clientCompanyId) return { id: "__never__" };
+  return { requisition: { clientCompanyId: scope.clientCompanyId } };
+}
+
+export function clientDocumentFilter(scope: Scope): Prisma.DocumentWhereInput {
+  if (!isUserScope(scope) || scope.role !== "CLIENT_USER") return {};
+  if (!scope.clientCompanyId) return { id: "__never__" };
+  return {
+    clientVisible: true,
+    candidate: {
+      applications: {
+        some: { requisition: { clientCompanyId: scope.clientCompanyId } },
+      },
+    },
+  };
+}

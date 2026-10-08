@@ -47,6 +47,8 @@ model Tenant {
   calendarConnections UserCalendarConnection[]
   scheduledEvents     ScheduledEvent[]
   smsQuotas           TenantSmsQuota[]
+  jobOrders           JobOrder[]
+  clientComments      ClientCandidateComment[]
 }
 
 enum UserRole {
@@ -56,12 +58,14 @@ enum UserRole {
   MOBILIZATION_OFFICER
   COMPLIANCE_OFFICER
   FINANCE
+  CLIENT_USER
 }
 
 model User {
   id            String    @id @default(cuid())
   tenantId      String
-  branchId      String?
+  branchId        String?
+  clientCompanyId String?
   email         String
   passwordHash  String?
   name          String
@@ -80,10 +84,13 @@ model User {
   uploadedDocuments Document[] @relation("DocumentUploader")
   calendarConnections UserCalendarConnection[]
   organizedEvents     ScheduledEvent[]
+  clientCompany       ClientCompany? @relation(fields: [clientCompanyId], references: [id])
+  clientComments      ClientCandidateComment[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([email])
+  @@index([tenantId, clientCompanyId])
 }
 
 model Branch {
@@ -112,7 +119,9 @@ model ClientCompany {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  users     User[]
+  jobOrders JobOrder[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -174,6 +183,7 @@ model JobRequisition {
 
   tenant       Tenant                 @relation(fields: [tenantId], references: [id])
   applications CandidateApplication[]
+  jobOrders    JobOrder[]
 
   @@unique([tenantId, reqCode])
   @@index([tenantId, status])
@@ -222,6 +232,7 @@ model CandidateApplication {
   screeningRecords   ScreeningRecord[]
   complianceCase     ComplianceCase?
   scheduledEvents    ScheduledEvent[]
+  clientComments     ClientCandidateComment[]
 
   @@unique([tenantId, candidateId, requisitionId])
   @@index([tenantId, status])
@@ -545,6 +556,7 @@ model Document {
   checksumSha256 String?
   expiryDate     DateTime?
   confirmed      Boolean      @default(false)
+  clientVisible  Boolean      @default(false)
   uploadedBy     String
   notifiedExpiryAt DateTime?
   createdAt      DateTime     @default(now())
@@ -979,4 +991,52 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+
+model JobOrder {
+  id              String    @id @default(cuid())
+  tenantId        String
+  clientCompanyId String
+  submittedBy     String
+  status          String    @default("PENDING")
+  roleTitle       String
+  roleCategory    String
+  country         String
+  vacancyCount    Int
+  targetStartDate DateTime?
+  description     String?
+  attachmentKeys  Json      @default("[]")
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  reviewNotes     String?
+  requisitionId   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  tenant        Tenant          @relation(fields: [tenantId], references: [id])
+  clientCompany ClientCompany   @relation(fields: [clientCompanyId], references: [id])
+  requisition   JobRequisition? @relation(fields: [requisitionId], references: [id])
+
+  @@index([tenantId, status])
+  @@index([tenantId, clientCompanyId])
+}
+
+model ClientCandidateComment {
+  id              String   @id @default(cuid())
+  tenantId        String
+  applicationId   String
+  clientCompanyId String
+  authorUserId    String
+  decision        String
+  comment         String?
+  createdAt       DateTime @default(now())
+
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  application CandidateApplication @relation(fields: [applicationId], references: [id])
+  author      User                 @relation(fields: [authorUserId], references: [id])
+
+  @@index([tenantId, applicationId, createdAt])
+  @@index([tenantId, clientCompanyId])
 }

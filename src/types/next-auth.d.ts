@@ -6,16 +6,19 @@ declare module "next-auth" {
     tenantId?: string;
     role?: UserRole;
     branchId?: string | null;
+    clientCompanyId?: string | null;
   }
   interface Session {
     tenantId?: string;
     role?: UserRole;
     branchId?: string | null;
+    clientCompanyId?: string | null;
     user: {
       id: string;
       tenantId: string;
       role: UserRole;
       branchId?: string | null;
+      clientCompanyId?: string | null;
     } & DefaultSession["user"];
   }
 }
@@ -26,5 +29,6 @@ declare module "next-auth/jwt" {
     role?: UserRole;
     uid?: string;
     branchId?: string | null;
+    clientCompanyId?: string | null;
   }
 }

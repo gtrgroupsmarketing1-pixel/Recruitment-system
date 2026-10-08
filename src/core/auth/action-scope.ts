@@ -16,12 +16,14 @@ export async function withSessionScope<T>(
   }
   const role = (session.user.role ?? session.role) as UserRole;
   const branchId = session.user.branchId ?? session.branchId ?? null;
+  const clientCompanyId = session.user.clientCompanyId ?? session.clientCompanyId ?? null;
   const scope: SessionScope = {
     kind: "USER",
     tenantId,
     userId: session.user.id,
     role,
     branchId,
+    clientCompanyId,
   };
   return withUserScope(scope, () => fn(scope));
 }

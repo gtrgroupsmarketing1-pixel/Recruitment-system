@@ -97,7 +97,18 @@ export function renderTemplate(
     subject: tpl.subject ? tpl.subject(context) : null,
     body: tpl.body(context),
     bodyHtml: tpl.bodyHtml ? tpl.bodyHtml(context) : null,
-  };
+  
+  "client.candidate_decision": {
+    channel: "EMAIL",
+    subject: () => "Client decision on a candidate",
+    body: (ctx) => `Decision ${ctx.decision ?? ""} on application ${ctx.applicationId ?? ""}`,
+  },
+  "joborder.submitted": {
+    channel: "EMAIL",
+    subject: () => "New job order",
+    body: (ctx) => `Job order ${ctx.roleTitle ?? ""} submitted`,
+  },
+};
 }
 
 export function listTemplateKeys(): string[] {

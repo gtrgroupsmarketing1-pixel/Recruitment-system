@@ -21,7 +21,7 @@ async function changeStatusAs(
   toStatus: Status
 ) {
   return withUserScope(
-    { kind: "USER", tenantId, userId, role, branchId: null },
+    { kind: "USER", tenantId, userId, role, branchId: null, clientCompanyId: null },
     async () => {
       const app = await ApplicationRepo.findById(tenantId, applicationId);
       if (!app) throw new Error("missing application");
@@ -50,7 +50,7 @@ describe("status-gated changeStatus", () => {
     ).rejects.toBeInstanceOf(ForbiddenError);
 
     const current = await withUserScope(
-      { kind: "USER", tenantId: seed.tenantId, userId: seed.adminId, role: "TENANT_ADMIN", branchId: null },
+      { kind: "USER", tenantId: seed.tenantId, userId: seed.adminId, role: "TENANT_ADMIN", branchId: null, clientCompanyId: null },
       () => ApplicationRepo.findById(seed.tenantId, seed.applicationId)
     );
     const startIdx = PIPELINE_ORDER.indexOf(current!.status as Status);
