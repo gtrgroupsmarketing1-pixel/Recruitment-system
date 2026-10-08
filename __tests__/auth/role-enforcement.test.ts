@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import type { UserRole } from "@prisma/client";
 import { withUserScope, authPrisma } from "@/core/db/client";
-import { requirePermission } from "@/core/auth/session";
+import { requirePermission } from "@/core/auth/permissions";
 import { ForbiddenError } from "@/lib/errors";
 import { seedTenantWithCase } from "../helpers/seed";
 import { CandidateService } from "@/modules/candidate/candidate.service";

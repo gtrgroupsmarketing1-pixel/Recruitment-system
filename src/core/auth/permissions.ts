@@ -1,4 +1,6 @@
 import type { UserRole } from "@prisma/client";
+import { tryGetScope } from "@/core/auth/scope";
+import { ForbiddenError } from "@/lib/errors";
 
 /**
  * Single source of truth for RBAC. Server requirePermission + UI can() read from this.
@@ -161,4 +163,21 @@ export type PermissionKey = keyof typeof PERMISSIONS;
 export function can(role: UserRole, key: PermissionKey): boolean {
   const allowed = PERMISSIONS[key] as readonly UserRole[];
   return allowed.includes(role);
+}
+
+
+/**
+ * Throws ForbiddenError if the current scope role lacks the permission.
+ * Lives here (not session.ts) so tests can import it without loading NextAuth.
+ * Must be called inside withUserScope / withSessionScope. SYSTEM scope always passes.
+ */
+export function requirePermission(key: PermissionKey): void {
+  const scope = tryGetScope();
+  if (!scope) {
+    throw new ForbiddenError(`Missing scope for permission ${key}`);
+  }
+  if (scope.kind === "SYSTEM") return;
+  if (!can(scope.role, key)) {
+    throw new ForbiddenError(`Role ${scope.role} cannot ${key}`);
+  }
 }
