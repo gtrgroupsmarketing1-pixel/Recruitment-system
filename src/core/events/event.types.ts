@@ -79,6 +79,17 @@ export type DomainEventPayloads = {
     roleTitle: string;
     submittedBy: string;
   };
+  "candidate.appointment_response": {
+    eventId: string;
+    candidateId: string;
+    response: "CONFIRMED" | "DECLINED";
+    reason: string | null;
+  };
+  "document.uploaded": {
+    documentId: string;
+    candidateId: string;
+    type: string;
+  };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;

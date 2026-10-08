@@ -2,6 +2,7 @@ import { authPrisma } from "@/core/db/client";
 import { getStorage } from "@/core/storage/storage.client";
 import { logger } from "@/lib/logger";
 import { runJob, type JobResult } from "@/core/jobs/run-job";
+import { sweepAuthRateLimits } from "@/core/candidate-auth/rate-limit";
 
 const GC_AGE_MS = 72 * 60 * 60 * 1000;
 
@@ -39,6 +40,7 @@ export async function sweepUnconfirmedDocuments(
       );
     }
   }
+  await sweepAuthRateLimits(now);
   return { processed, failed, metadata: { bytesReclaimed } };
 }
 

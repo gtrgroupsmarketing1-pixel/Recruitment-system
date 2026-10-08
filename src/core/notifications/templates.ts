@@ -92,6 +92,18 @@ export const TEMPLATES: Record<string, Template> = {
       `<p>Decision <strong>${e(ctx, "decision")}</strong> on application ` +
       `<strong>${e(ctx, "applicationId")}</strong>.</p>`,
   },
+  "document.uploaded": {
+    channel: "EMAIL",
+    subject: () => "Document uploaded",
+    body: (ctx) => `${field(ctx, "candidateName")} uploaded a ${field(ctx, "documentType")}.`,
+    bodyHtml: (ctx) => `<p>${e(ctx, "candidateName")} uploaded a ${e(ctx, "documentType")}.</p>`,
+  },
+  "candidate.appointment_response": {
+    channel: "EMAIL",
+    subject: () => "Appointment response",
+    body: (ctx) => `Candidate ${field(ctx, "response")} appointment ${field(ctx, "eventId")}.`,
+    bodyHtml: (ctx) => `<p>Candidate <strong>${e(ctx, "response")}</strong> appointment ${e(ctx, "eventId")}.</p>`,
+  },
   "joborder.submitted": {
     channel: "EMAIL",
     subject: () => "New job order",

@@ -48,6 +48,8 @@ model Tenant {
   scheduledEvents     ScheduledEvent[]
   smsQuotas           TenantSmsQuota[]
   jobOrders           JobOrder[]
+  candidateAuthTokens CandidateAuthToken[]
+  candidateAuthRateLimits CandidateAuthRateLimit[]
   clientComments      ClientCandidateComment[]
 }
 
@@ -143,6 +145,11 @@ model Candidate {
   smsOptIn           Boolean  @default(false)
   smsOptInAt         DateTime?
   whatsappOptIn      Boolean  @default(true)
+  emailVerifiedAt    DateTime?
+  phoneVerifiedAt    DateTime?
+  lastLoginAt        DateTime?
+  lastLoginIp        String?
+  portalStatus       String   @default("INVITED")
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   deletedAt          DateTime?
@@ -150,6 +157,8 @@ model Candidate {
   tenant       Tenant                 @relation(fields: [tenantId], references: [id])
   applications CandidateApplication[]
   vaultDocuments Document[]
+  authTokens   CandidateAuthToken[]
+  authRateLimits CandidateAuthRateLimit[]
 
   @@index([tenantId])
   @@index([tenantId, passportNumberBidx])
@@ -557,7 +566,7 @@ model Document {
   expiryDate     DateTime?
   confirmed      Boolean      @default(false)
   clientVisible  Boolean      @default(false)
-  uploadedBy     String
+  uploadedBy     String?
   notifiedExpiryAt DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -566,7 +575,7 @@ model Document {
   tenant    Tenant             @relation(fields: [tenantId], references: [id])
   candidate Candidate?         @relation(fields: [candidateId], references: [id])
   checklist ChecklistInstance? @relation(fields: [checklistId], references: [id])
-  uploader  User               @relation("DocumentUploader", fields: [uploadedBy], references: [id])
+  uploader  User?              @relation("DocumentUploader", fields: [uploadedBy], references: [id])
   syncStates DocumentSyncState[]
 
   @@index([tenantId, candidateId])
@@ -1039,4 +1048,42 @@ model ClientCandidateComment {
 
   @@index([tenantId, applicationId, createdAt])
   @@index([tenantId, clientCompanyId])
+}
+
+enum CandidateAuthMethod {
+  EMAIL_LINK
+  SMS_CODE
+}
+
+model CandidateAuthToken {
+  id          String              @id @default(cuid())
+  tenantId    String
+  candidateId String
+  method      CandidateAuthMethod
+  tokenHash   String              @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime            @default(now())
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@index([tenantId, candidateId, expiresAt])
+  @@index([expiresAt])
+}
+
+model CandidateAuthRateLimit {
+  id          String   @id @default(cuid())
+  tenantId    String
+  candidateId String
+  windowStart DateTime
+  count       Int      @default(0)
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@unique([candidateId, windowStart])
+  @@index([windowStart])
 }

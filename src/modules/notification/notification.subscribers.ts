@@ -27,6 +27,42 @@ export function registerNotificationSubscribers(): () => void {
       { decision: event.payload.decision, applicationId: event.payload.applicationId }
     );
   });
+  const unsubAppt = eventBus.subscribe("candidate.appointment_response", async (event) => {
+    const row = await db.scheduledEvent.findFirst({
+      where: { id: event.payload.eventId, tenantId: event.tenantId },
+      select: { organizerUserId: true },
+    });
+    if (!row) return;
+    const user = await db.user.findFirst({
+      where: { id: row.organizerUserId, tenantId: event.tenantId },
+      select: { email: true },
+    });
+    if (!user?.email) return;
+    await NotificationService.send(
+      event.tenantId,
+      "candidate.appointment_response",
+      { type: "USER", id: row.organizerUserId, addr: user.email },
+      { response: event.payload.response, eventId: event.payload.eventId }
+    );
+  });
+  const unsubUpload = eventBus.subscribe("document.uploaded", async (event) => {
+    const app = await db.candidateApplication.findFirst({
+      where: { candidateId: event.payload.candidateId, tenantId: event.tenantId },
+      select: { recruiterId: true },
+    });
+    if (!app?.recruiterId) return;
+    const user = await db.user.findFirst({
+      where: { id: app.recruiterId, tenantId: event.tenantId },
+      select: { email: true },
+    });
+    if (!user?.email) return;
+    await NotificationService.send(
+      event.tenantId,
+      "document.uploaded",
+      { type: "USER", id: app.recruiterId, addr: user.email },
+      { candidateName: "Candidate", documentType: event.payload.type }
+    );
+  });
   const unsubOrder = eventBus.subscribe("joborder.submitted", async (event) => {
     const admins = await db.user.findMany({
       where: { tenantId: event.tenantId, role: "TENANT_ADMIN", deletedAt: null },
@@ -189,6 +225,8 @@ export function registerNotificationSubscribers(): () => void {
   return () => {
     unsubClient();
     unsubOrder();
+    unsubAppt();
+    unsubUpload();
 
     unsub1();
     unsub2();

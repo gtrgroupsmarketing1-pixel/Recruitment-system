@@ -147,6 +147,11 @@ jobs:
             WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
           SQL
 
+      - name: Apply candidate auth RLS
+        run: |
+          PGPASSWORD=dev psql -h localhost -U postgres -d recruit -v ON_ERROR_STOP=1 \
+            -f prisma/migrations/20261008140000_session_26_candidate_portal/migration.sql
+
       - name: Apply user scope constraint
         run: |
           PGPASSWORD=dev psql -h localhost -U postgres -d recruit -v ON_ERROR_STOP=1 \
@@ -173,4 +178,5 @@ jobs:
           DIRECT_URL: postgres://postgres:dev@localhost:5432/recruit
           ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
           BLIND_INDEX_KEY: BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=
+          CANDIDATE_SESSION_SECRET: CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=
           NODE_ENV: test

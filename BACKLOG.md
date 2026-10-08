@@ -113,3 +113,5 @@ A clickable slot grid for the next 7 days is Session 25+ polish.
 `requireChangeStatusPermission` gates MOBILIZATION (>= TRAVELED) and COMPLIANCE (>= MEDICAL_BOOKED). Exit states remain allowed.
 
 - [ ] Document visibility toggle stays on the candidate documents page (Session 25); not moved to a separate card.
+
+- [ ] Candidate upload rate limit (20 per 24h) deferred to Session 29.

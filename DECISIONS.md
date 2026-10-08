@@ -125,3 +125,6 @@ Portal lives in (portal)/client and redirects away from the staff shell.
 
 ## Session 25b — Client user admin
 CLIENT_USER must have clientCompanyId and no branchId. Staff cannot carry clientCompanyId. Enforced by assertUserScope and Postgres user_scope_exclusive. Deactivated users keep rows and cannot log in.
+
+## Session 26 — Candidate portal
+Candidates are not User rows. Magic-link sessions use a separate cookie and scope. Raw tokens are stored only as SHA-256 hashes.

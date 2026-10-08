@@ -4,7 +4,9 @@ import type { UserRole } from "@prisma/client";
 import { auth } from "@/core/auth/auth.config";
 import { withUserScope } from "@/core/db/client";
 import { logger } from "@/lib/logger";
-import { ForbiddenError } from "@/lib/errors";
+import { cookies } from "next/headers";
+import { ForbiddenError, UnauthorizedError } from "@/lib/errors";
+import { assertNoCandidateOnStaffApi } from "@/core/candidate-auth/session";
 
 export type TrpcContext = {
   tenantId: string | null;
@@ -21,6 +23,12 @@ export type TrpcContext = {
  */
 export async function createTRPCContext(): Promise<TrpcContext> {
   const session = await auth();
+  try {
+    const jar = await cookies();
+    assertNoCandidateOnStaffApi(jar.get("candidate_session")?.value, Boolean(session?.user?.id));
+  } catch (error) {
+    if (error instanceof UnauthorizedError) throw error;
+  }
   return {
     tenantId: session?.tenantId ?? null,
     userId: session?.user?.id ?? null,
