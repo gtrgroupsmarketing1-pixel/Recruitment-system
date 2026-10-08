@@ -1,4 +1,5 @@
 import type { JWT } from "next-auth/jwt";
+import type { UserRole } from "@prisma/client";
 import type { Session, User } from "next-auth";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
@@ -31,7 +32,7 @@ export function withTenantClaims(token: JWT, user: User | null): JWT {
 /** Projects JWT tenant claims onto the session. Refresh must not drop tenantId. */
 export function toSession(session: Session, token: JWT): Session {
   session.tenantId = typeof token.tenantId === "string" ? token.tenantId : undefined;
-  session.role = typeof token.role === "string" ? token.role : undefined;
+  session.role = typeof token.role === "string" ? (token.role as UserRole) : undefined;
   session.branchId =
     typeof token.branchId === "string" ? token.branchId : token.branchId === null ? null : undefined;
   if (session.user) {
@@ -39,7 +40,7 @@ export function toSession(session: Session, token: JWT): Session {
     session.user.tenantId =
       typeof token.tenantId === "string" ? token.tenantId : session.user.tenantId;
     session.user.role =
-      typeof token.role === "string" ? (token.role as Session["role"]) : session.user.role;
+      typeof token.role === "string" ? (token.role as UserRole) : session.user.role;
     session.user.branchId =
       typeof token.branchId === "string"
         ? token.branchId
