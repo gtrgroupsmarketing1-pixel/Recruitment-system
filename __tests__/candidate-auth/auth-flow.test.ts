@@ -62,7 +62,7 @@ describe("candidate auth flow", () => {
       userAgent: null,
     });
     const note = await authPrisma.notification.findFirst({
-      where: { tenantId: tenant.id, candidateId: candidate.id },
+      where: { tenantId: tenant.id, recipientId: candidate.id },
       orderBy: { createdAt: "desc" },
     });
     const raw = note?.body.split("token=")[1] ?? "";
