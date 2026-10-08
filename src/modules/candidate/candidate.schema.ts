@@ -10,6 +10,7 @@ export const CreateCandidateInput = z
     nationalId: z.string().optional(),
     medicalResult: z.string().optional(),
     requisitionId: z.string().optional(),
+    smsOptIn: z.boolean().optional(),
   })
   .strict();
 
@@ -21,6 +22,7 @@ export const UpdateCandidateInput = z
     passportNumber: z.string().nullable().optional(),
     nationalId: z.string().nullable().optional(),
     medicalResult: z.string().nullable().optional(),
+    smsOptIn: z.boolean().optional(),
   })
   .strict();
 

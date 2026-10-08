@@ -1,4 +1,4 @@
-import type { Candidate } from "@prisma/client";
+import type { Candidate, Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { NotFoundError } from "@/lib/errors";
 import { CandidateRepo } from "./candidate.repo";
@@ -38,6 +38,7 @@ function toDetail(row: Candidate): CandidateDetailView {
 export const CandidateService = {
   async create(tenantId: string, userId: string, input: CreateCandidateInput) {
     void userId;
+    const smsOptIn = input.smsOptIn === true;
     return CandidateRepo.create(tenantId, {
       tenantId,
       fullName: input.fullName.trim(),
@@ -46,6 +47,8 @@ export const CandidateService = {
       passportNumber: input.passportNumber,
       nationalId: input.nationalId,
       medicalResult: input.medicalResult,
+      smsOptIn,
+      smsOptInAt: smsOptIn ? new Date() : null,
     });
   },
 
@@ -70,7 +73,15 @@ export const CandidateService = {
     patch: UpdateCandidateInput
   ) {
     void userId;
-    const updated = await CandidateRepo.update(tenantId, id, patch);
+    const existing = await CandidateRepo.findById(tenantId, id);
+    if (!existing) throw new NotFoundError("Candidate", id);
+
+    const data: Prisma.CandidateUncheckedUpdateInput = { ...patch };
+    if (patch.smsOptIn === true && existing.smsOptIn === false) {
+      data.smsOptInAt = new Date();
+    }
+
+    const updated = await CandidateRepo.update(tenantId, id, data);
     if (!updated) throw new NotFoundError("Candidate", id);
     return updated;
   },

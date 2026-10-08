@@ -106,3 +106,8 @@ Sessions 22's config-service and check-service suites skip without full seed.
 Before Session 24, build a __tests__/helpers/seed.ts that creates
 tenant + user + requisition + candidate + application + checklist in
 one call. Then un-skip those suites. Reuse for future integration tests.
+
+
+## Availability slot grid (UI polish)
+Session 23 ships pure computeCandidateSlots + datetime form.
+A clickable slot grid for the next 7 days is Session 25+ polish.

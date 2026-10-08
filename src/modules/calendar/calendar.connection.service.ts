@@ -2,9 +2,8 @@ import type { CalendarProvider } from "@prisma/client";
 import { db } from "@/core/db/client";
 import { ConfigurationError, NotFoundError } from "@/lib/errors";
 import { ensureFreshToken } from "@/core/oauth/token-refresh";
-import { createGoogleCalendarClient } from "@/core/calendar/google.client";
-import { createMicrosoftCalendarClient } from "@/core/calendar/microsoft.client";
 import type { ExternalCalendarClient } from "@/core/calendar/calendar.client";
+import { getCalendarClient } from "./calendar.provider";
 
 export type CalendarConnectionView = {
   provider: CalendarProvider;
@@ -182,10 +181,7 @@ export const CalendarConnectionService = {
       });
     }
 
-    const client =
-      provider === "GOOGLE"
-        ? createGoogleCalendarClient()
-        : createMicrosoftCalendarClient();
+    const client = getCalendarClient(provider);
 
     return { client, accessToken: fresh.accessToken };
   },

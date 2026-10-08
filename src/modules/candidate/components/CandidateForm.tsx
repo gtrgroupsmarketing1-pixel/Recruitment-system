@@ -35,6 +35,10 @@ export function CandidateForm({ requisitionId }: Props) {
       <Input id="passportNumber" name="passportNumber" />
       <Label htmlFor="nationalId">National ID</Label>
       <Input id="nationalId" name="nationalId" />
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="smsOptIn" />
+        <span>Candidate consents to SMS notifications</span>
+      </label>
       <Button>{isPending ? "Saving…" : "Create candidate"}</Button>
       {state.errors?.form ? (
         <p className="text-sm text-red-700">{state.errors.form[0]}</p>

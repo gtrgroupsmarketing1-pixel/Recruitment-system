@@ -19,12 +19,14 @@ export async function createCandidateAction(
     return { errors: { form: ["Missing session tenant"] } };
   }
   const raw = Object.fromEntries(formData.entries());
-  const payload: Record<string, string> = {};
+  const payload: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(raw)) {
     if (typeof value === "string" && value.trim() !== "") {
       payload[key] = value.trim();
     }
   }
+  // Checkbox: present when checked ("on"), absent when unchecked
+  payload.smsOptIn = formData.get("smsOptIn") === "on";
   const parsed = CreateCandidateInput.safeParse(payload);
   if (!parsed.success) {
     const errors: Record<string, string[]> = {};
