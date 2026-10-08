@@ -20,15 +20,15 @@ export default async function JobsAdminPage() {
       <p className="text-sm text-gray-600">
         Platform-level log. Not tenant-scoped.
       </p>
-      <table className="w-full border-collapse text-left text-sm">
+      <table className="w-full border-collapse text-start text-sm">
         <thead>
           <tr className="border-b">
-            <th className="py-2 pr-2">Job</th>
-            <th className="py-2 pr-2">Started</th>
-            <th className="py-2 pr-2">Duration</th>
-            <th className="py-2 pr-2">Status</th>
-            <th className="py-2 pr-2">Processed</th>
-            <th className="py-2 pr-2">Failed</th>
+            <th className="py-2 pe-2">Job</th>
+            <th className="py-2 pe-2">Started</th>
+            <th className="py-2 pe-2">Duration</th>
+            <th className="py-2 pe-2">Status</th>
+            <th className="py-2 pe-2">Processed</th>
+            <th className="py-2 pe-2">Failed</th>
           </tr>
         </thead>
         <tbody>
@@ -41,16 +41,16 @@ export default async function JobsAdminPage() {
           ) : (
             runs.map((r) => (
               <tr key={r.id} className="border-b align-top">
-                <td className="py-2 pr-2">{r.jobName}</td>
-                <td className="py-2 pr-2 whitespace-nowrap">
+                <td className="py-2 pe-2">{r.jobName}</td>
+                <td className="py-2 pe-2 whitespace-nowrap">
                   {r.startedAt.toISOString().slice(0, 19)}Z
                 </td>
-                <td className="py-2 pr-2">
+                <td className="py-2 pe-2">
                   {r.finishedAt.getTime() - r.startedAt.getTime()}ms
                 </td>
-                <td className="py-2 pr-2">{r.status}</td>
-                <td className="py-2 pr-2">{r.itemsProcessed}</td>
-                <td className="py-2 pr-2">
+                <td className="py-2 pe-2">{r.status}</td>
+                <td className="py-2 pe-2">{r.itemsProcessed}</td>
+                <td className="py-2 pe-2">
                   {r.itemsFailed}
                   {r.metadata ? (
                     <details>

@@ -27,7 +27,7 @@ describe("deleted user login", () => {
         deletedAt: new Date(),
       },
     });
-    await expect(authorizeCredentials(email, password)).resolves.toBeNull();
+    await expect(authorizeCredentials(email, password, tenant.id)).resolves.toBeNull();
 
     const liveEmail = `live-${stamp}@seed.local`;
     await authPrisma.user.create({
@@ -41,7 +41,7 @@ describe("deleted user login", () => {
         passwordHash,
       },
     });
-    const live = await authorizeCredentials(liveEmail, password);
+    const live = await authorizeCredentials(liveEmail, password, tenant.id);
     expect(live?.id).toBe(`u-live-${stamp}`);
   });
 });

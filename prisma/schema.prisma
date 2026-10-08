@@ -12,6 +12,13 @@ model Tenant {
   id        String   @id @default(cuid())
   name      String
   slug      String   @unique
+  displayName      String?
+  logoUrl          String?
+  primaryColor     String?
+  defaultLocale    String  @default("en")
+  defaultDirection String  @default("ltr")
+  customDomain     String?
+  isPublicListing  Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?

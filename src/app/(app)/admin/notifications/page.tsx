@@ -109,15 +109,15 @@ export default async function NotificationsAdminPage({ searchParams }: Props) {
       </form>
 
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left text-sm">
+        <table className="w-full border-collapse text-start text-sm">
           <thead>
             <tr className="border-b">
-              <th className="py-2 pr-2">Time</th>
-              <th className="py-2 pr-2">Channel</th>
-              <th className="py-2 pr-2">Template</th>
-              <th className="py-2 pr-2">Recipient</th>
-              <th className="py-2 pr-2">Status</th>
-              <th className="py-2 pr-2">Actions</th>
+              <th className="py-2 pe-2">Time</th>
+              <th className="py-2 pe-2">Channel</th>
+              <th className="py-2 pe-2">Template</th>
+              <th className="py-2 pe-2">Recipient</th>
+              <th className="py-2 pe-2">Status</th>
+              <th className="py-2 pe-2">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -130,17 +130,17 @@ export default async function NotificationsAdminPage({ searchParams }: Props) {
             ) : (
               rows.map((n) => (
                 <tr key={n.id} className="border-b">
-                  <td className="py-2 pr-2 whitespace-nowrap">
+                  <td className="py-2 pe-2 whitespace-nowrap">
                     {n.createdAt.toISOString().slice(0, 19)}Z
                   </td>
-                  <td className="py-2 pr-2">{n.channel}</td>
-                  <td className="py-2 pr-2">{n.templateKey}</td>
-                  <td className="py-2 pr-2">
+                  <td className="py-2 pe-2">{n.channel}</td>
+                  <td className="py-2 pe-2">{n.templateKey}</td>
+                  <td className="py-2 pe-2">
                     {n.recipientType}
                     {n.recipientId ? ` / ${n.recipientId.slice(0, 8)}` : ""}
                   </td>
-                  <td className="py-2 pr-2">{n.status}</td>
-                  <td className="py-2 pr-2">
+                  <td className="py-2 pe-2">{n.status}</td>
+                  <td className="py-2 pe-2">
                     <Link
                       href={`/admin/notifications/${n.id}`}
                       className="underline"

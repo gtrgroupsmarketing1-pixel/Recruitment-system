@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LanguageSwitcher } from "@/components/shell/LanguageSwitcher";
 import { requireCandidateSession } from "@/core/candidate-auth/session";
 
 export default async function CandidateLayout({ children }: { children: React.ReactNode }) {
@@ -10,6 +11,7 @@ export default async function CandidateLayout({ children }: { children: React.Re
         <Link href="/candidate/documents">Documents</Link>
         <Link href="/candidate/appointments">Appointments</Link>
         <Link href="/candidate/settings">Settings</Link>
+        <LanguageSwitcher />
       </header>
       {children}
     </div>

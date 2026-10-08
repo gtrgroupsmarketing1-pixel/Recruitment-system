@@ -1,11 +1,12 @@
 import bcrypt from "bcryptjs";
 import { authPrisma } from "@/core/db/client";
 
-export async function authorizeCredentials(emailRaw: string, password: string) {
+export async function authorizeCredentials(emailRaw: string, password: string, tenantId?: string | null) {
   const email = emailRaw.toLowerCase();
   if (!email || !password) return null;
+  if (!tenantId) return null;
   const user = await authPrisma.user.findFirst({
-    where: { email, deletedAt: null },
+    where: { email, tenantId, deletedAt: null },
   });
   if (!user?.passwordHash) return null;
   const ok = await bcrypt.compare(password, user.passwordHash);

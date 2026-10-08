@@ -22,7 +22,7 @@ export default async function TemplateDetailPage({ params }: Props) {
         {template.steps.map((step) => (
           <li key={step.id} className="rounded border p-3 text-sm">
             {step.stepOrder}. {step.name}
-            <span className="ml-2 text-xs text-neutral-500">
+            <span className="ms-2 text-xs text-neutral-500">
               {step.responsibleParty} · SLA {step.slaDays}d
             </span>
           </li>

@@ -152,6 +152,11 @@ jobs:
           PGPASSWORD=dev psql -h localhost -U postgres -d recruit -v ON_ERROR_STOP=1 \
             -f prisma/migrations/20261008140000_session_26_candidate_portal/migration.sql
 
+      - name: Apply branding index
+        run: |
+          PGPASSWORD=dev psql -h localhost -U postgres -d recruit -v ON_ERROR_STOP=1 \
+            -f prisma/migrations/20261008150000_session_27_branding/migration.sql
+
       - name: Apply user scope constraint
         run: |
           PGPASSWORD=dev psql -h localhost -U postgres -d recruit -v ON_ERROR_STOP=1 \
@@ -170,6 +175,13 @@ jobs:
         continue-on-error: true
       - name: typecheck (exit if errors)
         run: npx tsc --noEmit
+      - name: Check for physical Tailwind properties
+        run: |
+          if grep -RIn -E '\b(ml|mr|pl|pr)-|text-left|text-right' src/app src/components --include='*.tsx'; then
+            echo "Use logical properties for RTL"
+            exit 1
+          fi
+
       - name: vitest
         run: npx vitest run
         env:
@@ -179,4 +191,5 @@ jobs:
           ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
           BLIND_INDEX_KEY: BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=
           CANDIDATE_SESSION_SECRET: CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=
+          ROOT_DOMAIN: example.com
           NODE_ENV: test

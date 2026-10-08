@@ -71,11 +71,13 @@ const providers: Provider[] = [
       email: { label: "Email", type: "email" },
       password: { label: "Password", type: "password" },
     },
-    authorize: async (credentials) => {
-      // Pre-tenant: login lookup uses authPrisma (app_auth BYPASSRLS) and deletedAt: null.
+    authorize: async (credentials, request) => {
+      const tenantId = request?.headers?.get("x-tenant-id");
+      if (!tenantId) return null;
       return authorizeCredentials(
         String(credentials?.email ?? ""),
-        String(credentials?.password ?? "")
+        String(credentials?.password ?? ""),
+        tenantId
       );
     },
   }),

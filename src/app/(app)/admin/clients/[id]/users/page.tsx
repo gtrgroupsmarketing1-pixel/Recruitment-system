@@ -35,7 +35,7 @@ export default async function ClientUsersPage({ params }: Props) {
       </header>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left">
+          <tr className="text-start">
             <th>Email</th>
             <th>Name</th>
             <th>Created</th>

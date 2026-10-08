@@ -115,3 +115,5 @@ A clickable slot grid for the next 7 days is Session 25+ polish.
 - [ ] Document visibility toggle stays on the candidate documents page (Session 25); not moved to a separate card.
 
 - [ ] Candidate upload rate limit (20 per 24h) deferred to Session 29.
+
+- [ ] Split candidate auth-flow.test.ts (one it covers request, verify, expiry, rate limit, and no-enumeration) in Session 29.
