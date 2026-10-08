@@ -49,8 +49,13 @@ describe("status-gated changeStatus", () => {
       )
     ).rejects.toBeInstanceOf(ForbiddenError);
 
+    const current = await withUserScope(
+      { kind: "USER", tenantId: seed.tenantId, userId: seed.adminId, role: "TENANT_ADMIN", branchId: null },
+      () => ApplicationRepo.findById(seed.tenantId, seed.applicationId)
+    );
+    const startIdx = PIPELINE_ORDER.indexOf(current!.status as Status);
     const traveledIdx = PIPELINE_ORDER.indexOf(STATUS.TRAVELED);
-    for (let i = 0; i < traveledIdx; i++) {
+    for (let i = startIdx; i < traveledIdx; i++) {
       await changeStatusAs(
         seed.tenantId,
         seed.adminId,
