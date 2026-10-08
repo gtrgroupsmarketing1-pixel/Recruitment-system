@@ -101,3 +101,19 @@ is cheap; a broken template breaks every notification type silently.
   branch filters use `recruiterId IN branchUserIds` (`loadBranchUserIds` helper).
 - Status-gated `change_status` (MOBILIZATION ≥ TRAVELED, COMPLIANCE ≥ MEDICAL_BOOKED)
   deferred to service-level checks in a follow-up; role gate only in Session 24.
+
+## Scope filter integrity
+Scope filters depend on columns being populated. A missing recruiterId
+on create silently breaks BRANCH_MANAGER and RECRUITER visibility.
+Session 24's role-enforcement tests caught this. Rule: any new column
+referenced by a scope filter needs a test that asserts it's populated
+after the normal create path.
+
+## Session 24b — status-gated change_status
+MOBILIZATION_OFFICER may change status only when current >= TRAVELED.
+COMPLIANCE_OFFICER only when current >= MEDICAL_BOOKED.
+Exit states (REJECTED, ON_HOLD, MEDICAL_UNFIT, VISA_REFUSED, ABSCONDED)
+are always allowed for roles that already passed application:change_status.
+Order source is PIPELINE_ORDER. Gate lives in router/action, before the
+state machine.
+

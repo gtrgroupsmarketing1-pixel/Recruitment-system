@@ -7,6 +7,10 @@ import { ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { ApplicationStatusSchema } from "./application.schema";
 import { ApplicationService } from "./application.service";
+import { ApplicationRepo } from "./application.repo";
+import { requireChangeStatusPermission } from "@/core/auth/status-permission";
+import { NotFoundError } from "@/lib/errors";
+import type { Status } from "./application.state-machine";
 
 /**
  * Batch status change. Each application gets its own changeStatus call.
@@ -27,6 +31,9 @@ export async function batchStatusAction(formData: FormData): Promise<void> {
 
     for (const id of ids) {
       try {
+        const app = await ApplicationRepo.findById(scope.tenantId, id);
+        if (!app) throw new NotFoundError("Application");
+        requireChangeStatusPermission(scope, app.status as Status, parsed.data as Status);
         await ApplicationService.changeStatus(
           scope.tenantId,
           scope.userId,

@@ -2,6 +2,11 @@ import { z } from "zod";
 import { protectedProcedure, router } from "@/trpc/init";
 import { requirePermission } from "@/core/auth/session";
 import { ApplicationService } from "./application.service";
+import { ApplicationRepo } from "./application.repo";
+import { requireChangeStatusPermission } from "@/core/auth/status-permission";
+import { getUserScope } from "@/core/auth/scope";
+import { NotFoundError } from "@/lib/errors";
+import type { Status } from "./application.state-machine";
 import {
   ApplicationStatusSchema,
   CreateApplicationInput,
@@ -52,6 +57,13 @@ export const applicationRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       requirePermission("application:change_status");
+      const app = await ApplicationRepo.findById(ctx.tenantId, input.applicationId);
+      if (!app) throw new NotFoundError("Application");
+      requireChangeStatusPermission(
+        getUserScope(),
+        app.status as Status,
+        input.toStatus as Status
+      );
       return ApplicationService.changeStatus(
         ctx.tenantId,
         ctx.userId,
