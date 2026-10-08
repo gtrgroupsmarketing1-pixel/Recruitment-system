@@ -50,6 +50,12 @@ jobs:
           DATABASE_URL: postgres://postgres:dev@localhost:5432/recruit
           DIRECT_URL: postgres://postgres:dev@localhost:5432/recruit
 
+
+      - name: Apply audit integrity rules
+        run: |
+          PGPASSWORD=dev psql -h localhost -U postgres -d recruit -v ON_ERROR_STOP=1 \
+            -f prisma/migrations/20261008160000_session_29_security/migration.sql
+
       - name: Apply RLS policies
         run: |
           PGPASSWORD=dev psql -h localhost -U postgres -d recruit -v ON_ERROR_STOP=1 \

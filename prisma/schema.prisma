@@ -1094,3 +1094,17 @@ model CandidateAuthRateLimit {
   @@unique([candidateId, windowStart])
   @@index([windowStart])
 }
+
+/// Platform-level rate limit counters. No RLS — cross-tenant by design (attacker IP spans tenants).
+model RateLimit {
+  id          String   @id @default(cuid())
+  key         String
+  identifier  String
+  windowStart DateTime
+  count       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([key, identifier, windowStart])
+  @@index([windowStart])
+}

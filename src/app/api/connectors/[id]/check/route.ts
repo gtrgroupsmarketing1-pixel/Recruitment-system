@@ -1,3 +1,4 @@
+import { validateOrigin } from "@/core/security/origin";
 import { withSessionScope } from "@/core/auth/action-scope";
 import { requirePermission } from "@/core/auth/session";
 import { ConnectorCheckService } from "@/modules/connector/connector.check.service";
@@ -7,6 +8,9 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!validateOrigin(req)) {
+      return Response.json({ error: "Invalid origin" }, { status: 403 });
+    }
     const { id } = await context.params;
     const body = (await req.json()) as { checklistId?: unknown };
     if (typeof body.checklistId !== "string") {

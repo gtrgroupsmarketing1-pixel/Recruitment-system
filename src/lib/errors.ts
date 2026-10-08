@@ -85,3 +85,10 @@ export class ConfigurationError extends AppError {
     this.name = "ConfigurationError";
   }
 }
+
+export class RateLimitError extends AppError {
+  constructor(public readonly resetAt?: Date) {
+    super("Too many requests", "RATE_LIMITED", 429);
+    this.name = "RateLimitError";
+  }
+}

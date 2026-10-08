@@ -1,3 +1,5 @@
+import { assertRateLimit } from "@/core/security/rate-limit";
+import { RateLimitError } from "@/lib/errors";
 import { randomBytes } from "node:crypto";
 import { requireSession } from "@/core/auth/session";
 import { signState } from "@/core/oauth/state";
@@ -9,6 +11,17 @@ export async function GET(
   context: { params: Promise<{ provider: string }> }
 ) {
   const session = await requireSession();
+  try {
+    await assertRateLimit("api:oauth-start", session.user.id);
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return new Response("Too many requests", {
+        status: 429,
+        headers: { "Retry-After": "3600" },
+      });
+    }
+    throw error;
+  }
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) return new Response("Missing tenant", { status: 401 });
   const { provider } = await context.params;

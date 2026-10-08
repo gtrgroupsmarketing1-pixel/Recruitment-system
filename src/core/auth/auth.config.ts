@@ -74,10 +74,13 @@ const providers: Provider[] = [
     authorize: async (credentials, request) => {
       const tenantId = request?.headers?.get("x-tenant-id");
       if (!tenantId) return null;
+      const forwarded = request?.headers?.get("x-forwarded-for")?.split(",")[0]?.trim();
+      const ip = forwarded || request?.headers?.get("x-real-ip") || "unknown";
       return authorizeCredentials(
         String(credentials?.email ?? ""),
         String(credentials?.password ?? ""),
-        tenantId
+        tenantId,
+        ip
       );
     },
   }),

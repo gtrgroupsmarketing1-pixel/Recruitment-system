@@ -3,6 +3,37 @@ import { verifyCandidateSession } from "@/core/candidate-auth/session";
 import { resolveTenantFromHost } from "@/core/tenant/resolver";
 import { NextResponse } from "next/server";
 
+function applySecurityHeaders(res: NextResponse): NextResponse {
+  res.headers.set("Strict-Transport-Security", "max-age=604800; includeSubDomains");
+  res.headers.set("X-Content-Type-Options", "nosniff");
+  res.headers.set("X-Frame-Options", "DENY");
+  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+  );
+  res.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  res.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+  if (process.env.NODE_ENV === "production") {
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://*.amazonaws.com https://*.r2.cloudflarestorage.com",
+      "font-src 'self' data:",
+      "connect-src 'self' https://api.postmarkapp.com https://api.twilio.com https://graph.facebook.com https://www.googleapis.com https://graph.microsoft.com",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "object-src 'none'",
+      "upgrade-insecure-requests",
+    ].join("; ");
+    res.headers.set("Content-Security-Policy-Report-Only", csp);
+  }
+  return res;
+}
+
+
 export const runtime = "nodejs";
 
 function isCandidatePublic(pathname: string): boolean {
@@ -32,7 +63,7 @@ export default auth(async (req) => {
   const host = req.headers.get("host") ?? "";
   const tenant = await resolveTenantFromHost(host);
   if (pathname.startsWith("/landing") || pathname.startsWith("/api/locale")) {
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next());
   }
   if (pathname.startsWith("/candidate") || pathname.startsWith("/api/candidate-auth")) {
     if (!isCandidatePublic(pathname)) {
@@ -40,7 +71,7 @@ export default auth(async (req) => {
       const session = raw ? verifyCandidateSession(raw) : null;
       if (!session) return NextResponse.redirect(new URL("/candidate/login", req.url));
     }
-    const res = NextResponse.next();
+    const res = applySecurityHeaders(NextResponse.next());
     if (tenant) {
       res.headers.set("x-tenant-id", tenant.id);
       res.headers.set("x-tenant-slug", tenant.slug);
@@ -49,7 +80,7 @@ export default auth(async (req) => {
     return res;
   }
   if ((pathname === "/login" || pathname === "/signup") && !tenant) {
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next());
   }
   if (!tenant && pathname === "/") {
     return NextResponse.rewrite(new URL("/landing", req.url));
@@ -64,7 +95,7 @@ export default auth(async (req) => {
   requestHeaders.set("x-tenant-id", tenant.id);
   requestHeaders.set("x-tenant-slug", tenant.slug);
   requestHeaders.set("x-tenant-branding", brandingHeader(tenant));
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  return applySecurityHeaders(NextResponse.next({ request: { headers: requestHeaders } }));
 });
 
 export const config = {

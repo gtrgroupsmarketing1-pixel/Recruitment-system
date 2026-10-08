@@ -1,3 +1,5 @@
+import { assertRateLimit } from "@/core/security/rate-limit";
+import { RateLimitError } from "@/lib/errors";
 import { NextRequest } from "next/server";
 import { requireSession } from "@/core/auth/session";
 import { googleAuthUrl, microsoftAuthUrl } from "@/core/drive/drive.client";
@@ -14,6 +16,17 @@ export async function GET(
 ) {
   try {
     const session = await requireSession();
+  try {
+    await assertRateLimit("api:oauth-start", session.user.id);
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return new Response("Too many requests", {
+        status: 429,
+        headers: { "Retry-After": "3600" },
+      });
+    }
+    throw error;
+  }
     if (!canConnectDrive(session.user.role)) {
       return new Response("Forbidden", { status: 403 });
     }

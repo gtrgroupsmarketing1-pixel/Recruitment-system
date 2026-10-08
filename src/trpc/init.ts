@@ -5,7 +5,8 @@ import { auth } from "@/core/auth/auth.config";
 import { withUserScope } from "@/core/db/client";
 import { logger } from "@/lib/logger";
 import { cookies } from "next/headers";
-import { ForbiddenError, UnauthorizedError } from "@/lib/errors";
+import { ForbiddenError, RateLimitError, UnauthorizedError } from "@/lib/errors";
+import { assertRateLimit } from "@/core/security/rate-limit";
 import { assertNoCandidateOnStaffApi } from "@/core/candidate-auth/session";
 
 export type TrpcContext = {
@@ -62,6 +63,14 @@ export const publicProcedure = t.procedure;
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   if (!ctx.tenantId || !ctx.userId || !ctx.role) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  try {
+    await assertRateLimit("api:trpc", ctx.userId);
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: error.message });
+    }
+    throw error;
   }
   const tenantId = ctx.tenantId;
   const userId = ctx.userId;

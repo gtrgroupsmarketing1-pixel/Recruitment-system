@@ -134,3 +134,6 @@ Tenant id comes from the host via middleware. Credentials login rejects a missin
 
 ## Session 28 — SSE
 Staff realtime is a signal stream. pg_notify runs inside the publish transaction. Clients refresh; payloads are not the source of truth.
+
+## Session 29 — Security hardening
+Platform RateLimit table has no RLS (attacker IPs are cross-tenant). AuditLog is append-only via Postgres RULE + REVOKE UPDATE/DELETE from app_tenant. CSP ships as Report-Only; enforce after first production deploy. HSTS max-age is 1 week until HTTPS is confirmed stable.
