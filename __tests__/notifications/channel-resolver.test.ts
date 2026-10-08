@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const findFirst = vi.fn();
+const { findFirst } = vi.hoisted(() => ({
+  findFirst: vi.fn(),
+}));
+
 vi.mock("@/core/db/client", () => ({
   db: {
     candidate: { findFirst },
