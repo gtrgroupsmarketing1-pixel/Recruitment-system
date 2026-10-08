@@ -118,6 +118,13 @@ export const DocumentService = {
     return { url, expiresIn: 900 };
   },
 
+  async setClientVisible(tenantId: string, documentId: string, clientVisible: boolean) {
+    const row = await db.document.findFirst({ where: { id: documentId, tenantId, deletedAt: null } });
+    if (!row) throw new NotFoundError("Document", documentId);
+    await db.document.updateMany({ where: { id: documentId, tenantId }, data: { clientVisible } });
+    return { id: documentId, clientVisible };
+  },
+
   async softDelete(tenantId: string, _userId: string, documentId: string) {
     const row = await db.document.findFirst({ where: { id: documentId, tenantId, deletedAt: null } });
     if (!row) throw new NotFoundError("Document", documentId);

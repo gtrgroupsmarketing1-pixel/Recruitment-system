@@ -14,7 +14,7 @@ export default async function CandidateDocumentsPage({ params }: Props) {
   return (
     <main className="mx-auto max-w-3xl p-4">
       <h1 className="text-xl font-semibold">Candidate documents</h1>
-      <DocumentList documents={documents} />
+      <DocumentList documents={documents} candidateId={id} staff />
     </main>
   );
 }
