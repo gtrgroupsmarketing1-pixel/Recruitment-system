@@ -125,7 +125,7 @@ export function registerNotificationSubscribers(): () => void {
         candidate: { select: { fullName: true } },
       },
     });
-    if (!doc) return;
+    if (!doc?.uploadedBy) return;
 
     const uploader = await db.user.findFirst({
       where: {
