@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@/core/auth/session";
 import { subscribeToDomainEvents } from "@/core/events/pg-listener";
-import { parseRealtimePayload, shouldDeliver } from "@/core/realtime/filter";
+import { parseRealtimePayload, realtimeAccess, shouldDeliver } from "@/core/realtime/filter";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
   const tenantId = session.user.tenantId || session.tenantId;
-  if (!tenantId || session.user.role === "CLIENT_USER") {
+  if (realtimeAccess({ tenantId, role: session.user.role }) !== "ok" || !tenantId) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
   const encoder = new TextEncoder();

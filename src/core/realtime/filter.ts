@@ -16,3 +16,9 @@ export function parseRealtimePayload(raw: string): { type: string; tenantId: str
     return null;
   }
 }
+
+export function realtimeAccess(session: { tenantId?: string | null; role?: string | null } | null): "ok" | "unauthorized" {
+  if (!session?.tenantId) return "unauthorized";
+  if (session.role === "CLIENT_USER") return "unauthorized";
+  return "ok";
+}
