@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "@/trpc/init";
+import { requirePermission } from "@/core/auth/session";
 import { TaskService } from "./task.service";
 import { UpdateTaskInput } from "./task.schema";
 
@@ -15,26 +16,33 @@ export const taskRouter = router({
         })
         .strict()
     )
-    .query(({ ctx, input }) =>
-      TaskService.listForUser(ctx.tenantId, ctx.userId, input)
-    ),
+    .query(({ ctx, input }) => {
+      requirePermission("task:view_own");
+      return TaskService.listForUser(ctx.tenantId, ctx.userId, input);
+    }),
 
   getById: protectedProcedure
     .input(z.object({ id: z.string() }).strict())
-    .query(({ ctx, input }) => TaskService.getById(ctx.tenantId, input.id)),
+    .query(({ ctx, input }) => {
+      requirePermission("task:view_own");
+      return TaskService.getById(ctx.tenantId, input.id);
+    }),
 
   update: protectedProcedure
     .input(UpdateTaskInput.extend({ id: z.string() }))
     .mutation(({ ctx, input }) => {
+      requirePermission("task:update");
       const { id, ...patch } = input;
       return TaskService.update(ctx.tenantId, ctx.userId, id, patch);
     }),
 
-  countsForUser: protectedProcedure.query(({ ctx }) =>
-    TaskService.countsForUser(ctx.tenantId, ctx.userId)
-  ),
+  countsForUser: protectedProcedure.query(({ ctx }) => {
+    requirePermission("task:view_own");
+    return TaskService.countsForUser(ctx.tenantId, ctx.userId);
+  }),
 
-  overdue: protectedProcedure.query(({ ctx }) =>
-    TaskService.overdueForTenant(ctx.tenantId)
-  ),
+  overdue: protectedProcedure.query(({ ctx }) => {
+    requirePermission("task:view_all");
+    return TaskService.overdueForTenant(ctx.tenantId);
+  }),
 });

@@ -31,10 +31,12 @@ describe("session claims", () => {
       name: "Ada",
       tenantId: "ten_1",
       role: "TENANT_ADMIN",
+      branchId: "br_1",
     } as User;
     const token = withTenantClaims({} as JWT, user);
     expect(token.tenantId).toBe("ten_1");
     expect(token.role).toBe("TENANT_ADMIN");
+    expect(token.branchId).toBe("br_1");
 
     const refreshed = withTenantClaims(token, null);
     expect(refreshed.tenantId).toBe("ten_1");
@@ -56,5 +58,7 @@ describe("session claims", () => {
     );
     expect(session.tenantId).toBe("ten_1");
     expect(session.user.id).toBe("user_1");
+    expect(session.branchId).toBe("br_1");
+    expect(session.user.branchId).toBe("br_1");
   });
 });

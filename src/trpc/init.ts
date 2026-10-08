@@ -1,17 +1,21 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
+import type { UserRole } from "@prisma/client";
 import { auth } from "@/core/auth/auth.config";
-import { withTenant } from "@/core/db/client";
+import { withUserScope } from "@/core/db/client";
 import { logger } from "@/lib/logger";
+import { ForbiddenError } from "@/lib/errors";
 
 export type TrpcContext = {
   tenantId: string | null;
   userId: string | null;
+  role: UserRole | null;
+  branchId: string | null;
 };
 
 /**
  * Builds request context. Does NOT open a tenant transaction here —
- * withTenant wraps the procedure body in protectedProcedure, otherwise
+ * withUserScope wraps the procedure body in protectedProcedure, otherwise
  * the transaction would end before the procedure runs.
  */
 export async function createTRPCContext(): Promise<TrpcContext> {
@@ -19,34 +23,58 @@ export async function createTRPCContext(): Promise<TrpcContext> {
   return {
     tenantId: session?.tenantId ?? null,
     userId: session?.user?.id ?? null,
+    role: (session?.user?.role ?? session?.role ?? null) as UserRole | null,
+    branchId: session?.user?.branchId ?? session?.branchId ?? null,
   };
 }
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
+  errorFormatter({ shape, error }) {
+    if (error.cause instanceof ForbiddenError) {
+      return {
+        ...shape,
+        data: { ...shape.data, code: "FORBIDDEN", httpStatus: 403 },
+        message: error.cause.message,
+      };
+    }
+    return shape;
+  },
 });
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
 
 /**
- * Requires session tenant + user, then runs the procedure inside withTenant
- * so RLS set_config and the db Proxy share one transaction for the call.
+ * Requires session tenant + user, then runs the procedure inside withUserScope
+ * so RLS set_config, scope storage, and the db Proxy share one transaction.
  */
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
-  if (!ctx.tenantId || !ctx.userId) {
+  if (!ctx.tenantId || !ctx.userId || !ctx.role) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
   const tenantId = ctx.tenantId;
   const userId = ctx.userId;
-  const log = logger.child({ tenantId, userId });
-  return withTenant(tenantId, async () =>
-    next({
-      ctx: {
-        tenantId,
-        userId,
-        log,
-      },
-    })
+  const role = ctx.role;
+  const branchId = ctx.branchId;
+  const log = logger.child({ tenantId, userId, role });
+  return withUserScope(
+    {
+      kind: "USER",
+      tenantId,
+      userId,
+      role,
+      branchId,
+    },
+    async () =>
+      next({
+        ctx: {
+          tenantId,
+          userId,
+          role,
+          branchId,
+          log,
+        },
+      })
   );
 });

@@ -90,3 +90,14 @@ src/core/notifications/templates.ts has been corrupted twice by bulk
 edits (S19, S22). After any edit, run notification template tests
 locally before committing. The file is small enough that review-before-commit
 is cheap; a broken template breaks every notification type silently.
+
+
+## Session 24 — RBAC enforcement
+- PERMISSIONS matrix in `src/core/auth/permissions.ts` is the single source of truth.
+  `requirePermission` (session) + `can()` (UI) read from it. No dual lists.
+- Scope via AsyncLocalStorage (`scopeStorage`). `withUserScope` for interactive paths;
+  `withSystemScope` for jobs/webhooks. `withTenant` kept as deprecated alias to `withSystemScope`.
+- `branchId` claimed on JWT/session for BRANCH_MANAGER filters. No schema migration —
+  branch filters use `recruiterId IN branchUserIds` (`loadBranchUserIds` helper).
+- Status-gated `change_status` (MOBILIZATION ≥ TRAVELED, COMPLIANCE ≥ MEDICAL_BOOKED)
+  deferred to service-level checks in a follow-up; role gate only in Session 24.

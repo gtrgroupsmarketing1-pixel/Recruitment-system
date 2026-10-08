@@ -1,43 +1,45 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
+import { requirePermission } from "@/core/auth/session";
 import { ValidationError } from "@/lib/errors";
 import { ComplianceDetailsService } from "./compliance.details.service";
 
 export async function saveDetailsAction(formData: FormData): Promise<void> {
-  const session = await requireSession();
-  const tenantId = session.user.tenantId || session.tenantId;
-  if (!tenantId || !session.user.id) throw new ValidationError("Missing session tenant");
-  const caseId = String(formData.get("caseId") ?? "");
-  const checklistId = String(formData.get("checklistId") ?? "");
-  const connectorId = String(formData.get("connectorId") ?? "");
-  await withTenant(tenantId, async () => {
+  await withSessionScope(async (scope) => {
+    requirePermission("compliance:complete_step");
+    const tenantId = scope.tenantId;
+    const caseId = String(formData.get("caseId") ?? "");
+    const checklistId = String(formData.get("checklistId") ?? "");
+    const connectorId = String(formData.get("connectorId") ?? "");
+    if (!caseId || !checklistId) throw new ValidationError("Missing case or step");
+
     if (connectorId === "wafid") {
-      await ComplianceDetailsService.saveMedicalDetails(tenantId, session.user.id, checklistId, {
+      await ComplianceDetailsService.saveMedicalDetails(tenantId, scope.userId, checklistId, {
         centerName: String(formData.get("centerName") ?? "") || null,
         result: String(formData.get("result") ?? "") || null,
       });
     } else if (connectorId === "mohre") {
-      await ComplianceDetailsService.saveVisaDetails(tenantId, session.user.id, checklistId, {
+      await ComplianceDetailsService.saveVisaDetails(tenantId, scope.userId, checklistId, {
         visaNumber: String(formData.get("visaNumber") ?? "") || null,
       });
     } else if (connectorId === "dmw") {
-      await ComplianceDetailsService.saveLaborExitDetails(tenantId, session.user.id, checklistId, {
+      await ComplianceDetailsService.saveLaborExitDetails(tenantId, scope.userId, checklistId, {
         clearanceType: String(formData.get("clearanceType") ?? "") || null,
       });
     } else if (connectorId === "travel") {
-      await ComplianceDetailsService.saveTravelDetails(tenantId, session.user.id, checklistId, {
+      await ComplianceDetailsService.saveTravelDetails(tenantId, scope.userId, checklistId, {
         flightNumber: String(formData.get("flightNumber") ?? "") || null,
       });
     } else if (connectorId === "deployment") {
-      await ComplianceDetailsService.saveDeploymentDetails(tenantId, session.user.id, checklistId, {
+      await ComplianceDetailsService.saveDeploymentDetails(tenantId, scope.userId, checklistId, {
         site: String(formData.get("site") ?? "") || null,
       });
     } else if (connectorId === "attestation") {
-      await ComplianceDetailsService.saveAttestationDetails(tenantId, session.user.id, checklistId);
+      await ComplianceDetailsService.saveAttestationDetails(tenantId, scope.userId, checklistId);
     }
+  
+    revalidatePath(`/compliance/cases/${caseId}`);
   });
-  revalidatePath(`/compliance/cases/${caseId}`);
 }

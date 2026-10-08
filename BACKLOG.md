@@ -100,12 +100,9 @@ Notification.body is considered sensitive (may contain candidate names, IDs).
 Accessible via tenant-scoped admin UI; never logged or exported bulk.
 
 
-## Test seed factory (Session 23 shipped `__tests__/helpers/seed.ts`)
-## Test seed factory
-Sessions 22's config-service and check-service suites skip without full seed.
-Before Session 24, build a __tests__/helpers/seed.ts that creates
-tenant + user + requisition + candidate + application + checklist in
-one call. Then un-skip those suites. Reuse for future integration tests.
+## Test seed factory — SHIPPED (Session 23)
+`__tests__/helpers/seed.ts` `seedTenantWithCase` creates tenant + users +
+requisition + candidate + application + compliance case. Session 22 suites un-skipped.
 
 
 ## Availability slot grid (UI polish)

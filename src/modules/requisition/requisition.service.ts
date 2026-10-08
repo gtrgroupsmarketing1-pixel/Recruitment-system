@@ -8,6 +8,8 @@ import {
 } from "./requisition.id";
 import { computeFulfillmentPct, computeSlaFlag } from "./requisition.metrics";
 import type { CreateRequisitionInput, UpdateRequisitionInput } from "./requisition.schema";
+import { tryGetScope } from "@/core/auth/scope";
+import { requisitionScopeFilter, loadBranchUserIds } from "@/core/auth/scope-filter";
 
 /**
  * Requisition business logic.
@@ -119,7 +121,13 @@ export const RequisitionService = {
     tenantId: string,
     filter: { status?: JobRequisition["status"]; clientCompanyId?: string; search?: string }
   ): Promise<RequisitionView[]> {
-    const rows = await RequisitionRepo.list(tenantId, filter);
+    const scope = tryGetScope();
+    let branchUserIds: string[] | undefined;
+    if (scope?.kind === "USER" && scope.role === "BRANCH_MANAGER" && scope.branchId) {
+      branchUserIds = await loadBranchUserIds(tenantId, scope.branchId);
+    }
+    const scopeWhere = scope ? requisitionScopeFilter(scope, branchUserIds) : {};
+    const rows = await RequisitionRepo.list(tenantId, filter, scopeWhere);
     const views: RequisitionView[] = [];
     for (const row of rows) {
       views.push(await toView(tenantId, row));

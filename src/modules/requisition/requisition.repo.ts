@@ -15,12 +15,14 @@ export const RequisitionRepo = {
 
   async list(
     tenantId: string,
-    filter?: { status?: ReqStatus; clientCompanyId?: string; search?: string }
+    filter?: { status?: ReqStatus; clientCompanyId?: string; search?: string },
+    scopeWhere?: Prisma.JobRequisitionWhereInput
   ) {
     return db.jobRequisition.findMany({
       where: {
         tenantId,
         deletedAt: null,
+        ...scopeWhere,
         ...(filter?.status ? { status: filter.status } : {}),
         ...(filter?.clientCompanyId
           ? { clientCompanyId: filter.clientCompanyId }

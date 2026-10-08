@@ -1,4 +1,4 @@
-import { authPrisma, withTenant, db } from "@/core/db/client";
+import { authPrisma, withSystemScope, db } from "@/core/db/client";
 import { DocumentSyncService } from "@/modules/document/document.sync.service";
 import { nextAttemptAt } from "@/core/drive/folder-path";
 import { runJob, type JobResult } from "@/core/jobs/run-job";
@@ -19,7 +19,7 @@ export async function runDocumentSyncJob(): Promise<JobResult> {
     let failed = 0;
     for (const state of pending) {
       try {
-        await withTenant(state.tenantId, async () => {
+        await withSystemScope(state.tenantId, "cron:document-sync", async () => {
           await db.documentSyncState.updateMany({
             where: { id: state.id, tenantId: state.tenantId },
             data: {

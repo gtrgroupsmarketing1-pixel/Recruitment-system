@@ -13,11 +13,16 @@ export const CandidateRepo = {
     });
   },
 
-  async list(tenantId: string, filter?: { search?: string }) {
+  async list(
+    tenantId: string,
+    filter?: { search?: string },
+    scopeWhere?: Prisma.CandidateWhereInput
+  ) {
     return db.candidate.findMany({
       where: {
         tenantId,
         deletedAt: null,
+        ...scopeWhere,
         ...(filter?.search
           ? {
               OR: [

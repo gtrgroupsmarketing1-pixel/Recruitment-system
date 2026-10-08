@@ -1,4 +1,4 @@
-import { authPrisma, withTenant, db } from "@/core/db/client";
+import { authPrisma, withSystemScope, db } from "@/core/db/client";
 import { getConnector } from "@/core/connectors/registry";
 import { connectorKindToId } from "@/core/connectors/kind";
 import { suggestedActionFor } from "@/core/connectors/suggested-action";
@@ -179,7 +179,7 @@ export async function runConnectorPollJob(): Promise<JobResult> {
         continue;
       }
 
-      await withTenant(config.tenantId, async () => {
+      await withSystemScope(config.tenantId, "cron:connector-poll", async () => {
         try {
           const result = await pollOneConfig(config.tenantId, config);
           processed += result.processed;

@@ -1,4 +1,4 @@
-import { authPrisma, withTenant } from "@/core/db/client";
+import { authPrisma, withSystemScope } from "@/core/db/client";
 import { eventBus } from "@/core/events/event-bus";
 import { daysRemaining } from "@/modules/document/document.expiry";
 import { runJob, type JobResult } from "@/core/jobs/run-job";
@@ -28,7 +28,7 @@ export async function runDocumentExpiryJob(): Promise<JobResult> {
     for (const row of rows) {
       if (!row.expiryDate) continue;
       try {
-        await withTenant(row.tenantId, async () => {
+        await withSystemScope(row.tenantId, "cron:document-expiry", async () => {
           await eventBus.publish({
             type: "document.expiring",
             tenantId: row.tenantId,

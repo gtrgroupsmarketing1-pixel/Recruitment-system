@@ -1,5 +1,5 @@
 import { db } from "@/core/db/client";
-import type { ApplicationStatus } from "@prisma/client";
+import type { ApplicationStatus, Prisma } from "@prisma/client";
 
 /**
  * Application data access. Tenant-scoped. No business logic.
@@ -12,17 +12,25 @@ export const ApplicationRepo = {
     });
   },
 
-  async listByRequisition(tenantId: string, requisitionId: string) {
+  async listByRequisition(
+    tenantId: string,
+    requisitionId: string,
+    scopeWhere?: Prisma.CandidateApplicationWhereInput
+  ) {
     return db.candidateApplication.findMany({
-      where: { tenantId, requisitionId, deletedAt: null },
+      where: { tenantId, requisitionId, deletedAt: null, ...scopeWhere },
       orderBy: { createdAt: "desc" },
     });
   },
 
   /** Projection for pipeline + bulk: includes candidate name/phone. */
-  async listByRequisitionGrouped(tenantId: string, requisitionId: string) {
+  async listByRequisitionGrouped(
+    tenantId: string,
+    requisitionId: string,
+    scopeWhere?: Prisma.CandidateApplicationWhereInput
+  ) {
     return db.candidateApplication.findMany({
-      where: { tenantId, requisitionId, deletedAt: null },
+      where: { tenantId, requisitionId, deletedAt: null, ...scopeWhere },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -71,9 +79,13 @@ export const ApplicationRepo = {
     });
   },
 
-  async listByCandidate(tenantId: string, candidateId: string) {
+  async listByCandidate(
+    tenantId: string,
+    candidateId: string,
+    scopeWhere?: Prisma.CandidateApplicationWhereInput
+  ) {
     return db.candidateApplication.findMany({
-      where: { tenantId, candidateId, deletedAt: null },
+      where: { tenantId, candidateId, deletedAt: null, ...scopeWhere },
       orderBy: { createdAt: "desc" },
     });
   },

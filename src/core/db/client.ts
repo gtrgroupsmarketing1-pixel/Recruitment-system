@@ -7,6 +7,11 @@ import {
 } from "@/core/db/prisma-instances";
 import { logger } from "@/lib/logger";
 import { eventBus } from "@/core/events/event-bus";
+import {
+  scopeStorage,
+  type SessionScope,
+  type SystemScope,
+} from "@/core/auth/scope";
 
 /**
  * RLS bypassed. Auth.js adapter + signup + privileged test setup only.
@@ -66,13 +71,7 @@ export async function runInTenantTx<T>(
   });
 }
 
-/**
- * Opens a transaction-local set_config('app.tenant_id', ..., true) and runs fn
- * with db Proxy resolving to that transaction client.
- * After commit, dispatches pending DomainEvent rows (transactional outbox).
- * Idempotent for nested calls: reuses an already-active tenant tx (no nested dispatch).
- */
-export async function withTenant<T>(
+async function runWithOutbox<T>(
   tenantId: string,
   fn: () => Promise<T>
 ): Promise<T> {
@@ -80,7 +79,6 @@ export async function withTenant<T>(
     return fn();
   }
   const result = await runInTenantTx(tenantId, fn);
-  // Post-commit outbox drain. Failures are logged; rows stay pending for retry.
   try {
     await eventBus.dispatchPending(tenantId);
   } catch (err) {
@@ -90,4 +88,44 @@ export async function withTenant<T>(
     );
   }
   return result;
+}
+
+/**
+ * @deprecated Use withUserScope (interactive) or withSystemScope (jobs/webhooks).
+ * Backwards-compatible: sets SYSTEM scope with reason "legacy-withTenant".
+ * Remove in Session 25.
+ */
+export async function withTenant<T>(
+  tenantId: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  return withSystemScope(tenantId, "legacy-withTenant", fn);
+}
+
+/**
+ * Jobs, webhooks, and other non-interactive paths. Bypasses role checks.
+ */
+export async function withSystemScope<T>(
+  tenantId: string,
+  reason: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  const systemScope: SystemScope = { kind: "SYSTEM", tenantId, reason };
+  if (getActiveTx()) {
+    return scopeStorage.run(systemScope, fn);
+  }
+  return runWithOutbox(tenantId, () => scopeStorage.run(systemScope, fn));
+}
+
+/**
+ * Interactive user paths (tRPC, server actions). Carries role + branch for RBAC.
+ */
+export async function withUserScope<T>(
+  scope: SessionScope,
+  fn: () => Promise<T>
+): Promise<T> {
+  if (getActiveTx()) {
+    return scopeStorage.run(scope, fn);
+  }
+  return runWithOutbox(scope.tenantId, () => scopeStorage.run(scope, fn));
 }

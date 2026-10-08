@@ -6,10 +6,25 @@ import type { ApplicationStatus } from "@prisma/client";
 import { CandidateRepo } from "@/modules/candidate/candidate.repo";
 import { RequisitionRepo } from "@/modules/requisition/requisition.repo";
 import type { CreateApplicationInput } from "./application.schema";
+import { tryGetScope } from "@/core/auth/scope";
+import {
+  applicationScopeFilter,
+  loadBranchUserIds,
+} from "@/core/auth/scope-filter";
 
 /**
  * Application business logic. Only writer of CandidateApplication.status.
  */
+
+async function resolveAppScopeWhere(tenantId: string) {
+  const scope = tryGetScope();
+  let branchUserIds: string[] | undefined;
+  if (scope?.kind === "USER" && scope.role === "BRANCH_MANAGER" && scope.branchId) {
+    branchUserIds = await loadBranchUserIds(tenantId, scope.branchId);
+  }
+  return scope ? applicationScopeFilter(scope, branchUserIds) : {};
+}
+
 export const ApplicationService = {
   async create(tenantId: string, userId: string, input: CreateApplicationInput) {
     void userId;
@@ -34,7 +49,8 @@ export const ApplicationService = {
   },
 
   async listByCandidate(tenantId: string, candidateId: string) {
-    return ApplicationRepo.listByCandidate(tenantId, candidateId);
+    const scopeWhere = await resolveAppScopeWhere(tenantId);
+    return ApplicationRepo.listByCandidate(tenantId, candidateId, scopeWhere);
   },
 
   async changeStatus(
@@ -90,6 +106,7 @@ export const ApplicationService = {
   },
 
   async listByRequisition(tenantId: string, requisitionId: string) {
-    return ApplicationRepo.listByRequisition(tenantId, requisitionId);
+    const scopeWhere = await resolveAppScopeWhere(tenantId);
+    return ApplicationRepo.listByRequisition(tenantId, requisitionId, scopeWhere);
   },
 };

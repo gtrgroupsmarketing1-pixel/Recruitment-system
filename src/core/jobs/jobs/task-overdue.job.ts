@@ -3,7 +3,7 @@
  * Uses authPrisma (BYPASSRLS) to scan across tenants, then publishes
  * task.overdue inside a per-tenant withTenant transaction.
  */
-import { authPrisma, withTenant, db } from "@/core/db/client";
+import { authPrisma, withSystemScope, db } from "@/core/db/client";
 import { eventBus } from "@/core/events/event-bus";
 import { logger } from "@/lib/logger";
 import { runJob } from "@/core/jobs/run-job";
@@ -33,7 +33,7 @@ export async function runTaskOverdueJob(): Promise<{ processed: number }> {
       (now.getTime() - task.dueDate.getTime()) / 86_400_000
     );
 
-    await withTenant(task.tenantId, async () => {
+    await withSystemScope(task.tenantId, "cron:task-overdue", async () => {
       await eventBus.publish({
         type: "task.overdue",
         tenantId: task.tenantId,

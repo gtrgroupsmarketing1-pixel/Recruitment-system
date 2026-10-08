@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import type { ExternalProvider } from "@prisma/client";
-import { withTenant, db } from "@/core/db/client";
+import { withSystemScope, db } from "@/core/db/client";
 import { createGoogleDriveClient, googleExchangeCode, googleGetUserInfo } from "@/core/drive/google.client";
 import {
   createMicrosoftDriveClient,
@@ -40,7 +40,7 @@ export async function GET(
       ? createGoogleDriveClient(tokens.access_token)
       : createMicrosoftDriveClient(tokens.access_token);
 
-  await withTenant(claims.tenantId, async () => {
+  await withSystemScope(claims.tenantId, "oauth:drive-callback", async () => {
     const tenant = await db.tenant.findFirst({ where: { id: claims.tenantId } });
     const rootName = tenant?.name ?? "Recruitment System";
     const folder = await client.ensureRootFolder(rootName);

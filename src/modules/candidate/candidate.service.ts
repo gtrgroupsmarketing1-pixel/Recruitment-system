@@ -3,6 +3,8 @@ import { logger } from "@/lib/logger";
 import { NotFoundError } from "@/lib/errors";
 import { CandidateRepo } from "./candidate.repo";
 import type { CreateCandidateInput, UpdateCandidateInput } from "./candidate.schema";
+import { tryGetScope } from "@/core/auth/scope";
+import { candidateScopeFilter, loadBranchUserIds } from "@/core/auth/scope-filter";
 
 export type CandidateListItem = {
   id: string;
@@ -56,7 +58,13 @@ export const CandidateService = {
     tenantId: string,
     filter: { search?: string }
   ): Promise<CandidateListItem[]> {
-    return CandidateRepo.list(tenantId, filter);
+    const scope = tryGetScope();
+    let branchUserIds: string[] | undefined;
+    if (scope?.kind === "USER" && scope.role === "BRANCH_MANAGER" && scope.branchId) {
+      branchUserIds = await loadBranchUserIds(tenantId, scope.branchId);
+    }
+    const scopeWhere = scope ? candidateScopeFilter(scope, branchUserIds) : {};
+    return CandidateRepo.list(tenantId, filter, scopeWhere);
   },
 
   async getById(tenantId: string, id: string): Promise<CandidateDetailView> {

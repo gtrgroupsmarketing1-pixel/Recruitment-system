@@ -1,5 +1,5 @@
-import { requireSession } from "@/core/auth/session";
-import { withTenant } from "@/core/db/client";
+import { withSessionScope } from "@/core/auth/action-scope";
+import { requirePermission } from "@/core/auth/session";
 import { verifyState } from "@/core/oauth/state";
 import { CalendarConnectionService } from "@/modules/calendar/calendar.connection.service";
 
@@ -76,38 +76,45 @@ export async function GET(
   req: Request,
   context: { params: Promise<{ provider: string }> }
 ) {
-  const session = await requireSession();
-  const tenantId = session.user.tenantId || session.tenantId;
-  if (!tenantId) return new Response("Missing tenant", { status: 401 });
-  const { provider } = await context.params;
-  const url = new URL(req.url);
-  const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state");
-  if (!code || !state) return new Response("Missing code/state", { status: 400 });
-  const claims = verifyState(state);
-  if (!claims || claims.tenantId !== tenantId || claims.userId !== session.user.id) {
-    return new Response("Invalid state", { status: 400 });
-  }
+  try {
+    return await withSessionScope(async (scope) => {
+      requirePermission("calendar:connect_own");
+      const { provider } = await context.params;
+      const url = new URL(req.url);
+      const code = url.searchParams.get("code");
+      const state = url.searchParams.get("state");
+      if (!code || !state) return new Response("Missing code/state", { status: 400 });
+      const claims = verifyState(state);
+      if (
+        !claims ||
+        claims.tenantId !== scope.tenantId ||
+        claims.userId !== scope.userId
+      ) {
+        return new Response("Invalid state", { status: 400 });
+      }
 
-  const tokens =
-    provider === "google"
-      ? await exchangeGoogle(code)
-      : await exchangeMicrosoft(code);
-
-  await withTenant(tenantId, () =>
-    CalendarConnectionService.upsert(tenantId, session.user.id, {
-      provider: provider === "google" ? "GOOGLE" : "MICROSOFT",
-      externalAccountId: tokens.externalAccountId,
-      externalEmail: tokens.externalEmail,
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      tokenExpiresAt: new Date(Date.now() + tokens.expiresIn * 1000),
-      scopes:
+      const tokens =
         provider === "google"
-          ? "calendar.events calendar.readonly"
-          : "Calendars.ReadWrite",
-    })
-  );
+          ? await exchangeGoogle(code)
+          : await exchangeMicrosoft(code);
 
-  return Response.redirect(new URL("/settings/calendar?connected=1", req.url));
+      await CalendarConnectionService.upsert(scope.tenantId, scope.userId, {
+        provider: provider === "google" ? "GOOGLE" : "MICROSOFT",
+        externalAccountId: tokens.externalAccountId,
+        externalEmail: tokens.externalEmail,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        tokenExpiresAt: new Date(Date.now() + tokens.expiresIn * 1000),
+        scopes:
+          provider === "google"
+            ? "calendar.events calendar.readonly"
+            : "Calendars.ReadWrite",
+      });
+
+      return Response.redirect(new URL("/settings/calendar?connected=1", req.url));
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return new Response(message, { status: 403 });
+  }
 }

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "@/trpc/init";
+import { requirePermission } from "@/core/auth/session";
 import { ComplianceTemplateService } from "./compliance.template.service";
 import { ComplianceCaseService } from "./compliance.case.service";
 
@@ -28,14 +29,16 @@ export const complianceRouter = router({
           })
           .strict()
       )
-      .query(({ ctx, input }) =>
-        ComplianceTemplateService.listTemplates(ctx.tenantId, input)
-      ),
+      .query(({ ctx, input }) => {
+        requirePermission("compliance:view_case");
+        return ComplianceTemplateService.listTemplates(ctx.tenantId, input);
+      }),
     get: protectedProcedure
       .input(z.object({ id: z.string() }).strict())
-      .query(({ ctx, input }) =>
-        ComplianceTemplateService.getTemplate(ctx.tenantId, input.id)
-      ),
+      .query(({ ctx, input }) => {
+        requirePermission("compliance:view_case");
+        return ComplianceTemplateService.getTemplate(ctx.tenantId, input.id);
+      }),
     create: protectedProcedure
       .input(
         z
@@ -49,9 +52,14 @@ export const complianceRouter = router({
           })
           .strict()
       )
-      .mutation(({ ctx, input }) =>
-        ComplianceTemplateService.createTemplate(ctx.tenantId, ctx.userId, input)
-      ),
+      .mutation(({ ctx, input }) => {
+        requirePermission("compliance:template_manage");
+        return ComplianceTemplateService.createTemplate(
+          ctx.tenantId,
+          ctx.userId,
+          input
+        );
+      }),
     update: protectedProcedure
       .input(
         z
@@ -66,6 +74,7 @@ export const complianceRouter = router({
           .strict()
       )
       .mutation(({ ctx, input }) => {
+        requirePermission("compliance:template_manage");
         const { id, ...rest } = input;
         return ComplianceTemplateService.updateTemplate(
           ctx.tenantId,
@@ -76,14 +85,20 @@ export const complianceRouter = router({
       }),
     delete: protectedProcedure
       .input(z.object({ id: z.string() }).strict())
-      .mutation(({ ctx, input }) =>
-        ComplianceTemplateService.deleteTemplate(ctx.tenantId, ctx.userId, input.id)
-      ),
+      .mutation(({ ctx, input }) => {
+        requirePermission("compliance:template_manage");
+        return ComplianceTemplateService.deleteTemplate(
+          ctx.tenantId,
+          ctx.userId,
+          input.id
+        );
+      }),
   }),
   steps: router({
     add: protectedProcedure
       .input(stepInput.extend({ templateId: z.string() }))
       .mutation(({ ctx, input }) => {
+        requirePermission("compliance:template_manage");
         const { templateId, ...step } = input;
         return ComplianceTemplateService.addStep(
           ctx.tenantId,
@@ -95,6 +110,7 @@ export const complianceRouter = router({
     update: protectedProcedure
       .input(stepInput.partial().extend({ stepId: z.string() }))
       .mutation(({ ctx, input }) => {
+        requirePermission("compliance:template_manage");
         const { stepId, ...rest } = input;
         return ComplianceTemplateService.updateStep(
           ctx.tenantId,
@@ -104,15 +120,20 @@ export const complianceRouter = router({
         );
       }),
     remove: protectedProcedure
-      .input(z.object({ stepId: z.string(), force: z.boolean().default(false) }).strict())
-      .mutation(({ ctx, input }) =>
-        ComplianceTemplateService.removeStep(
+      .input(
+        z
+          .object({ stepId: z.string(), force: z.boolean().default(false) })
+          .strict()
+      )
+      .mutation(({ ctx, input }) => {
+        requirePermission("compliance:template_manage");
+        return ComplianceTemplateService.removeStep(
           ctx.tenantId,
           ctx.userId,
           input.stepId,
           input.force
-        )
-      ),
+        );
+      }),
   }),
   cases: router({
     list: protectedProcedure
@@ -124,14 +145,16 @@ export const complianceRouter = router({
           })
           .strict()
       )
-      .query(({ ctx, input }) =>
-        ComplianceCaseService.listCases(ctx.tenantId, input)
-      ),
+      .query(({ ctx, input }) => {
+        requirePermission("compliance:view_case");
+        return ComplianceCaseService.listCases(ctx.tenantId, input);
+      }),
     get: protectedProcedure
       .input(z.object({ id: z.string() }).strict())
-      .query(({ ctx, input }) =>
-        ComplianceCaseService.getCase(ctx.tenantId, input.id)
-      ),
+      .query(({ ctx, input }) => {
+        requirePermission("compliance:view_case");
+        return ComplianceCaseService.getCase(ctx.tenantId, input.id);
+      }),
     completeStep: protectedProcedure
       .input(
         z
@@ -142,24 +165,26 @@ export const complianceRouter = router({
           })
           .strict()
       )
-      .mutation(({ ctx, input }) =>
-        ComplianceCaseService.completeStep(
+      .mutation(({ ctx, input }) => {
+        requirePermission("compliance:complete_step");
+        return ComplianceCaseService.completeStep(
           ctx.tenantId,
           ctx.userId,
           input.caseId,
           input.checklistId,
           input.docs
-        )
-      ),
+        );
+      }),
     uncompleteStep: protectedProcedure
       .input(z.object({ caseId: z.string(), checklistId: z.string() }).strict())
-      .mutation(({ ctx, input }) =>
-        ComplianceCaseService.uncompleteStep(
+      .mutation(({ ctx, input }) => {
+        requirePermission("compliance:uncomplete_step");
+        return ComplianceCaseService.uncompleteStep(
           ctx.tenantId,
           ctx.userId,
           input.caseId,
           input.checklistId
-        )
-      ),
+        );
+      }),
   }),
 });
