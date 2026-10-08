@@ -1,3 +1,4 @@
+// Cron path params only; body unused. Bearer auth + rate limit.
 import { NextResponse } from "next/server";
 import { runJob } from "@/core/jobs/run-job";
 import { runDocumentExpiryJob } from "@/core/jobs/jobs/document-expiry.job";
@@ -5,6 +6,8 @@ import { runTaskOverdueJob } from "@/core/jobs/jobs/task-overdue.job";
 import { runDocumentGcJob } from "@/core/jobs/jobs/document-gc.job";
 import { runDocumentSyncJob } from "@/core/jobs/jobs/document-sync.job";
 import { runConnectorPollJob } from "@/core/jobs/jobs/connector-poll.job";
+import { RATE_LIMITS, checkRateLimit } from "@/core/security/rate-limit";
+import { extractIp } from "@/core/security/ip";
 
 const JOBS: Record<string, () => Promise<unknown>> = {
   "document-expiry": runDocumentExpiryJob,
@@ -32,6 +35,22 @@ export async function GET(
 ) {
   if (!authorizeCron(req.headers.get("authorization"))) {
     return new Response("Unauthorized", { status: 401 });
+  }
+  // Bearer-auth job runner — Origin not applicable (machine client, not browser).
+  const ip = extractIp(req);
+  const limit = await checkRateLimit(
+    {
+      key: "api:cron",
+      max: RATE_LIMITS["api:cron"].max,
+      windowSeconds: RATE_LIMITS["api:cron"].windowSeconds,
+    },
+    ip
+  );
+  if (!limit.allowed) {
+    return new Response("Too Many Requests", {
+      status: 429,
+      headers: { "Retry-After": "60" },
+    });
   }
   const { job } = await context.params;
   const fn = JOBS[job];

@@ -1,10 +1,26 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { TenantService } from "@/modules/tenant/tenant.service";
-import { ValidationError } from "@/lib/errors";
+import { RateLimitError, ValidationError } from "@/lib/errors";
 import { signIn } from "@/core/auth/auth.config";
+import { RATE_LIMITS, checkRateLimit } from "@/core/security/rate-limit";
+import { extractIp } from "@/core/security/ip";
 
 async function signupAction(formData: FormData) {
   "use server";
+  const h = await headers();
+  const ip = extractIp({ headers: h });
+  const limit = await checkRateLimit(
+    {
+      key: "auth:signup",
+      max: RATE_LIMITS["auth:signup"].max,
+      windowSeconds: RATE_LIMITS["auth:signup"].windowSeconds,
+    },
+    ip
+  );
+  if (!limit.allowed) {
+    redirect(`/signup?error=${encodeURIComponent("Too many signup attempts")}`);
+  }
   const input = {
     tenantName: String(formData.get("tenantName") ?? ""),
     slug: String(formData.get("slug") ?? ""),
@@ -15,6 +31,9 @@ async function signupAction(formData: FormData) {
   try {
     await TenantService.signup(input);
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      redirect(`/signup?error=${encodeURIComponent("Too many signup attempts")}`);
+    }
     const message = error instanceof ValidationError ? error.message : "Signup failed";
     redirect(`/signup?error=${encodeURIComponent(message)}`);
   }

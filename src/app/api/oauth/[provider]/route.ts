@@ -1,3 +1,4 @@
+// OAuth start/callback — provider redirect; Origin check exempt (callback from IdP).
 import { assertRateLimit } from "@/core/security/rate-limit";
 import { RateLimitError } from "@/lib/errors";
 import { NextRequest } from "next/server";

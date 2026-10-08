@@ -1,3 +1,4 @@
+// OAuth start/callback — provider redirect; Origin check exempt (callback from IdP).
 import { withSessionScope } from "@/core/auth/action-scope";
 import { requirePermission } from "@/core/auth/session";
 import { verifyState } from "@/core/oauth/state";

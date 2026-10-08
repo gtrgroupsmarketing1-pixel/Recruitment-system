@@ -2,6 +2,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "@/trpc/init";
 import { requirePermission } from "@/core/auth/session";
 import { DocumentService } from "./document.service";
+import { assertRateLimit } from "@/core/security/rate-limit";
 
 const typeSchema = z.enum([
   "PASSPORT",
@@ -31,8 +32,9 @@ export const documentRouter = router({
         sizeBytes: z.number().int().positive(),
       })
     )
-    .mutation(({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       requirePermission("document:upload");
+      await assertRateLimit("api:upload", ctx.userId);
       return DocumentService.requestUpload(ctx.tenantId, ctx.userId, input);
     }),
   confirmUpload: protectedProcedure

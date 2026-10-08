@@ -1,4 +1,5 @@
 "use server";
+import { z } from "zod";
 
 import { revalidatePath } from "next/cache";
 import { withSessionScope } from "@/core/auth/action-scope";
@@ -6,14 +7,23 @@ import { requirePermission } from "@/core/auth/session";
 import { ValidationError } from "@/lib/errors";
 import { ComplianceDetailsService } from "./compliance.details.service";
 
+const DetailsSchema = z.object({
+  caseId: z.string().min(1),
+  checklistId: z.string().min(1),
+  connectorId: z.string().optional().default(""),
+});
+
 export async function saveDetailsAction(formData: FormData): Promise<void> {
   await withSessionScope(async (scope) => {
     requirePermission("compliance:complete_step");
     const tenantId = scope.tenantId;
-    const caseId = String(formData.get("caseId") ?? "");
-    const checklistId = String(formData.get("checklistId") ?? "");
-    const connectorId = String(formData.get("connectorId") ?? "");
-    if (!caseId || !checklistId) throw new ValidationError("Missing case or step");
+    const parsed = DetailsSchema.safeParse({
+      caseId: formData.get("caseId"),
+      checklistId: formData.get("checklistId"),
+      connectorId: formData.get("connectorId") ?? "",
+    });
+    if (!parsed.success) throw new ValidationError("Missing case or step");
+    const { caseId, checklistId, connectorId } = parsed.data;
 
     if (connectorId === "wafid") {
       await ComplianceDetailsService.saveMedicalDetails(tenantId, scope.userId, checklistId, {

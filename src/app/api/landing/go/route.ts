@@ -1,3 +1,4 @@
+// Redirect helper — no untrusted body parse needed.
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {

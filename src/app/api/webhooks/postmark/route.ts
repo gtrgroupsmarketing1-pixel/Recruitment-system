@@ -1,4 +1,17 @@
+import { z } from "zod";
 import { handlePostmarkWebhook } from "@/modules/notification/postmark.webhook";
+
+// Webhook with basic-auth verification — Origin check exempt.
+const PostmarkWebhook = z
+  .object({
+    RecordType: z.enum(["Delivery", "Bounce", "Open", "SpamComplaint"]).or(z.string()),
+    MessageID: z.string().min(1),
+    DeliveredAt: z.string().optional(),
+    Type: z.string().optional(),
+    Description: z.string().optional(),
+    ReceivedAt: z.string().optional(),
+  })
+  .passthrough();
 
 export async function POST(req: Request) {
   const auth = req.headers.get("authorization");
@@ -8,12 +21,13 @@ export async function POST(req: Request) {
   } catch {
     return new Response("Bad request", { status: 400 });
   }
-  if (!payload || typeof payload !== "object") {
+  const parsed = PostmarkWebhook.safeParse(payload);
+  if (!parsed.success) {
     return new Response("Bad request", { status: 400 });
   }
   const result = await handlePostmarkWebhook(
     auth,
-    payload as {
+    parsed.data as {
       RecordType?: string;
       MessageID?: string;
       DeliveredAt?: string;

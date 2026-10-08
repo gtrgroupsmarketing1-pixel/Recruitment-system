@@ -1,3 +1,4 @@
+// Health check — no external body input.
 import { NextResponse } from "next/server";
 import { getStorage } from "@/core/storage/storage.client";
 

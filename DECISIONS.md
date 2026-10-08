@@ -137,3 +137,6 @@ Staff realtime is a signal stream. pg_notify runs inside the publish transaction
 
 ## Session 29 — Security hardening
 Platform RateLimit table has no RLS (attacker IPs are cross-tenant). AuditLog is append-only via Postgres RULE + REVOKE UPDATE/DELETE from app_tenant. CSP ships as Report-Only; enforce after first production deploy. HSTS max-age is 1 week until HTTPS is confirmed stable.
+
+## Session 29b — Security gaps closed
+All nine RATE_LIMITS keys have callers. Mutating /api routes use requireOrigin or documented exemption (webhooks, OAuth callbacks, signed storage, cron bearer). Webhooks and form actions Zod-parse external input.

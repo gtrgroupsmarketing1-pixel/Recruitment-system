@@ -1,3 +1,4 @@
+// SSE GET stream — no body.
 import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@/core/auth/session";
 import { subscribeToDomainEvents } from "@/core/events/pg-listener";

@@ -1,3 +1,4 @@
+// OAuth start/callback — provider redirect; Origin check exempt (callback from IdP).
 import { NextRequest } from "next/server";
 import type { ExternalProvider } from "@prisma/client";
 import { withSystemScope, db } from "@/core/db/client";
