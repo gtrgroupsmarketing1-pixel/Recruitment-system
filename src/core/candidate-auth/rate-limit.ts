@@ -26,8 +26,10 @@ export async function assertAuthRateLimit(tenantId: string, candidateId: string)
 }
 
 export async function sweepAuthRateLimits(now = Date.now()): Promise<number> {
+  const table = authPrisma.candidateAuthRateLimit;
+  if (!table) return 0;
   const cutoff = new Date(now - 24 * 60 * 60_000);
-  const result = await authPrisma.candidateAuthRateLimit.deleteMany({
+  const result = await table.deleteMany({
     where: { windowStart: { lt: cutoff } },
   });
   return result.count;
