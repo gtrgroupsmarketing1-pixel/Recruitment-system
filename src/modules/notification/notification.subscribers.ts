@@ -1,6 +1,7 @@
 import { eventBus } from "@/core/events/event-bus";
 import { db } from "@/core/db/client";
 import { NotificationService } from "./notification.service";
+import { resolveChannel } from "@/core/notifications/channel-resolver";
 
 /**
  * Notification subscribers. Register once at boot.
@@ -19,8 +20,10 @@ export function registerNotificationSubscribers(): () => void {
     });
     if (!candidate) return;
 
-    const addr = candidate.phone ?? candidate.email;
-    if (!addr) return;
+    const resolved = await resolveChannel(event.tenantId, {
+      candidateId: event.payload.candidateId,
+    });
+    if (!resolved) return;
 
     await NotificationService.send(
       event.tenantId,
@@ -28,13 +31,14 @@ export function registerNotificationSubscribers(): () => void {
       {
         type: "CANDIDATE",
         id: event.payload.candidateId,
-        addr,
+        addr: resolved.address,
       },
       {
         candidateName: candidate.fullName,
         status: event.payload.to,
         requisitionCode: event.payload.requisitionId,
-      }
+      },
+      { channel: resolved.channel }
     );
   });
 

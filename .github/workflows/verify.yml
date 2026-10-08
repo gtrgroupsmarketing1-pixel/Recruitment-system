@@ -120,6 +120,21 @@ jobs:
           CREATE POLICY tenant_isolation ON "ConnectorCheckLog"
             USING ("tenantId" = current_setting('app.tenant_id', true))
             WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
+          ALTER TABLE "UserCalendarConnection" ENABLE ROW LEVEL SECURITY;
+          DROP POLICY IF EXISTS tenant_isolation ON "UserCalendarConnection";
+          CREATE POLICY tenant_isolation ON "UserCalendarConnection"
+            USING ("tenantId" = current_setting('app.tenant_id', true))
+            WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
+          ALTER TABLE "ScheduledEvent" ENABLE ROW LEVEL SECURITY;
+          DROP POLICY IF EXISTS tenant_isolation ON "ScheduledEvent";
+          CREATE POLICY tenant_isolation ON "ScheduledEvent"
+            USING ("tenantId" = current_setting('app.tenant_id', true))
+            WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
+          ALTER TABLE "TenantSmsQuota" ENABLE ROW LEVEL SECURITY;
+          DROP POLICY IF EXISTS tenant_isolation ON "TenantSmsQuota";
+          CREATE POLICY tenant_isolation ON "TenantSmsQuota"
+            USING ("tenantId" = current_setting('app.tenant_id', true))
+            WITH CHECK ("tenantId" = current_setting('app.tenant_id', true));
           SQL
 
       - name: Grant on tables

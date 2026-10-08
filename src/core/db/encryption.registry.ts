@@ -21,6 +21,10 @@ export const SENSITIVE_FIELDS: Record<string, Record<string, SensitiveField>> = 
   TenantConnectorConfig: {
     credentialsCt: {},
   },
+  UserCalendarConnection: {
+    accessToken: {},
+    refreshToken: {},
+  },
 };
 
 export type SensitiveModel = keyof typeof SENSITIVE_FIELDS;

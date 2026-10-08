@@ -6,6 +6,8 @@ import type {
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { TEMPLATES, type TemplateContext } from "@/core/notifications/templates";
 import { getChannelDriver } from "@/core/notifications/drivers";
+import { SmsQuotaService } from "@/modules/notification/sms-quota.service";
+import { logger } from "@/lib/logger";
 import { renderEmailHtml } from "@/core/notifications/email.layout";
 import { NotificationRepo } from "./notification.repo";
 import { resolveSender } from "./sender.resolver";
@@ -67,7 +69,17 @@ export const NotificationService = {
       throw new NotFoundError("NotificationTemplate", templateKey);
     }
 
-    const channel = overrides?.channel ?? tpl.channel;
+    let channel = overrides?.channel ?? tpl.channel;
+    if (channel === "SMS") {
+      const quota = await SmsQuotaService.canSend(tenantId);
+      if (!quota.ok) {
+        logger.warn(
+          { tenantId, used: quota.used, limit: quota.limit },
+          "sms quota exceeded; falling back to email"
+        );
+        channel = "EMAIL";
+      }
+    }
     const subject = tpl.subject ? tpl.subject(context) : null;
     const body = tpl.body(context);
     const sender = await resolveSender(tenantId);
@@ -109,6 +121,13 @@ export const NotificationService = {
       sentAt: result.status === "SENT" || result.status === "DELIVERED" ? now : null,
       deliveredAt: result.status === "DELIVERED" ? now : null,
     });
+
+    if (
+      channel === "SMS" &&
+      (result.status === "SENT" || result.status === "DELIVERED")
+    ) {
+      await SmsQuotaService.increment(tenantId);
+    }
 
     return toView(updated ?? queued);
   },

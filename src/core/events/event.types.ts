@@ -52,6 +52,18 @@ export type DomainEventPayloads = {
     newStatus: string;
     suggestedAction: "COMPLETE_STEP" | "REVIEW" | null;
   };
+  "calendar.event_created": {
+    eventId: string;
+    applicationId: string | null;
+    organizerUserId: string;
+    startsAt: string;
+    meetingUrl: string | null;
+  };
+  "calendar.event_cancelled": {
+    eventId: string;
+    applicationId: string | null;
+    reason: string;
+  };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;

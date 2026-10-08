@@ -77,3 +77,11 @@ export class StageLockedError extends AppError {
     this.name = "StageLockedError";
   }
 }
+
+
+export class ConfigurationError extends AppError {
+  constructor(message: string) {
+    super(message, "CONFIGURATION_ERROR", 400);
+    this.name = "ConfigurationError";
+  }
+}

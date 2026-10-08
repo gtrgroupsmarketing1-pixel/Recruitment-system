@@ -83,3 +83,10 @@ go to AuditLog, not stdout.
 - TenantConnectorConfig.credentialsCt is encrypted bidx-less (same pattern as Drive tokens).
 - COMPLIANCE_OFFICER queried by role string; Session 23 formalizes RBAC enforcement.
 - Interface changes ripple to every mock (Session 21 lesson). Prefer pure fixtures over structural mocks when possible.
+
+
+## Template file fragility
+src/core/notifications/templates.ts has been corrupted twice by bulk
+edits (S19, S22). After any edit, run notification template tests
+locally before committing. The file is small enough that review-before-commit
+is cheap; a broken template breaks every notification type silently.

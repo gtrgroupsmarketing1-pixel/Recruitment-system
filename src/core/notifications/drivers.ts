@@ -9,6 +9,10 @@ import {
   createMetaWhatsAppChannel,
 } from "@/core/notifications/channels/whatsapp.channel";
 import { InAppChannel } from "@/core/notifications/channels/in-app.channel";
+import {
+  LogSmsChannel,
+  createTwilioSmsChannel,
+} from "@/core/notifications/channels/sms.channel";
 import { ValidationError } from "@/lib/errors";
 
 export type EmailDriverName = "postmark" | "log";
@@ -51,9 +55,21 @@ export function getChannelDriver(
     }
     case "IN_APP":
       return InAppChannel;
-    case "SMS":
-      // Session 22 — fall back to log
-      return LogEmailChannel;
+    case "SMS": {
+      const driver = (process.env.SMS_DRIVER ?? "log") as "twilio" | "log";
+      if (driver === "twilio") {
+        const sid = process.env.TWILIO_ACCOUNT_SID;
+        const token = process.env.TWILIO_AUTH_TOKEN;
+        const from = process.env.TWILIO_FROM_NUMBER;
+        if (!sid || !token || !from) {
+          throw new ValidationError(
+            "SMS_DRIVER=twilio requires TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER"
+          );
+        }
+        return createTwilioSmsChannel(sid, token, from);
+      }
+      return LogSmsChannel;
+    }
     default:
       return LogEmailChannel;
   }

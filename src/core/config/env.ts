@@ -72,6 +72,17 @@ const envObjectSchema = z.object({
   CONNECTOR_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
   CONNECTOR_INTER_REQUEST_DELAY_MS: z.coerce.number().int().nonnegative().default(3000),
   CONNECTOR_USER_AGENT: z.string().min(1).default("RecruitmentSystem/1.0 (+https://app.example.com)"),
+  GOOGLE_CALENDAR_CLIENT_ID: z.string().optional(),
+  GOOGLE_CALENDAR_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CALENDAR_REDIRECT_URI: z.string().optional(),
+  MS_CALENDAR_CLIENT_ID: z.string().optional(),
+  MS_CALENDAR_CLIENT_SECRET: z.string().optional(),
+  MS_CALENDAR_REDIRECT_URI: z.string().optional(),
+  SMS_DRIVER: z.enum(["twilio", "log"]).default("log"),
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_FROM_NUMBER: z.string().optional(),
+  SMS_DAILY_LIMIT_PER_TENANT: z.coerce.number().int().positive().default(500),
 });
 
 /** Full schema with driver/credential cross-checks. */
@@ -113,7 +124,31 @@ const envSchema = envObjectSchema.superRefine((data, ctx) => {
       });
     }
   }
+  if (data.SMS_DRIVER === "twilio") {
+    if (!data.TWILIO_ACCOUNT_SID) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "TWILIO_ACCOUNT_SID required when SMS_DRIVER=twilio",
+        path: ["TWILIO_ACCOUNT_SID"],
+      });
+    }
+    if (!data.TWILIO_AUTH_TOKEN) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "TWILIO_AUTH_TOKEN required when SMS_DRIVER=twilio",
+        path: ["TWILIO_AUTH_TOKEN"],
+      });
+    }
+    if (!data.TWILIO_FROM_NUMBER) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "TWILIO_FROM_NUMBER required when SMS_DRIVER=twilio",
+        path: ["TWILIO_FROM_NUMBER"],
+      });
+    }
+  }
   if (data.STORAGE_DRIVER === "s3" || data.STORAGE_DRIVER === "r2") {
+
     if (!data.S3_BUCKET) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -226,6 +261,17 @@ export function parseEnv(
     CONNECTOR_INTER_REQUEST_DELAY_MS: source.CONNECTOR_INTER_REQUEST_DELAY_MS ?? 3000,
     CONNECTOR_USER_AGENT:
       source.CONNECTOR_USER_AGENT ?? "RecruitmentSystem/1.0 (+https://app.example.com)",
+    GOOGLE_CALENDAR_CLIENT_ID: source.GOOGLE_CALENDAR_CLIENT_ID,
+    GOOGLE_CALENDAR_CLIENT_SECRET: source.GOOGLE_CALENDAR_CLIENT_SECRET,
+    GOOGLE_CALENDAR_REDIRECT_URI: source.GOOGLE_CALENDAR_REDIRECT_URI,
+    MS_CALENDAR_CLIENT_ID: source.MS_CALENDAR_CLIENT_ID,
+    MS_CALENDAR_CLIENT_SECRET: source.MS_CALENDAR_CLIENT_SECRET,
+    MS_CALENDAR_REDIRECT_URI: source.MS_CALENDAR_REDIRECT_URI,
+    SMS_DRIVER: source.SMS_DRIVER ?? "log",
+    TWILIO_ACCOUNT_SID: source.TWILIO_ACCOUNT_SID,
+    TWILIO_AUTH_TOKEN: source.TWILIO_AUTH_TOKEN,
+    TWILIO_FROM_NUMBER: source.TWILIO_FROM_NUMBER,
+    SMS_DAILY_LIMIT_PER_TENANT: source.SMS_DAILY_LIMIT_PER_TENANT ?? 500,
     DRIVE_ENCRYPTION_KEY: source.DRIVE_ENCRYPTION_KEY,
   });
   if (!result.success) {

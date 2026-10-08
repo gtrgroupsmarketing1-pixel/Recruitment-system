@@ -44,6 +44,9 @@ model Tenant {
   connectorConfigs   TenantConnectorConfig[]
   connectorChecks    ConnectorCheck[]
   connectorCheckLogs ConnectorCheckLog[]
+  calendarConnections UserCalendarConnection[]
+  scheduledEvents     ScheduledEvent[]
+  smsQuotas           TenantSmsQuota[]
 }
 
 enum UserRole {
@@ -75,6 +78,8 @@ model User {
   sessions Session[]
   assignedTasks Task[] @relation("TaskAssignee")
   uploadedDocuments Document[] @relation("DocumentUploader")
+  calendarConnections UserCalendarConnection[]
+  organizedEvents     ScheduledEvent[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -126,6 +131,9 @@ model Candidate {
   medicalResult      String?
   medicalResultBidx  String?
   nationality        String?
+  smsOptIn           Boolean  @default(false)
+  smsOptInAt         DateTime?
+  whatsappOptIn      Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   deletedAt          DateTime?
@@ -213,6 +221,7 @@ model CandidateApplication {
   requisition        JobRequisition      @relation(fields: [requisitionId], references: [id])
   screeningRecords   ScreeningRecord[]
   complianceCase     ComplianceCase?
+  scheduledEvents    ScheduledEvent[]
 
   @@unique([tenantId, candidateId, requisitionId])
   @@index([tenantId, status])
@@ -835,6 +844,88 @@ model ConnectorCheckLog {
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId, connectorCheckId, checkedAt])
+}
+
+
+enum CalendarProvider {
+  GOOGLE
+  MICROSOFT
+}
+
+model UserCalendarConnection {
+  id                String           @id @default(cuid())
+  tenantId          String
+  userId            String
+  provider          CalendarProvider
+  externalAccountId String
+  externalEmail     String
+  accessToken       String
+  refreshToken      String
+  tokenExpiresAt    DateTime
+  scopes            String
+  connectedAt       DateTime         @default(now())
+  lastUsedAt        DateTime?
+  lastError         String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([userId, provider])
+  @@index([tenantId])
+}
+
+enum ScheduledEventStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  FAILED
+}
+
+model ScheduledEvent {
+  id                 String               @id @default(cuid())
+  tenantId           String
+  applicationId      String?
+  type               String
+  title              String
+  description        String?
+  startsAt           DateTime
+  endsAt             DateTime
+  timezone           String
+  organizerUserId    String
+  provider           CalendarProvider?
+  externalEventId    String?
+  meetingUrl         String?
+  attendees          Json
+  status             ScheduledEventStatus @default(PENDING)
+  cancellationReason String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  tenant      Tenant                @relation(fields: [tenantId], references: [id])
+  organizer   User                  @relation(fields: [organizerUserId], references: [id])
+  application CandidateApplication? @relation(fields: [applicationId], references: [id])
+
+  @@index([tenantId, startsAt])
+  @@index([tenantId, organizerUserId, startsAt])
+  @@index([tenantId, applicationId])
+  @@index([tenantId, status])
+}
+
+model TenantSmsQuota {
+  id        String   @id @default(cuid())
+  tenantId  String
+  day       String
+  sentCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, day])
 }
 
 
