@@ -3,7 +3,7 @@ import type { UserRole } from "@prisma/client";
 import { ForbiddenError } from "@/lib/errors";
 import { requireChangeStatusPermission } from "@/core/auth/status-permission";
 import type { SessionScope } from "@/core/auth/scope";
-import { STATUS } from "@/modules/application/application.state-machine";
+import { STATUS, type Status } from "@/modules/application/application.state-machine";
 
 function scope(role: UserRole): SessionScope {
   return {
@@ -15,11 +15,11 @@ function scope(role: UserRole): SessionScope {
   };
 }
 
-function expectThrow(role: UserRole, from: typeof STATUS.SOURCED, to: typeof STATUS.SOURCED) {
+function expectThrow(role: UserRole, from: Status, to: Status) {
   expect(() => requireChangeStatusPermission(scope(role), from, to)).toThrow(ForbiddenError);
 }
 
-function expectAllow(role: UserRole, from: typeof STATUS.SOURCED, to: typeof STATUS.SOURCED) {
+function expectAllow(role: UserRole, from: Status, to: Status) {
   expect(() => requireChangeStatusPermission(scope(role), from, to)).not.toThrow();
 }
 
