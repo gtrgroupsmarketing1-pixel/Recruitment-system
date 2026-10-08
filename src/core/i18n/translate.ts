@@ -1,4 +1,5 @@
 import { DICTS, type Locale, type TranslationKey } from "./dict";
+export type { Locale, TranslationKey };
 
 export function t(locale: Locale, key: TranslationKey, params?: Record<string, string>): string {
   const dict = DICTS[locale];
