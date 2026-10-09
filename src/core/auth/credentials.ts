@@ -9,11 +9,23 @@ export async function authorizeCredentials(
   tenantId?: string | null,
   ipAddress?: string | null
 ) {
-  const email = emailRaw.toLowerCase();
-  if (!email || !password) return null;
-  if (!tenantId) return null;
+  const email = emailRaw.toLowerCase().trim();
+  const tid = (tenantId ?? "").trim() || null;
 
-  const identifier = `${ipAddress ?? "unknown"}:${email}`;
+    tenantId: tid,
+    email,
+    hasPassword: Boolean(password),
+    ip: ipAddress ?? "unknown",
+  });
+
+  if (!email || !password) {
+    return null;
+  }
+  if (!tid) {
+    return null;
+  }
+
+  const identifier = `\( {ipAddress ?? "unknown"}: \){email}`;
   const limit = await checkRateLimit(
     {
       key: "auth:login",
@@ -28,11 +40,20 @@ export async function authorizeCredentials(
   }
 
   const user = await authPrisma.user.findFirst({
-    where: { email, tenantId, deletedAt: null },
+    where: { email, tenantId: tid, deletedAt: null },
   });
+
+  console.log(
+    user?.id ?? "NONE",
+    "hashLen=",
+    user?.passwordHash?.length ?? 0
+  );
+
   if (!user?.passwordHash) return null;
+
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return null;
+
   return {
     id: user.id,
     email: user.email,

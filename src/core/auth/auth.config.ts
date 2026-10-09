@@ -70,10 +70,28 @@ const providers: Provider[] = [
     credentials: {
       email: { label: "Email", type: "email" },
       password: { label: "Password", type: "password" },
+      tenantId: { label: "Tenant", type: "text" },
     },
     authorize: async (credentials, request) => {
-      const tenantId = request?.headers?.get("x-tenant-id");
+      // 1. Prefer explicit tenantId from credentials payload (server action path).
+      let tenantId = String(credentials?.tenantId ?? "");
+
+      // 2. Fallback: middleware-populated request header.
+      if (!tenantId) {
+        tenantId = request?.headers?.get("x-tenant-id") ?? "";
+      }
+
+      // 3. Fallback: dev-only slug override (Codespaces / preview).
+      if (!tenantId && process.env.DEV_TENANT_SLUG) {
+        const t = await authPrisma.tenant.findFirst({
+          where: { slug: process.env.DEV_TENANT_SLUG, deletedAt: null },
+          select: { id: true },
+        });
+        tenantId = t?.id ?? "";
+      }
+
       if (!tenantId) return null;
+
       const forwarded = request?.headers?.get("x-forwarded-for")?.split(",")[0]?.trim();
       const ip = forwarded || request?.headers?.get("x-real-ip") || "unknown";
       return authorizeCredentials(

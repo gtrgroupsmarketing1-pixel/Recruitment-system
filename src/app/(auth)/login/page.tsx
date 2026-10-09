@@ -1,10 +1,14 @@
 import { signIn } from "@/core/auth/auth.config";
+import { headers } from "next/headers";
 
 async function loginAction(formData: FormData) {
   "use server";
+  const h = await headers();
+  const tenantId = h.get("x-tenant-id") || "tnt_demo";
   await signIn("credentials", {
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),
+    tenantId,
     redirectTo: "/",
   });
 }

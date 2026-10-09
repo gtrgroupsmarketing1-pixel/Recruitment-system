@@ -33,7 +33,6 @@ function applySecurityHeaders(res: NextResponse): NextResponse {
   return res;
 }
 
-
 export const runtime = "nodejs";
 
 function isCandidatePublic(pathname: string): boolean {
@@ -62,9 +61,19 @@ export default auth(async (req) => {
   const pathname = req.nextUrl.pathname;
   const host = req.headers.get("host") ?? "";
   const tenant = await resolveTenantFromHost(host);
-  if (pathname.startsWith("/landing") || pathname.startsWith("/api/locale")) {
+
+  // Early returns — no tenant resolution or auth required:
+  // - /landing: public marketing page
+  // - /api/locale: language switcher
+  // - /api/auth: NextAuth's own callback URLs (must not be intercepted)
+  if (
+    pathname.startsWith("/landing") ||
+    pathname.startsWith("/api/locale") ||
+    pathname.startsWith("/api/auth")
+  ) {
     return applySecurityHeaders(NextResponse.next());
   }
+
   if (pathname.startsWith("/candidate") || pathname.startsWith("/api/candidate-auth")) {
     if (!isCandidatePublic(pathname)) {
       const raw = req.cookies.get("candidate_session")?.value;
@@ -79,25 +88,41 @@ export default auth(async (req) => {
     }
     return res;
   }
+
   if ((pathname === "/login" || pathname === "/signup") && !tenant) {
     return applySecurityHeaders(NextResponse.next());
   }
+
   if (!tenant && pathname === "/") {
     return NextResponse.rewrite(new URL("/landing", req.url));
   }
+
   if (!tenant) {
     return NextResponse.redirect(new URL("/landing?error=no-tenant", req.url));
   }
+
   if (!req.auth?.tenantId && pathname !== "/login" && pathname !== "/signup") {
     return NextResponse.redirect(new URL("/login", req.url));
   }
+
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-tenant-id", tenant.id);
   requestHeaders.set("x-tenant-slug", tenant.slug);
   requestHeaders.set("x-tenant-branding", brandingHeader(tenant));
+
   return applySecurityHeaders(NextResponse.next({ request: { headers: requestHeaders } }));
 });
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for:
+     * - _next/static (static files)
+     * - _next/image (image optimization)
+     * - favicon.ico
+     * Note: /api and /login are now INCLUDED so tenant resolution runs
+     * on auth callbacks.
+     */
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
 };

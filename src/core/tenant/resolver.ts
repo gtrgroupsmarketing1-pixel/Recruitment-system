@@ -38,6 +38,19 @@ const select = {
 } as const;
 
 export async function resolveTenantFromHost(host: string): Promise<ResolvedTenant | null> {
+  // DEV-ONLY override: Codespaces / preview environments have no subdomain
+  // control, so allow forcing the tenant via DEV_TENANT_SLUG env var.
+  // Never set this in production.
+  if (process.env.DEV_TENANT_SLUG) {
+    const tenant = await authPrisma.tenant.findFirst({
+      where: { slug: process.env.DEV_TENANT_SLUG, deletedAt: null },
+      select,
+    });
+    return tenant
+      ? { ...tenant, defaultDirection: tenant.defaultDirection === "rtl" ? "rtl" : "ltr" }
+      : null;
+  }
+
   const root = process.env.ROOT_DOMAIN || "localhost";
   const parsed = parseHost(host, root);
   if (parsed.kind === "ROOT") return null;
