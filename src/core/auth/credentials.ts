@@ -12,18 +12,8 @@ export async function authorizeCredentials(
   const email = emailRaw.toLowerCase().trim();
   const tid = (tenantId ?? "").trim() || null;
 
-    tenantId: tid,
-    email,
-    hasPassword: Boolean(password),
-    ip: ipAddress ?? "unknown",
-  });
-
-  if (!email || !password) {
-    return null;
-  }
-  if (!tid) {
-    return null;
-  }
+  if (!email || !password) return null;
+  if (!tid) return null;
 
   const identifier = `\( {ipAddress ?? "unknown"}: \){email}`;
   const limit = await checkRateLimit(
@@ -42,13 +32,6 @@ export async function authorizeCredentials(
   const user = await authPrisma.user.findFirst({
     where: { email, tenantId: tid, deletedAt: null },
   });
-
-  console.log(
-    user?.id ?? "NONE",
-    "hashLen=",
-    user?.passwordHash?.length ?? 0
-  );
-
   if (!user?.passwordHash) return null;
 
   const ok = await bcrypt.compare(password, user.passwordHash);
