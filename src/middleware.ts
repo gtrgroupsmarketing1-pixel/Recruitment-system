@@ -35,10 +35,16 @@ function applySecurityHeaders(res: NextResponse): NextResponse {
 
 export const runtime = "nodejs";
 
+function isCandidatePath(pathname: string): boolean {
+  return pathname === "/candidate" || pathname.startsWith("/candidate/");
+}
+
 function isCandidatePublic(pathname: string): boolean {
-  return pathname.startsWith("/candidate/login")
-    || pathname.startsWith("/candidate/verify")
-    || pathname.startsWith("/api/candidate-auth");
+  return (
+    pathname.startsWith("/candidate/login") ||
+    pathname.startsWith("/candidate/verify") ||
+    pathname.startsWith("/api/candidate-auth")
+  );
 }
 
 function brandingHeader(tenant: {
@@ -74,11 +80,15 @@ export default auth(async (req) => {
     return applySecurityHeaders(NextResponse.next());
   }
 
-  if (pathname.startsWith("/candidate") || pathname.startsWith("/api/candidate-auth")) {
+  // Candidate portal — /candidate and /candidate/* ONLY, not /candidates.
+  // The trailing slash in isCandidatePath is what protects staff /candidates.
+  if (isCandidatePath(pathname) || pathname.startsWith("/api/candidate-auth")) {
     if (!isCandidatePublic(pathname)) {
       const raw = req.cookies.get("candidate_session")?.value;
       const session = raw ? verifyCandidateSession(raw) : null;
-      if (!session) return NextResponse.redirect(new URL("/candidate/login", req.url));
+      if (!session) {
+        return NextResponse.redirect(new URL("/candidate/login", req.url));
+      }
     }
     const res = applySecurityHeaders(NextResponse.next());
     if (tenant) {
@@ -110,7 +120,9 @@ export default auth(async (req) => {
   requestHeaders.set("x-tenant-slug", tenant.slug);
   requestHeaders.set("x-tenant-branding", brandingHeader(tenant));
 
-  return applySecurityHeaders(NextResponse.next({ request: { headers: requestHeaders } }));
+  return applySecurityHeaders(
+    NextResponse.next({ request: { headers: requestHeaders } })
+  );
 });
 
 export const config = {
@@ -120,7 +132,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization)
      * - favicon.ico
-     * Note: /api and /login are now INCLUDED so tenant resolution runs
+     * Note: /api and /login are INCLUDED so tenant resolution runs
      * on auth callbacks.
      */
     "/((?!_next/static|_next/image|favicon.ico).*)",
