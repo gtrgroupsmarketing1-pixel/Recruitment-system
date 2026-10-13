@@ -44,3 +44,6 @@ next-env.d.ts
 session-*.bundle
 session-*.patch
 *.bundle
+
+.vercel
+.env*
