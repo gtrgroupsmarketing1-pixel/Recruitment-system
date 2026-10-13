@@ -1,9 +1,9 @@
 {
   "crons": [
     { "path": "/api/cron/document-expiry", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/task-overdue", "schedule": "0 * * * *" },
-    { "path": "/api/cron/document-gc", "schedule": "30 * * * *" },
-    { "path": "/api/cron/document-sync", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/connector-poll", "schedule": "*/15 * * * *" }
+    { "path": "/api/cron/task-overdue", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/document-gc", "schedule": "30 3 * * *" },
+    { "path": "/api/cron/document-sync", "schedule": "0 4 * * *" },
+    { "path": "/api/cron/connector-poll", "schedule": "30 4 * * *" }
   ]
 }
