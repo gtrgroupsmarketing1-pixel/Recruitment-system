@@ -9,9 +9,17 @@ import {
   type CreateFormState,
 } from "@/modules/requisition/create.action";
 
-type Props = { clientCompanyId?: string };
+type ClientCompanyOption = { id: string; name: string; code: string };
 
-export function CreateRequisitionForm({ clientCompanyId }: Props) {
+type Props = {
+  clientCompanyId?: string;
+  clients: ClientCompanyOption[];
+};
+
+export function CreateRequisitionForm({
+  clientCompanyId,
+  clients,
+}: Props) {
   const [state, formAction, isPending] = useActionState<
     CreateFormState,
     FormData
@@ -19,16 +27,32 @@ export function CreateRequisitionForm({ clientCompanyId }: Props) {
 
   return (
     <form action={formAction} className="grid max-w-md gap-3">
-      <Label htmlFor="clientCompanyId">Client company id</Label>
-      <Input
-        id="clientCompanyId"
-        name="clientCompanyId"
-        defaultValue={clientCompanyId}
-        required
-      />
-      {state.errors?.clientCompanyId ? (
-        <p className="text-sm text-red-700">{state.errors.clientCompanyId[0]}</p>
-      ) : null}
+      <Label htmlFor="clientCompanyId">Client company</Label>
+      {clients.length === 0 ? (
+        <p className="text-sm text-red-700">
+          Please create a client company first in Admin &gt; Clients.
+        </p>
+      ) : (
+        <>
+          <select
+            id="clientCompanyId"
+            name="clientCompanyId"
+            defaultValue={clientCompanyId ?? ""}
+            required
+            className="rounded border px-3 py-2"
+          >
+            <option value="">Select a client</option>
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.name} ({client.code})
+              </option>
+            ))}
+          </select>
+          {state.errors?.clientCompanyId ? (
+            <p className="text-sm text-red-700">{state.errors.clientCompanyId[0]}</p>
+          ) : null}
+        </>
+      )}
 
       <Label htmlFor="country">Country</Label>
       <select id="country" name="country" className="rounded border px-3 py-2" required defaultValue="AE">
@@ -58,7 +82,7 @@ export function CreateRequisitionForm({ clientCompanyId }: Props) {
       <Label htmlFor="notes">Notes</Label>
       <Input id="notes" name="notes" />
 
-      <Button>{isPending ? "Saving…" : "Create requisition"}</Button>
+      <Button type="submit">{isPending ? "Saving…" : "Create requisition"}</Button>
       {state.errors?.form ? (
         <p className="text-sm text-red-700">{state.errors.form[0]}</p>
       ) : null}
