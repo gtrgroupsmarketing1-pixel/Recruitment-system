@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { withSessionScope } from "@/core/auth/action-scope";
 import { requirePermission } from "@/core/auth/session";
+import { logger } from "@/lib/logger";
 import { CreateRequisitionInput } from "./requisition.schema";
 import { RequisitionService } from "./requisition.service";
 
@@ -27,7 +28,18 @@ export async function createRequisitionAction(
         errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
       };
     }
-    await RequisitionService.create(scope.tenantId, scope.userId, parsed.data);
+    try {
+      await RequisitionService.create(scope.tenantId, scope.userId, parsed.data);
+    } catch (error) {
+      console.error("REQUISITION_CREATE_ERROR:", error);
+      logger.error(
+        { err: error instanceof Error ? error.message : String(error) },
+        "requisition create failed"
+      );
+      const message =
+        error instanceof Error ? error.message : "Failed to create requisition";
+      return { errors: { form: [message] } };
+    }
     redirect("/requisitions");
   });
 }
