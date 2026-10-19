@@ -39,7 +39,7 @@ export function CandidateForm({ requisitionId }: Props) {
         <input type="checkbox" name="smsOptIn" />
         <span>Candidate consents to SMS notifications</span>
       </label>
-      <Button>{isPending ? "Saving…" : "Create candidate"}</Button>
+      <Button type="submit">{isPending ? "Saving…" : "Create candidate"}</Button>
       {state.errors?.form ? (
         <p className="text-sm text-red-700">{state.errors.form[0]}</p>
       ) : null}

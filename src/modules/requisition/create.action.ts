@@ -7,39 +7,48 @@ import { logger } from "@/lib/logger";
 import { CreateRequisitionInput } from "./requisition.schema";
 import { RequisitionService } from "./requisition.service";
 
-export type CreateFormState = { errors?: Record<string, string[]> };
+export async function createRequisitionAction(formData: FormData) {
+  let errorMsg: string | null = null;
 
-export async function createRequisitionAction(
-  _prev: CreateFormState,
-  formData: FormData
-): Promise<CreateFormState> {
-  return withSessionScope(async (scope) => {
-    requirePermission("requisition:create");
-    const raw = Object.fromEntries(formData.entries());
-    const payload: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(raw)) {
-      if (typeof value !== "string") continue;
-      if (value.trim() === "") continue;
-      payload[key] = key === "vacancyTarget" ? Number(value) : value;
-    }
-    const parsed = CreateRequisitionInput.safeParse(payload);
-    if (!parsed.success) {
-      return {
-        errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
-      };
-    }
-    try {
+  try {
+    await withSessionScope(async (scope) => {
+      requirePermission("requisition:create");
+      const raw = Object.fromEntries(formData.entries());
+      const payload: Record<string, unknown> = {};
+      
+      for (const [key, value] of Object.entries(raw)) {
+        if (typeof value !== "string") continue;
+        if (value.trim() === "") continue;
+        // Convert numbers and dates appropriately
+        if (key === "vacancyTarget") {
+          payload[key] = Number(value);
+        } else {
+          payload[key] = value;
+        }
+      }
+      
+      const parsed = CreateRequisitionInput.safeParse(payload);
+      if (!parsed.success) {
+        const firstError = Object.values(parsed.error.flatten().fieldErrors).flat()[0] || "Validation failed";
+        throw new Error(firstError);
+      }
+      
       await RequisitionService.create(scope.tenantId, scope.userId, parsed.data);
-    } catch (error) {
-      console.error("REQUISITION_CREATE_ERROR:", error);
-      logger.error(
-        { err: error instanceof Error ? error.message : String(error) },
-        "requisition create failed"
-      );
-      const message =
-        error instanceof Error ? error.message : "Failed to create requisition";
-      return { errors: { form: [message] } };
-    }
-    redirect("/requisitions");
-  });
+    });
+  } catch (error) {
+    console.error("REQUISITION_CREATE_ERROR:", error);
+    logger.error(
+      { err: error instanceof Error ? error.message : String(error) },
+      "requisition create failed"
+    );
+    errorMsg = error instanceof Error ? error.message : "Failed to create requisition";
+  }
+
+  // If there was an error, redirect back to the form with the error message
+  if (errorMsg) {
+    redirect(`/requisitions/new?error=${encodeURIComponent(errorMsg)}`);
+  }
+
+  // Only redirect to the list if successful
+  redirect("/requisitions");
 }
