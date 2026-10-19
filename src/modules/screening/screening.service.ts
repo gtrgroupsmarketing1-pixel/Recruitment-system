@@ -59,25 +59,26 @@ export const ScreeningService = {
     if (existing.length > 0) {
       return existing[0];
     }
-    return db.$transaction(async () => {
-      const screening = await ScreeningRepo.create(tenantId, {
-        applicationId,
-        stage: "SCREENING",
-        path,
-      });
-      const template = stepsFor(path);
-      for (const step of template) {
-        await db.screeningStep.create({
-          data: {
-            screeningId: screening.id,
-            tenantId,
-            ...step,
-            status: "PENDING",
-          },
-        });
-      }
-      return ScreeningRepo.findById(tenantId, screening.id);
+
+    // DO NOT use db.$transaction here. withSessionScope already provides the transaction.
+    const screening = await ScreeningRepo.create(tenantId, {
+      applicationId,
+      stage: "SCREENING",
+      path,
     });
+    
+    const template = stepsFor(path);
+    for (const step of template) {
+      await db.screeningStep.create({
+        data: {
+          screeningId: screening.id,
+          tenantId,
+          ...step,
+          status: "PENDING",
+        },
+      });
+    }
+    return ScreeningRepo.findById(tenantId, screening.id);
   },
 
   async completeStep(
