@@ -1,11 +1,14 @@
 import { ApplicationRepo } from "./application.repo";
 import { transition, type Status } from "./application.state-machine";
 import { eventBus } from "@/core/events/event-bus";
-import { ConflictError, NotFoundError } from "@/lib/errors";
-import type { ApplicationStatus } from "@prisma/client";
+import { db } from "@/core/db/client";
+import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
+import type { ApplicationStatus, ScreeningPath } from "@prisma/client";
 import { CandidateRepo } from "@/modules/candidate/candidate.repo";
 import { RequisitionRepo } from "@/modules/requisition/requisition.repo";
 import type { CreateApplicationInput } from "./application.schema";
+import { ScreeningRepo } from "@/modules/screening/screening.repo";
+import { ScreeningService } from "@/modules/screening/screening.service";
 import { tryGetScope } from "@/core/auth/scope";
 import {
   applicationScopeFilter,
@@ -40,11 +43,16 @@ export const ApplicationService = {
     if (existing) {
       throw new ConflictError("Candidate already linked to this requisition");
     }
-    // SOURCED is the initial state, not a transition. No event publish.
-    return ApplicationRepo.create(tenantId, {
-      candidateId: input.candidateId,
-      requisitionId: input.requisitionId,
-      recruiterId: input.recruiterId,
+    const path = input.path ?? "BLUE_COLLAR";
+    return db.$transaction(async () => {
+      // SOURCED is the initial state, not a transition. No event publish.
+      const app = await ApplicationRepo.create(tenantId, {
+        candidateId: input.candidateId,
+        requisitionId: input.requisitionId,
+        recruiterId: input.recruiterId,
+      });
+      await ScreeningService.startScreening(tenantId, userId, app.id, path);
+      return app;
     });
   },
 
@@ -66,6 +74,16 @@ export const ApplicationService = {
     }
 
     const fromStatus = app.status;
+
+    if (toStatus === "SHORTLISTED") {
+      const screenings = await ScreeningRepo.findByApplication(tenantId, applicationId);
+      const passed = screenings.some((s) => s.outcome === "PASSED");
+      if (!passed) {
+        throw new ValidationError(
+          "Application must pass screening before shortlisting"
+        );
+      }
+    }
 
     // Pure state machine — throws IllegalTransitionError on illegal move.
     transition(fromStatus as Status, toStatus as Status);

@@ -5,6 +5,7 @@ import { requisitionRouter } from "@/modules/requisition/requisition.router";
 import { taskRouter } from "@/modules/task/task.router";
 import { complianceRouter } from "@/modules/compliance/compliance.router";
 import { documentRouter } from "@/modules/document/document.router";
+import { screeningRouter } from "@/modules/screening/screening.router";
 
 export const appRouter = router({
   application: applicationRouter,
@@ -13,6 +14,7 @@ export const appRouter = router({
   task: taskRouter,
   compliance: complianceRouter,
   document: documentRouter,
+  screening: screeningRouter,
 });
 
 export type AppRouter = typeof appRouter;

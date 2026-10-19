@@ -90,6 +90,13 @@ export type DomainEventPayloads = {
     candidateId: string;
     type: string;
   };
+  "screening.completed": {
+    screeningId: string;
+    applicationId: string;
+    outcome: string;
+    overallScore: number | null;
+    actorId: string;
+  };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;

@@ -30,6 +30,7 @@ model Tenant {
   requisitions       JobRequisition[]
   applications       CandidateApplication[]
   screeningRecords   ScreeningRecord[]
+  screeningSteps     ScreeningStep[]
   complianceTemplates     ComplianceTemplate[]
   complianceStepTemplates ComplianceStepTemplate[]
   complianceCases         ComplianceCase[]
@@ -256,8 +257,8 @@ model CandidateApplication {
 }
 
 enum ScreeningPath {
-  BLUE
-  WHITE
+  BLUE_COLLAR
+  WHITE_COLLAR
 }
 
 enum ChecklistStatus {
@@ -274,17 +275,46 @@ model ScreeningRecord {
   applicationId String
   stage         String
   path          ScreeningPath
+  outcome       String        @default("PENDING")
+  overallScore  Int?
   scorecard     Json?
   result        String?
+  completedAt   DateTime?
+  completedBy   String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   deletedAt     DateTime?
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
   application CandidateApplication @relation(fields: [applicationId], references: [id])
+  steps       ScreeningStep[]
 
   @@index([tenantId])
   @@index([tenantId, applicationId])
+}
+
+model ScreeningStep {
+  id            String   @id @default(cuid())
+  tenantId      String
+  screeningId   String
+  stepOrder     Int
+  name          String
+  description   String?
+  status        String   @default("PENDING")
+  score         Int?
+  notes         String?
+  completedAt   DateTime?
+  completedBy   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  tenant    Tenant           @relation(fields: [tenantId], references: [id])
+  screening ScreeningRecord @relation(fields: [screeningId], references: [id], onDelete: Cascade)
+
+  @@unique([screeningId, stepOrder])
+  @@index([tenantId, screeningId])
+  @@index([tenantId, status])
 }
 
 model ComplianceTemplate {

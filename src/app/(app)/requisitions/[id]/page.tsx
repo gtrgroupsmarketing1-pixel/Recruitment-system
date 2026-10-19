@@ -8,6 +8,7 @@ import { RequisitionDetail } from "@/modules/requisition/components/RequisitionD
 import { listRequisitionAudit } from "@/modules/requisition/requisition.audit";
 import { RequisitionService } from "@/modules/requisition/requisition.service";
 import { ApplicationStatusSchema } from "@/modules/application/application.schema";
+import { ScreeningPanel } from "@/modules/screening/components/ScreeningPanel";
 
 type DetailProps = {
   params: Promise<{ id: string }>;
@@ -52,6 +53,18 @@ export default async function RequisitionDetailPage({ params }: DetailProps) {
         recentAudit={recentAudit}
         applications={applications}
       />
+      {applications.length > 0 && (
+        <div className="mt-8 grid gap-4">
+          <h2 className="text-sm font-medium">Candidate screening</h2>
+          {applications.map((app) => (
+            <ScreeningPanel
+              key={app.id}
+              tenantId={tenantId}
+              applicationId={app.id}
+            />
+          ))}
+        </div>
+      )}
     </main>
     </>
   );

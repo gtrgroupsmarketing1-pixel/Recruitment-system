@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ScreeningPath } from "@prisma/client";
 
 /** All 21 frozen ApplicationStatus values. SCREAMING_SNAKE only. */
 export const ApplicationStatusSchema = z.enum([
@@ -30,6 +31,7 @@ export const CreateApplicationInput = z
     candidateId: z.string().min(1),
     requisitionId: z.string().min(1),
     recruiterId: z.string().optional(),
+    path: z.nativeEnum(ScreeningPath).optional(),
   })
   .strict();
 
