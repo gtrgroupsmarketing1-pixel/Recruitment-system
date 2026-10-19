@@ -60,7 +60,7 @@ export const ScreeningService = {
       return existing[0];
     }
 
-    // DO NOT use db.$transaction here. withSessionScope already provides the transaction.
+    // NO db.$transaction HERE!
     const screening = await ScreeningRepo.create(tenantId, {
       applicationId,
       stage: "SCREENING",

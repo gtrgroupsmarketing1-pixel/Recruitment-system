@@ -30,7 +30,6 @@ async function resolveAppScopeWhere(tenantId: string) {
 
 export const ApplicationService = {
   async create(tenantId: string, userId: string, input: CreateApplicationInput) {
-    void userId;
     const candidate = await CandidateRepo.findById(tenantId, input.candidateId);
     if (!candidate) throw new NotFoundError("Candidate", input.candidateId);
     const requisition = await RequisitionRepo.findById(tenantId, input.requisitionId);
@@ -44,16 +43,17 @@ export const ApplicationService = {
       throw new ConflictError("Candidate already linked to this requisition");
     }
     const path = input.path ?? "BLUE_COLLAR";
-    return db.$transaction(async () => {
-      // SOURCED is the initial state, not a transition. No event publish.
-      const app = await ApplicationRepo.create(tenantId, {
-        candidateId: input.candidateId,
-        requisitionId: input.requisitionId,
-        recruiterId: input.recruiterId,
-      });
-      await ScreeningService.startScreening(tenantId, userId, app.id, path);
-      return app;
+
+    // NO db.$transaction HERE! The calling server action (withSessionScope) handles it.
+    const app = await ApplicationRepo.create(tenantId, {
+      candidateId: input.candidateId,
+      requisitionId: input.requisitionId,
+      recruiterId: input.recruiterId,
     });
+    
+    await ScreeningService.startScreening(tenantId, userId, app.id, path);
+    
+    return app;
   },
 
   async listByCandidate(tenantId: string, candidateId: string) {
