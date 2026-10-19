@@ -5,6 +5,7 @@ import { withSessionScope } from "@/core/auth/action-scope";
 import { CandidateService } from "./candidate.service";
 import { CreateCandidateInput } from "./candidate.schema";
 
+
 export async function createCandidateAction(formData: FormData) {
   let errorMsg: string | null = null;
 
@@ -12,7 +13,7 @@ export async function createCandidateAction(formData: FormData) {
     await withSessionScope(async (scope) => {
       const raw = Object.fromEntries(formData.entries());
       // Handle checkbox for smsOptIn
-      raw.smsOptIn = raw.smsOptIn === "on" ? "true" : "false";
+      raw.smsOptIn = raw.smsOptIn === "on";
       
       const parsed = CreateCandidateInput.safeParse(raw);
       if (!parsed.success) {
