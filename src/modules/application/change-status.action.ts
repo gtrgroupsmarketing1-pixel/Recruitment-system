@@ -13,14 +13,22 @@ import type { Status } from "./application.state-machine";
 
 export async function changeStatusAction(formData: FormData): Promise<void> {
   const applicationId = String(formData.get("applicationId") ?? "");
+  const requisitionId = String(formData.get("requisitionId") ?? "");
   const candidateId = String(formData.get("candidateId") ?? "");
-  const parsed = ApplicationStatusSchema.safeParse(
-    String(formData.get("toStatus") ?? "")
-  );
+  
+  // Determine where to send them back to
+  const fallbackUrl = requisitionId 
+    ? `/requisitions/${requisitionId}` 
+    : candidateId 
+      ? `/candidates/${candidateId}` 
+      : "/candidates";
 
   let errorMsg: string | null = null;
 
   try {
+    const parsed = ApplicationStatusSchema.safeParse(
+      String(formData.get("toStatus") ?? "")
+    );
     if (!parsed.success) {
       throw new ValidationError("Invalid status");
     }
@@ -45,10 +53,9 @@ export async function changeStatusAction(formData: FormData): Promise<void> {
   }
 
   if (errorMsg) {
-    redirect(`/candidates/${candidateId}?error=${encodeURIComponent(errorMsg)}`);
+    redirect(`${fallbackUrl}?error=${encodeURIComponent(errorMsg)}`);
   }
 
-  // On success, reload the candidate page so the new status shows immediately
-  revalidatePath(`/candidates/${candidateId}`);
-  redirect(`/candidates/${candidateId}`);
+  revalidatePath(fallbackUrl);
+  redirect(fallbackUrl);
 }

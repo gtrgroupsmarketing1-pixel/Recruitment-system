@@ -12,15 +12,19 @@ import { ScreeningPanel } from "@/modules/screening/components/ScreeningPanel";
 
 type DetailProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
 };
 
-export default async function RequisitionDetailPage({ params }: DetailProps) {
+export default async function RequisitionDetailPage({ params, searchParams }: DetailProps) {
   const { id } = await params;
+  const { error } = await searchParams;
   const session = await requireSession();
   const tenantId = session.user.tenantId || session.tenantId;
+  
   if (!tenantId) {
     return <main className="p-8">Missing tenant</main>;
   }
+
   const data = await withSessionScope((_scope) =>
     RequisitionService.getById(tenantId, id)
   );
@@ -44,28 +48,36 @@ export default async function RequisitionDetailPage({ params }: DetailProps) {
     }
     return items;
   });
+
   return (
     <>
-    <RealtimeRefresher eventTypes={["candidate.status_changed"]} />
-    <main className="p-8">
-      <RequisitionDetail
-        data={data}
-        recentAudit={recentAudit}
-        applications={applications}
-      />
-      {applications.length > 0 && (
-        <div className="mt-8 grid gap-4">
-          <h2 className="text-sm font-medium">Candidate screening</h2>
-          {applications.map((app) => (
-            <ScreeningPanel
-              key={app.id}
-              tenantId={tenantId}
-              applicationId={app.id}
-            />
-          ))}
-        </div>
-      )}
-    </main>
+      <RealtimeRefresher eventTypes={["candidate.status_changed"]} />
+      <main className="p-8 space-y-6">
+        {error && (
+          <div className="rounded border border-red-500 bg-red-50 p-3 text-sm text-red-700 max-w-5xl">
+            <strong>Cannot update status:</strong> {error}
+          </div>
+        )}
+        
+        <RequisitionDetail
+          data={data}
+          recentAudit={recentAudit}
+          applications={applications}
+        />
+        
+        {applications.length > 0 && (
+          <div className="mt-8 grid gap-4 max-w-5xl">
+            <h2 className="text-lg font-semibold">Candidate screening</h2>
+            {applications.map((app) => (
+              <ScreeningPanel
+                key={app.id}
+                tenantId={tenantId}
+                applicationId={app.id}
+              />
+            ))}
+          </div>
+        )}
+      </main>
     </>
   );
 }
