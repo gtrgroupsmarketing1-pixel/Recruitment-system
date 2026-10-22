@@ -14,6 +14,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "/requisitions", label: "Requisitions" },
       { href: "/candidates", label: "Candidates" },
       { href: "/tasks", label: "Tasks" },
+      { href: "/documents", label: "Documents" },
     ],
   },
   {
@@ -26,11 +27,16 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Admin",
     items: [
+      { href: "/admin/clients", label: "Clients" },
+      { href: "/admin/job-orders", label: "Job orders" },
       { href: "/admin/notifications", label: "Notifications" },
       { href: "/admin/integrations", label: "Integrations" },
       { href: "/admin/connectors", label: "Connectors" },
+      { href: "/admin/email-config", label: "Email" },
+      { href: "/admin/sms", label: "SMS" },
       { href: "/admin/jobs", label: "Jobs" },
       { href: "/admin/branding", label: "Branding" },
+      { href: "/settings/calendar", label: "Calendar" },
     ],
   },
 ];

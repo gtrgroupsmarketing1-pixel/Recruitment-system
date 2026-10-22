@@ -14,17 +14,15 @@ export default async function ClientPortalLayout({
   }
   return (
     <div className="min-h-screen bg-neutral-50">
-      <header className="flex items-center justify-between border-b bg-white px-6 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-white px-6 py-3">
         <strong>Client portal</strong>
-        <LanguageSwitcher />
-        <nav className="flex gap-4 text-sm">
+        <nav className="flex flex-wrap gap-4 text-sm">
           <Link href="/client/dashboard">Dashboard</Link>
           <Link href="/client/requisitions">Requisitions</Link>
           <Link href="/client/job-orders">Job orders</Link>
-          <Link href="/client/documents">Documents</Link>
           <Link href="/client/deployments">Deployments</Link>
-          <Link href="/client/reports">Reports</Link>
         </nav>
+        <LanguageSwitcher />
       </header>
       <div className="p-6">{children}</div>
     </div>
