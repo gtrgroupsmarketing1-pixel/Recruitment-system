@@ -179,13 +179,12 @@ export const RequisitionService = {
       pct: computeFulfillmentPct(mobilized, row.vacancyTarget),
     };
   },
-};
 
-export { computeSlaFlag, computeFulfillmentPct 
   async softDelete(tenantId: string, userId: string, id: string) {
     void userId;
     const ok = await RequisitionRepo.softDelete(tenantId, id);
     if (!ok) throw new NotFoundError("JobRequisition", id);
   },
 };
-void ValidationError;
+
+export { computeSlaFlag, computeFulfillmentPct };
