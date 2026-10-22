@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Tabs } from "@/components/ui/tabs";
 import type { RequisitionView } from "@/modules/requisition/requisition.service";
 import type { ApplicationListItem } from "@/modules/application/components/ApplicationList";
 import { PipelineBoard } from "@/modules/application/components/PipelineBoard";
@@ -38,16 +37,7 @@ export function RequisitionDetail({ data, recentAudit, applications }: Props) {
 
   return (
     <div className="grid gap-4">
-      <Tabs
-        active="overview"
-        tabs={[
-          { id: "overview", label: "Overview" },
-          { id: "pipeline", label: "Pipeline" },
-          { id: "compliance", label: "Compliance" },
-          { id: "tasks", label: "Tasks" },
-        ]}
-      >
-        <Card className="space-y-4 p-4">
+      <Card className="space-y-4 p-4">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-semibold">{title}</h1>
             <span className="font-mono text-sm text-muted-foreground">{data.reqCode}</span>
@@ -206,8 +196,7 @@ export function RequisitionDetail({ data, recentAudit, applications }: Props) {
             </div>
             <PipelineBoard applications={applications} />
           </div>
-        </Card>
-      </Tabs>
+      </Card>
     </div>
   );
 }
