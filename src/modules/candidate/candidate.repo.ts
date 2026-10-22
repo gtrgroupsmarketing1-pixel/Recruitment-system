@@ -91,4 +91,12 @@ export const CandidateRepo = {
       select: { id: true, fullName: true, phone: true },
     });
   },
+
+  async softDelete(tenantId: string, id: string) {
+    const result = await db.candidate.updateMany({
+      where: { id, tenantId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    return result.count > 0;
+  },
 };

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
 import { withSessionScope } from "@/core/auth/action-scope";
 import { ClientCompanyService } from "@/modules/client/client.company.service";
+import { deleteClientCompanyAction } from "@/modules/client/client.company.actions";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -67,12 +68,20 @@ export default async function ClientsPage() {
                   <td className="px-3 py-2 font-mono text-xs">{c.code}</td>
                   <td className="px-3 py-2">{c.country ?? "—"}</td>
                   <td className="px-3 py-2">
-                    <Link
-                      href={`/admin/clients/${c.id}/users`}
-                      className="underline underline-offset-2"
-                    >
-                      Manage users
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Link
+                        href={`/admin/clients/${c.id}/users`}
+                        className="underline underline-offset-2"
+                      >
+                        Manage users
+                      </Link>
+                      <form action={deleteClientCompanyAction}>
+                        <input type="hidden" name="id" value={c.id} />
+                        <button type="submit" className="text-xs text-red-700 underline underline-offset-2">
+                          Delete
+                        </button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               ))}

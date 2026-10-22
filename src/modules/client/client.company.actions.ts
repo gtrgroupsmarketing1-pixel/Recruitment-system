@@ -40,3 +40,60 @@ export async function createClientCompanyAction(formData: FormData) {
     redirect(`/admin/clients/new?error=${encodeURIComponent(message)}`);
   }
 }
+
+export async function updateClientCompanyAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "");
+  const country = String(formData.get("country") ?? "");
+  try {
+    await withSessionScope(async (scope) => {
+      await ClientCompanyService.update(scope.tenantId, id, {
+        name,
+        country: country || null,
+      });
+    });
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "digest" in error &&
+      String((error as { digest?: string }).digest).startsWith("NEXT_REDIRECT")
+    ) {
+      throw error;
+    }
+    const message =
+      error instanceof AppError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : "Could not update client";
+    redirect(`/admin/clients?error=${encodeURIComponent(message)}`);
+  }
+  redirect("/admin/clients");
+}
+
+export async function deleteClientCompanyAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  try {
+    await withSessionScope(async (scope) => {
+      await ClientCompanyService.softDelete(scope.tenantId, id);
+    });
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "digest" in error &&
+      String((error as { digest?: string }).digest).startsWith("NEXT_REDIRECT")
+    ) {
+      throw error;
+    }
+    const message =
+      error instanceof AppError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : "Could not delete client";
+    redirect(`/admin/clients?error=${encodeURIComponent(message)}`);
+  }
+  redirect("/admin/clients");
+}

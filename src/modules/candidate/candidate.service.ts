@@ -93,4 +93,12 @@ export const CandidateService = {
     if (!updated) throw new NotFoundError("Candidate", id);
     return updated;
   },
+
+  async softDelete(tenantId: string, userId: string, id: string) {
+    void userId;
+    const existing = await CandidateRepo.findById(tenantId, id);
+    if (!existing) throw new NotFoundError("Candidate", id);
+    const ok = await CandidateRepo.softDelete(tenantId, id);
+    if (!ok) throw new NotFoundError("Candidate", id);
+  },
 };

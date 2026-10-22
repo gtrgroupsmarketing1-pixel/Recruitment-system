@@ -79,4 +79,36 @@ export const ClientCompanyService = {
       throw error;
     }
   },
+
+  async update(
+    tenantId: string,
+    id: string,
+    input: { name?: string; country?: string | null }
+  ): Promise<ClientCompanyView> {
+    assertCanManageClients();
+    await ClientCompanyService.getById(tenantId, id);
+    const data: { name?: string; country?: string | null } = {};
+    if (input.name != null) {
+      const name = input.name.trim();
+      if (!name) throw new ValidationError("Name is required");
+      data.name = name;
+    }
+    if (input.country !== undefined) {
+      data.country = (input.country ?? "").trim().toUpperCase().slice(0, 2) || null;
+    }
+    await db.clientCompany.updateMany({
+      where: { id, tenantId, deletedAt: null },
+      data,
+    });
+    return ClientCompanyService.getById(tenantId, id);
+  },
+
+  async softDelete(tenantId: string, id: string): Promise<void> {
+    assertCanManageClients();
+    const result = await db.clientCompany.updateMany({
+      where: { id, tenantId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    if (result.count === 0) throw new NotFoundError("ClientCompany", id);
+  },
 };
