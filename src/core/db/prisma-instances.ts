@@ -10,12 +10,21 @@ const globalForPrisma = globalThis as unknown as {
   authPrisma?: PrismaClient;
 };
 
+function dbUrl(preferred?: string | undefined): string {
+  const url = preferred ?? process.env.DATABASE_URL ?? process.env.AUTH_DATABASE_URL;
+  if (!url) {
+    // Avoid hard-crash at module load; queries will still fail with a clear message.
+    return "postgresql://invalid:invalid@127.0.0.1:1/invalid";
+  }
+  return url;
+}
+
 /** AUTH_DATABASE_URL — app_auth, BYPASSRLS */
 export const authPlain =
   globalForPrisma.authPrisma ??
   new PrismaClient({
     datasources: {
-      db: { url: process.env.AUTH_DATABASE_URL ?? process.env.DATABASE_URL },
+      db: { url: dbUrl(process.env.AUTH_DATABASE_URL ?? process.env.DATABASE_URL) },
     },
   });
 
@@ -23,7 +32,7 @@ export const authPlain =
 export const appPlain =
   globalForPrisma.appPrisma ??
   new PrismaClient({
-    datasources: { db: { url: process.env.DATABASE_URL } },
+    datasources: { db: { url: dbUrl(process.env.DATABASE_URL) } },
   });
 
 if (process.env.NODE_ENV !== "production") {

@@ -66,7 +66,13 @@ function brandingHeader(tenant: {
 export default auth(async (req) => {
   const pathname = req.nextUrl.pathname;
   const host = req.headers.get("host") ?? "";
-  const tenant = await resolveTenantFromHost(host);
+  let tenant = null;
+  try {
+    tenant = await resolveTenantFromHost(host);
+  } catch (error) {
+    console.error("[middleware] tenant resolve failed", error);
+    tenant = null;
+  }
 
   // Early returns — no tenant resolution or auth required:
   // - /landing: public marketing page
