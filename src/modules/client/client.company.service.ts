@@ -12,7 +12,10 @@ export type ClientCompanyView = {
 
 function assertCanManageClients() {
   const scope = tryGetScope();
-  const role = scope?.role;
+  if (!scope || scope.kind !== "USER") {
+    throw new ForbiddenError("Only TENANT_ADMIN or BRANCH_MANAGER can manage clients");
+  }
+  const role = scope.role;
   if (role !== "TENANT_ADMIN" && role !== "BRANCH_MANAGER") {
     throw new ForbiddenError("Only TENANT_ADMIN or BRANCH_MANAGER can manage clients");
   }
