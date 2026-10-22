@@ -186,7 +186,6 @@ model JobRequisition {
   tenantId             String
   clientCompanyId      String
   reqCode              String // {ClientCode}-{Country}-{RoleCat}-{YYYYMM}-{Seq}
-  jobTitle             String?
   roleCategory         String
   country              String
   vacancyTarget        Int

@@ -18,7 +18,6 @@ export const ReqStatusSchema = z.enum([
 export const CreateRequisitionInput = z
   .object({
     clientCompanyId: z.string().min(1),
-    jobTitle: z.string().min(1).max(120).optional(),
     roleCategory: RoleCategoryCode,
     country: CountryCode,
     vacancyTarget: z.number().int().positive(),
@@ -32,7 +31,6 @@ export const CreateRequisitionInput = z
 export const UpdateRequisitionInput = z
   .object({
     id: z.string().min(1),
-    jobTitle: z.string().min(1).max(120).nullable().optional(),
     roleCategory: RoleCategoryCode.optional(),
     country: CountryCode.optional(),
     vacancyTarget: z.number().int().positive().optional(),

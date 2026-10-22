@@ -12,7 +12,7 @@ export function RequisitionCard({ req }: Props) {
   const onboard = req.targetOnboardingDate
     ? formatOnboarding(req.targetOnboardingDate.toISOString())
     : "—";
-  const title = req.jobTitle?.trim() || req.roleCategory;
+  const title = req.notes?.trim() || req.roleCategory;
   return (
     <Card className="p-3">
       <div className="flex items-center justify-between gap-2">

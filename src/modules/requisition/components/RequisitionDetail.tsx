@@ -30,7 +30,7 @@ export function RequisitionDetail({ data, recentAudit, applications }: Props) {
   const onboard = data.targetOnboardingDate
     ? formatOnboarding(data.targetOnboardingDate.toISOString())
     : "—";
-  const title = data.jobTitle?.trim() || data.roleCategory;
+  const title = data.notes?.trim() || data.roleCategory;
   const onboardInput = data.targetOnboardingDate
     ? data.targetOnboardingDate.toISOString().slice(0, 10)
     : "";
@@ -66,14 +66,6 @@ export function RequisitionDetail({ data, recentAudit, applications }: Props) {
           >
             <input type="hidden" name="id" value={data.id} />
             <p className="text-sm font-medium">Edit requisition</p>
-            <label className="grid gap-1 text-sm">
-              Job title
-              <input
-                name="jobTitle"
-                defaultValue={data.jobTitle ?? ""}
-                className="rounded border px-2 py-1.5"
-              />
-            </label>
             <label className="grid gap-1 text-sm">
               Role category code
               <input

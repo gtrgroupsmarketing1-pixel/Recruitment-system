@@ -25,7 +25,6 @@ export async function updateRequisitionAction(formData: FormData) {
       const vacancyRaw = formData.get("vacancyTarget");
       const payload: Record<string, unknown> = {
         id,
-        jobTitle: formData.get("jobTitle") || null,
         roleCategory: formData.get("roleCategory") || undefined,
         country: formData.get("country") || undefined,
         location: formData.get("location") || null,

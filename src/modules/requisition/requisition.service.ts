@@ -86,7 +86,6 @@ export const RequisitionService = {
         tenantId,
         clientCompanyId: input.clientCompanyId,
         reqCode,
-        jobTitle: input.jobTitle?.trim() || null,
         roleCategory: input.roleCategory,
         country: input.country,
         vacancyTarget: input.vacancyTarget,

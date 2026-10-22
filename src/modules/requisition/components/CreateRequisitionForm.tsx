@@ -76,8 +76,8 @@ export function CreateRequisitionForm({ clientCompanyId, clients }: Props) {
         <option value="OM">OM</option>
       </select>
 
-      <Label htmlFor="jobTitle">Job title</Label>
-      <Input id="jobTitle" name="jobTitle" placeholder="e.g. Heavy Driver" required />
+      <Label htmlFor="notes">Job title / notes</Label>
+      <Input id="notes" name="notes" placeholder="e.g. Heavy Driver" />
 
       <Label htmlFor="roleCategory">Role category code</Label>
       <Input id="roleCategory" name="roleCategory" defaultValue="BC" required />
