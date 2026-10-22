@@ -109,6 +109,17 @@ export const ScreeningService = {
         completedAt: new Date(),
         completedBy: userId,
       });
+      return updated;
+    }
+
+    // Auto-finalize when every step is PASSED (UI has no separate finalize button).
+    const screening = await ScreeningRepo.findById(tenantId, screeningId);
+    if (screening?.steps?.length) {
+      const allPassed = screening.steps.every((s) => s.status === "PASSED");
+      const anyFailed = screening.steps.some((s) => s.status === "FAILED");
+      if (allPassed && !anyFailed && screening.outcome !== "PASSED") {
+        await ScreeningService.finalizeScreening(tenantId, userId, screeningId);
+      }
     }
     return updated;
   },

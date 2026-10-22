@@ -66,15 +66,26 @@ export default async function RequisitionDetailPage({ params, searchParams }: De
         />
         
         {applications.length > 0 && (
-          <div className="mt-8 grid gap-4 max-w-5xl">
-            <h2 className="text-lg font-semibold">Candidate screening</h2>
-            {applications.map((app) => (
-              <ScreeningPanel
-                key={app.id}
-                tenantId={tenantId}
-                applicationId={app.id}
-              />
-            ))}
+          <div className="mt-8 max-w-7xl space-y-3">
+            <div>
+              <h2 className="text-lg font-semibold">Candidate screening</h2>
+              <p className="text-sm text-muted-foreground">
+                Complete every step for a candidate. When all steps pass, outcome becomes
+                PASSED and you can shortlist them.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {applications.map((app) => (
+                <ScreeningPanel
+                  key={app.id}
+                  tenantId={tenantId}
+                  applicationId={app.id}
+                  candidateId={app.candidateId}
+                  candidateName={app.candidateName}
+                  applicationStatus={app.status}
+                />
+              ))}
+            </div>
           </div>
         )}
       </main>
