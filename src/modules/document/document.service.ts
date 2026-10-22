@@ -93,6 +93,28 @@ export const DocumentService = {
     });
   },
 
+  async listRecent(tenantId: string, take = 50) {
+    return db.document.findMany({
+      where: { tenantId, deletedAt: null, confirmed: true },
+      orderBy: { createdAt: "desc" },
+      take,
+      include: {
+        syncStates: {
+          where: { status: "SYNCED" },
+          select: { externalUrl: true, provider: true },
+        },
+      },
+    });
+  },
+
+  async listPendingConfirm(tenantId: string, take = 20) {
+    return db.document.findMany({
+      where: { tenantId, deletedAt: null, confirmed: false },
+      orderBy: { createdAt: "desc" },
+      take,
+    });
+  },
+
   async listExpiring(withinDays: number) {
     const until = new Date(Date.now() + withinDays * 86_400_000);
     return authPrisma.document.findMany({

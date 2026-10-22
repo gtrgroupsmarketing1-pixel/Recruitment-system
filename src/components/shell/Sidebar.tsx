@@ -34,7 +34,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "/admin/connectors", label: "Connectors" },
       { href: "/admin/email-config", label: "Email" },
       { href: "/admin/sms", label: "SMS" },
-      { href: "/admin/jobs", label: "Jobs" },
+      { href: "/admin/jobs", label: "Job runs" },
       { href: "/admin/branding", label: "Branding" },
       { href: "/settings/calendar", label: "Calendar" },
     ],

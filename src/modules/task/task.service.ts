@@ -1,5 +1,5 @@
 import type { Task, TaskPriority, TaskStatus } from "@prisma/client";
-import { NotFoundError } from "@/lib/errors";
+import { NotFoundError, ValidationError } from "@/lib/errors";
 import { TaskRepo } from "./task.repo";
 import { computeIsOverdue } from "./task.overdue";
 
@@ -105,6 +105,33 @@ export const TaskService = {
       today,
       thisWeek,
     };
+  },
+
+  async createManual(
+    tenantId: string,
+    userId: string,
+    input: {
+      title: string;
+      description?: string | null;
+      dueDate?: Date | null;
+      priority?: TaskPriority;
+    }
+  ): Promise<TaskView> {
+    const title = input.title.trim();
+    if (!title) throw new ValidationError("Title is required");
+    const row = await TaskRepo.create(tenantId, {
+      tenantId,
+      assigneeId: userId,
+      type: "CUSTOM",
+      refType: "MANUAL",
+      refId: `manual-${Date.now()}`,
+      title,
+      description: input.description?.trim() || null,
+      dueDate: input.dueDate ?? null,
+      priority: input.priority ?? "MEDIUM",
+      status: "OPEN",
+    });
+    return toView(row);
   },
 
   async overdueForTenant(tenantId: string): Promise<TaskView[]> {
