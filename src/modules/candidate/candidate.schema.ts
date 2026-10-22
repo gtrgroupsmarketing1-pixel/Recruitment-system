@@ -1,18 +1,16 @@
 import { z } from "zod";
 
 /** No encryption logic here — middleware encrypts on write. Plain fields only. */
-export const CreateCandidateInput = z
-  .object({
-    fullName: z.string().min(1),
-    email: z.string().email().optional(),
-    phone: z.string().optional(),
-    passportNumber: z.string().optional(),
-    nationalId: z.string().optional(),
-    medicalResult: z.string().optional(),
-    requisitionId: z.string().optional(),
-    smsOptIn: z.boolean().optional(),
-  })
-  .strict();
+export const CreateCandidateInput = z.object({
+  fullName: z.string().min(1),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  passportNumber: z.string().optional(),
+  nationalId: z.string().optional(),
+  medicalResult: z.string().optional(),
+  requisitionId: z.string().optional(),
+  smsOptIn: z.boolean().optional(),
+});
 
 export const UpdateCandidateInput = z
   .object({

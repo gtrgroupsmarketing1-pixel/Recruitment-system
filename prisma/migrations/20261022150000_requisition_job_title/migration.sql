@@ -1,0 +1,1 @@
+ALTER TABLE "JobRequisition" ADD COLUMN IF NOT EXISTS "jobTitle" TEXT;

@@ -12,14 +12,16 @@ export function RequisitionCard({ req }: Props) {
   const onboard = req.targetOnboardingDate
     ? formatOnboarding(req.targetOnboardingDate.toISOString())
     : "—";
+  const title = req.jobTitle?.trim() || req.roleCategory;
   return (
-    <Card>
+    <Card className="p-3">
       <div className="flex items-center justify-between gap-2">
-        <Link href={`/requisitions/${req.id}`} className="font-mono text-sm">
-          {req.reqCode}
+        <Link href={`/requisitions/${req.id}`} className="font-medium hover:underline">
+          {title}
         </Link>
         <ReqStatusBadge status={req.status} />
       </div>
+      <p className="mt-1 font-mono text-xs text-muted-foreground">{req.reqCode}</p>
       <p className="mt-2 text-sm">
         {req.client.name} · {req.country} · {req.roleCategory}
       </p>

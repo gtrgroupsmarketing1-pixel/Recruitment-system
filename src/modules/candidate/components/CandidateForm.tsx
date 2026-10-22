@@ -44,9 +44,15 @@ export function CandidateForm({ requisitionId }: Props) {
         A short ID (C-XXXXXX) is assigned automatically.
       </p>
       <Button>{isPending ? "Saving…" : "Create candidate"}</Button>
-      {state.errors?.form ? (
-        <p className="text-sm text-red-700">{state.errors.form[0]}</p>
-      ) : null}
+      {state.errors
+        ? Object.entries(state.errors).map(([k, msgs]) =>
+            msgs?.map((m, i) => (
+              <p key={`${k}-${i}`} className="text-sm text-red-700">
+                {k}: {m}
+              </p>
+            ))
+          )
+        : null}
     </form>
   );
 }

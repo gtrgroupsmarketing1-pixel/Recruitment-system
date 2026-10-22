@@ -86,6 +86,7 @@ export const RequisitionService = {
         tenantId,
         clientCompanyId: input.clientCompanyId,
         reqCode,
+        jobTitle: input.jobTitle?.trim() || null,
         roleCategory: input.roleCategory,
         country: input.country,
         vacancyTarget: input.vacancyTarget,
@@ -180,5 +181,11 @@ export const RequisitionService = {
   },
 };
 
-export { computeSlaFlag, computeFulfillmentPct };
+export { computeSlaFlag, computeFulfillmentPct 
+  async softDelete(tenantId: string, userId: string, id: string) {
+    void userId;
+    const ok = await RequisitionRepo.softDelete(tenantId, id);
+    if (!ok) throw new NotFoundError("JobRequisition", id);
+  },
+};
 void ValidationError;

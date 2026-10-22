@@ -109,4 +109,12 @@ export const RequisitionRepo = {
       select: { id: true, name: true, role: true },
     });
   },
+
+  async softDelete(tenantId: string, id: string) {
+    const result = await db.jobRequisition.updateMany({
+      where: { id, tenantId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    return result.count > 0;
+  },
 };
