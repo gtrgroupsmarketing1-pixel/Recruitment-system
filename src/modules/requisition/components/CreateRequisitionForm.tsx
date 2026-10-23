@@ -76,9 +76,6 @@ export function CreateRequisitionForm({ clientCompanyId, clients }: Props) {
         <option value="OM">OM</option>
       </select>
 
-      <Label htmlFor="notes">Job title / notes</Label>
-      <Input id="notes" name="notes" placeholder="e.g. Heavy Driver" />
-
       <Label htmlFor="roleCategory">Role category code</Label>
       <Input id="roleCategory" name="roleCategory" defaultValue="BC" required />
       <p className="text-xs text-muted-foreground">2–4 uppercase letters/numbers used in req codes (e.g. BC, DRV).</p>
@@ -95,13 +92,19 @@ export function CreateRequisitionForm({ clientCompanyId, clients }: Props) {
       <Label htmlFor="targetOnboardingDate">Target onboarding</Label>
       <Input id="targetOnboardingDate" name="targetOnboardingDate" type="date" />
 
-      <Label htmlFor="notes">Notes</Label>
-      <Input id="notes" name="notes" />
+      <Label htmlFor="notes">Job title / notes</Label>
+      <Input id="notes" name="notes" placeholder="e.g. Heavy Driver — Dubai site" />
 
       <Button>{isPending ? "Saving…" : "Create requisition"}</Button>
-      {state.errors?.form ? (
-        <p className="text-sm text-red-700">{state.errors.form[0]}</p>
-      ) : null}
+      {state.errors
+        ? Object.entries(state.errors).flatMap(([k, msgs]) =>
+            (msgs ?? []).map((m, i) => (
+              <p key={`${k}-${i}`} className="text-sm text-red-700">
+                {k}: {m}
+              </p>
+            ))
+          )
+        : null}
     </form>
   );
 }

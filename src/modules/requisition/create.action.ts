@@ -29,7 +29,13 @@ export async function createRequisitionAction(
       for (const [key, value] of Object.entries(raw)) {
         if (typeof value !== "string") continue;
         if (value.trim() === "") continue;
-        payload[key] = key === "vacancyTarget" ? Number(value) : value;
+        if (key === "vacancyTarget") {
+          payload[key] = Number(value);
+        } else if (key === "roleCategory") {
+          payload[key] = value.trim().toUpperCase();
+        } else {
+          payload[key] = value;
+        }
       }
       const parsed = CreateRequisitionInput.safeParse(payload);
       if (!parsed.success) {
@@ -37,8 +43,12 @@ export async function createRequisitionAction(
           errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
         };
       }
-      await RequisitionService.create(scope.tenantId, scope.userId, parsed.data);
-      redirect("/requisitions");
+      const created = await RequisitionService.create(
+        scope.tenantId,
+        scope.userId,
+        parsed.data
+      );
+      redirect(`/requisitions/${created.id}`);
     });
   } catch (error) {
     if (isRedirectError(error)) throw error;

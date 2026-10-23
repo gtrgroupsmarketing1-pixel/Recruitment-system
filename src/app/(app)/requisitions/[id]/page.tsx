@@ -9,6 +9,7 @@ import { listRequisitionAudit } from "@/modules/requisition/requisition.audit";
 import { RequisitionService } from "@/modules/requisition/requisition.service";
 import { ApplicationStatusSchema } from "@/modules/application/application.schema";
 import { ScreeningPanel } from "@/modules/screening/components/ScreeningPanel";
+import { notFound } from "next/navigation";
 
 type DetailProps = {
   params: Promise<{ id: string }>;
@@ -25,9 +26,14 @@ export default async function RequisitionDetailPage({ params, searchParams }: De
     return <main className="p-8">Missing tenant</main>;
   }
 
-  const data = await withSessionScope((_scope) =>
-    RequisitionService.getById(tenantId, id)
-  );
+  let data;
+  try {
+    data = await withSessionScope((_scope) =>
+      RequisitionService.getById(tenantId, id)
+    );
+  } catch {
+    notFound();
+  }
   const recentAudit = await withSessionScope((_scope) =>
     listRequisitionAudit(tenantId, id)
   );

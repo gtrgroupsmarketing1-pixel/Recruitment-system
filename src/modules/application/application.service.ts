@@ -50,9 +50,14 @@ export const ApplicationService = {
       requisitionId: input.requisitionId,
       recruiterId: input.recruiterId,
     });
-    
-    await ScreeningService.startScreening(tenantId, userId, app.id, path);
-    
+
+    try {
+      await ScreeningService.startScreening(tenantId, userId, app.id, path);
+    } catch (err) {
+      // Screening tables/enum may lag production schema — do not block linking.
+      console.error("[application.create] startScreening failed", err);
+    }
+
     return app;
   },
 
