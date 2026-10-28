@@ -13,14 +13,29 @@ import {
 
 async function loginAction(formData: FormData) {
   "use server";
+  const { redirect } = await import("next/navigation");
   const h = await headers();
+  // Prefer middleware header; on bare vercel.app fall back to DEV_TENANT_SLUG resolution in authorize.
   const tenantId = h.get("x-tenant-id") ?? "";
-  await signIn("credentials", {
-    email: String(formData.get("email") ?? ""),
-    password: String(formData.get("password") ?? ""),
-    tenantId,
-    redirectTo: "/",
-  });
+  try {
+    await signIn("credentials", {
+      email: String(formData.get("email") ?? ""),
+      password: String(formData.get("password") ?? ""),
+      tenantId,
+      redirectTo: "/",
+    });
+  } catch (error) {
+    // Auth.js throws on failure and on successful redirect — rethrow redirects.
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "digest" in error &&
+      String((error as { digest?: string }).digest).startsWith("NEXT_REDIRECT")
+    ) {
+      throw error;
+    }
+    redirect("/login?error=CredentialsSignin");
+  }
 }
 
 async function googleAction() {

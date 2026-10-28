@@ -66,24 +66,24 @@ function brandingHeader(tenant: {
 export default auth(async (req) => {
   const pathname = req.nextUrl.pathname;
   const host = req.headers.get("host") ?? "";
+
+  // Public paths first — never block login/signup/landing on tenant or DB.
+  if (
+    pathname.startsWith("/landing") ||
+    pathname.startsWith("/api/locale") ||
+    pathname.startsWith("/api/auth") ||
+    pathname === "/login" ||
+    pathname === "/signup"
+  ) {
+    return applySecurityHeaders(NextResponse.next());
+  }
+
   let tenant = null;
   try {
     tenant = await resolveTenantFromHost(host);
   } catch (error) {
     console.error("[middleware] tenant resolve failed", error);
     tenant = null;
-  }
-
-  // Early returns — no tenant resolution or auth required:
-  // - /landing: public marketing page
-  // - /api/locale: language switcher
-  // - /api/auth: NextAuth's own callback URLs (must not be intercepted)
-  if (
-    pathname.startsWith("/landing") ||
-    pathname.startsWith("/api/locale") ||
-    pathname.startsWith("/api/auth")
-  ) {
-    return applySecurityHeaders(NextResponse.next());
   }
 
   // Candidate portal — /candidate and /candidate/* ONLY, not /candidates.
@@ -103,10 +103,6 @@ export default auth(async (req) => {
       res.headers.set("x-tenant-branding", brandingHeader(tenant));
     }
     return res;
-  }
-
-  if ((pathname === "/login" || pathname === "/signup") && !tenant) {
-    return applySecurityHeaders(NextResponse.next());
   }
 
   if (!tenant && pathname === "/") {

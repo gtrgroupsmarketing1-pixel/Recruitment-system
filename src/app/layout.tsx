@@ -27,7 +27,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const locale = await resolveLocale();
+  let locale: "en" | "ar" = "en";
+  try {
+    locale = await resolveLocale();
+  } catch {
+    locale = "en";
+  }
   const dir = locale === "ar" ? "rtl" : "ltr";
   return (
     <html
