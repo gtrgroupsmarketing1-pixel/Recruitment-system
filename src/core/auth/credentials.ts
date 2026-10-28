@@ -10,10 +10,28 @@ export async function authorizeCredentials(
   ipAddress?: string | null
 ) {
   const email = emailRaw.toLowerCase().trim();
-  const tid = (tenantId ?? "").trim() || null;
+  let tid = (tenantId ?? "").trim() || null;
 
   if (!email || !password) return null;
-  if (!tid) return null;
+
+  // Preview hosts often have no x-tenant-id — resolve demo tenant by slug.
+  if (!tid) {
+    const slug = process.env.DEV_TENANT_SLUG || "demo";
+    try {
+      const t = await authPrisma.tenant.findFirst({
+        where: { slug, deletedAt: null },
+        select: { id: true },
+      });
+      tid = t?.id ?? null;
+    } catch (err) {
+      console.error("[AUTH] tenant slug lookup failed", String(err));
+    }
+  }
+
+  if (!tid) {
+    console.error("[AUTH] no tenantId for login", { email });
+    return null;
+  }
 
   const identifier = `${ipAddress ?? "unknown"}:${email}`;
   try {
@@ -30,18 +48,24 @@ export async function authorizeCredentials(
       return null;
     }
   } catch (err) {
-    console.error("[AUTH] rate limit error", String(err));
-    return null;
+    // Fail open — missing RateLimit table must not block all logins.
+    console.error("[AUTH] rate limit error (continuing)", String(err));
   }
 
   try {
     const user = await authPrisma.user.findFirst({
       where: { email, tenantId: tid, deletedAt: null },
     });
-    if (!user?.passwordHash) return null;
+    if (!user?.passwordHash) {
+      console.error("[AUTH] user not found or no password", { email, tid });
+      return null;
+    }
 
     const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return null;
+    if (!ok) {
+      console.error("[AUTH] password mismatch", { email, tid });
+      return null;
+    }
 
     return {
       id: user.id,

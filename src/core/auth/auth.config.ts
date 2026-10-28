@@ -81,10 +81,11 @@ const providers: Provider[] = [
         tenantId = request?.headers?.get("x-tenant-id") ?? "";
       }
 
-      // 3. Fallback: dev-only slug override (Codespaces / preview).
-      if (!tenantId && process.env.DEV_TENANT_SLUG) {
+      // 3. Fallback: slug (DEV_TENANT_SLUG or "demo") for preview / vercel.app.
+      if (!tenantId) {
+        const slug = process.env.DEV_TENANT_SLUG || "demo";
         const t = await authPrisma.tenant.findFirst({
-          where: { slug: process.env.DEV_TENANT_SLUG, deletedAt: null },
+          where: { slug, deletedAt: null },
           select: { id: true },
         });
         tenantId = t?.id ?? "";
