@@ -1,11 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+type ClientOption = { id: string; name: string };
+
 type Props = {
   current: { status?: string; client?: string; q?: string };
+  clients: ClientOption[];
 };
 
-export function RequisitionFilters({ current }: Props) {
+export function RequisitionFilters({ current, clients }: Props) {
   return (
     <form
       method="get"
@@ -24,17 +27,23 @@ export function RequisitionFilters({ current }: Props) {
         <option value="CANCELLED">CANCELLED</option>
         <option value="ON_HOLD">ON_HOLD</option>
       </select>
+      <select
+        name="client"
+        defaultValue={current.client ?? ""}
+        className="h-8 min-w-[12rem] rounded-lg border border-input bg-background px-2 text-sm"
+      >
+        <option value="">All clients</option>
+        {clients.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+      </select>
       <Input
         name="q"
         defaultValue={current.q ?? ""}
-        placeholder="Search code, client, notes…"
+        placeholder="Search code, notes…"
         className="sm:max-w-xs"
-      />
-      <Input
-        name="client"
-        defaultValue={current.client ?? ""}
-        placeholder="Client company id"
-        className="sm:max-w-[12rem]"
       />
       <Button type="submit" size="sm">
         Apply filters

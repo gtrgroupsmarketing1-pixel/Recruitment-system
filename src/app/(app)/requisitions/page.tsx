@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
 import { withSessionScope } from "@/core/auth/action-scope";
+import { db } from "@/core/db/client";
 import { RequisitionFilters } from "@/modules/requisition/components/RequisitionFilters";
 import { RequisitionList } from "@/modules/requisition/components/RequisitionList";
 import { RequisitionService } from "@/modules/requisition/requisition.service";
@@ -22,18 +23,25 @@ export default async function RequisitionsPage({ searchParams }: ListProps) {
     return <main className="p-8">Missing tenant</main>;
   }
   const status = STATUSES.find((s) => s === sp.status);
-  const data = await withSessionScope((_scope) =>
-    RequisitionService.list(tenantId, {
+  const [data, clients] = await withSessionScope(async () => {
+    const list = await RequisitionService.list(tenantId, {
       status,
       clientCompanyId: sp.client,
       search: sp.q,
-    })
-  );
+    });
+    const clientRows = await db.clientCompany.findMany({
+      where: { tenantId, deletedAt: null },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+      take: 200,
+    });
+    return [list, clientRows] as const;
+  });
   return (
     <main className="space-y-6 p-6">
       <PageHeader
         title="Requisitions"
-        description="Open roles, SLA, and fulfillment progress"
+        description="Open roles, SLA countdown, and fulfillment progress"
         actions={
           <Link
             href="/requisitions/new"
@@ -43,7 +51,7 @@ export default async function RequisitionsPage({ searchParams }: ListProps) {
           </Link>
         }
       />
-      <RequisitionFilters current={sp} />
+      <RequisitionFilters current={sp} clients={clients} />
       <RequisitionList data={data} />
     </main>
   );

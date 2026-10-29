@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { differenceInCalendarDays } from "date-fns";
 import type { RequisitionView } from "@/modules/requisition/requisition.service";
 import { ReqStatusBadge } from "./ReqStatusBadge";
-import { SlaBadge } from "./SlaBadge";
 import {
   Table,
   TableBody,
@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "cn";
@@ -26,6 +27,39 @@ function jobTitle(req: RequisitionView): string {
     return fromNotes.split("\n")[0]!.slice(0, 80);
   }
   return req.roleCategory;
+}
+
+function slaBadge(req: RequisitionView) {
+  if (!req.targetOnboardingDate) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  const days = differenceInCalendarDays(req.targetOnboardingDate, new Date());
+  if (days < 0) {
+    return (
+      <Badge variant="destructive" className="tabular-nums">
+        {Math.abs(days)}d overdue
+      </Badge>
+    );
+  }
+  if (days <= 7) {
+    return (
+      <Badge className="bg-orange-500 text-white hover:bg-orange-500 tabular-nums">
+        {days}d left
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="secondary" className="tabular-nums">
+      {days}d left
+    </Badge>
+  );
+}
+
+function progressColor(pct: number): string {
+  if (pct <= 0) return "bg-red-500";
+  if (pct < 50) return "bg-amber-500";
+  if (pct < 100) return "bg-sky-500";
+  return "bg-emerald-600";
 }
 
 export function RequisitionList({ data }: Props) {
@@ -65,7 +99,8 @@ export function RequisitionList({ data }: Props) {
             const pct = Math.min(
               100,
               Math.round(
-                (req.fulfillment.mobilized / Math.max(req.fulfillment.target, 1)) *
+                (req.fulfillment.mobilized /
+                  Math.max(req.fulfillment.target, 1)) *
                   100
               )
             );
@@ -96,18 +131,16 @@ export function RequisitionList({ data }: Props) {
                 <TableCell>
                   <ReqStatusBadge status={req.status} />
                 </TableCell>
-                <TableCell>
-                  <SlaBadge flag={req.slaFlag} />
-                </TableCell>
-                <TableCell className="min-w-[9rem]">
+                <TableCell>{slaBadge(req)}</TableCell>
+                <TableCell className="min-w-[10rem]">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full bg-primary"
+                        className={cn("h-full rounded-full", progressColor(pct))}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <span className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
+                    <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
                       {req.fulfillment.mobilized}/{req.fulfillment.target}
                     </span>
                   </div>
