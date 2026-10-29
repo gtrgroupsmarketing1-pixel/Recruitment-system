@@ -37,7 +37,11 @@ export const CandidateRepo = {
         id: true,
         fullName: true,
         phone: true,
+        email: true,
+        nationality: true,
+        portalStatus: true,
         createdAt: true,
+        _count: { select: { applications: true } },
       },
     });
   },

@@ -10,6 +10,10 @@ export type CandidateListItem = {
   id: string;
   fullName: string;
   phone: string | null;
+  email: string | null;
+  nationality: string | null;
+  portalStatus: string;
+  applicationCount: number;
   createdAt: Date;
 };
 
@@ -64,7 +68,17 @@ export const CandidateService = {
       branchUserIds = await loadBranchUserIds(tenantId, scope.branchId);
     }
     const scopeWhere = scope ? candidateScopeFilter(scope, branchUserIds) : {};
-    return CandidateRepo.list(tenantId, filter, scopeWhere);
+    const rows = await CandidateRepo.list(tenantId, filter, scopeWhere);
+    return rows.map((r) => ({
+      id: r.id,
+      fullName: r.fullName,
+      phone: r.phone,
+      email: r.email,
+      nationality: r.nationality,
+      portalStatus: r.portalStatus,
+      applicationCount: r._count.applications,
+      createdAt: r.createdAt,
+    }));
   },
 
   async getById(tenantId: string, id: string): Promise<CandidateDetailView> {
