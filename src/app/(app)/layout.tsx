@@ -15,7 +15,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex h-screen bg-background">
-      <Sidebar />
+      <Sidebar role={session.user.role} />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar userName={session.user.name ?? "User"} role={session.user.role} />
         <main className="flex-1 overflow-y-auto">{children}</main>

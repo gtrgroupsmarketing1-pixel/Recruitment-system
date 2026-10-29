@@ -31,12 +31,15 @@ export default async function IntegrationsPage() {
 
   return (
     <main className="mx-auto grid max-w-2xl gap-4 p-4 sm:p-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">Integrations</h1>
-        <Link href="/admin/jobs" className="text-sm underline">Jobs</Link>
+        <div className="flex gap-3 text-sm">
+          <Link href="/settings/calendar" className="underline">Calendar</Link>
+          <Link href="/admin/jobs" className="underline text-muted-foreground">Job runs</Link>
+        </div>
       </div>
-      <p className="text-sm text-gray-600">
-        Push-only mirror. Disconnect stops new syncs and does not delete files in Drive.
+      <p className="text-sm text-muted-foreground">
+        Cloud storage and calendar. Disconnect stops new syncs and does not delete files in Drive.
       </p>
       <section className="rounded border p-3 text-sm">
         <h2 className="font-medium">Google Drive</h2>
