@@ -72,6 +72,8 @@ export default auth(async (req) => {
     pathname.startsWith("/landing") ||
     pathname.startsWith("/api/locale") ||
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/mobile-auth") ||
+    pathname.startsWith("/api/mobile/") ||
     pathname === "/login" ||
     pathname === "/signup"
   ) {
