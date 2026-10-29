@@ -153,6 +153,66 @@ export const DocumentService = {
     await db.document.updateMany({ where: { id: documentId, tenantId }, data: { deletedAt: new Date() } });
   },
 
+  async getComplianceDashboard(tenantId: string, withinDays = 30) {
+    const now = new Date();
+    const until = new Date(Date.now() + withinDays * 86_400_000);
+
+    const [expiredOrExpiring, pendingVerification, totalValid, actionRows] =
+      await Promise.all([
+        db.document.count({
+          where: {
+            tenantId,
+            deletedAt: null,
+            confirmed: true,
+            expiryDate: { not: null, lte: until },
+          },
+        }),
+        db.document.count({
+          where: { tenantId, deletedAt: null, confirmed: false },
+        }),
+        db.document.count({
+          where: {
+            tenantId,
+            deletedAt: null,
+            confirmed: true,
+            OR: [{ expiryDate: null }, { expiryDate: { gt: until } }],
+          },
+        }),
+        db.document.findMany({
+          where: {
+            tenantId,
+            deletedAt: null,
+            OR: [
+              { confirmed: false },
+              { confirmed: true, expiryDate: { not: null, lte: until } },
+            ],
+          },
+          orderBy: [{ expiryDate: "asc" }, { createdAt: "desc" }],
+          take: 50,
+          select: {
+            id: true,
+            type: true,
+            label: true,
+            fileName: true,
+            expiryDate: true,
+            confirmed: true,
+            candidateId: true,
+            createdAt: true,
+            candidate: { select: { id: true, fullName: true } },
+          },
+        }),
+      ]);
+
+    return {
+      stats: {
+        expiredOrExpiring,
+        pendingVerification,
+        totalValid,
+      },
+      actionRequired: actionRows,
+    };
+  },
+
   async publishExpiring(withinDays: number) {
     const rows = await DocumentService.listExpiring(withinDays);
     for (const row of rows) {
