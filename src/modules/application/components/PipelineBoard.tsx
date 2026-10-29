@@ -3,12 +3,17 @@ import { PIPELINE_ORDER } from "@/modules/application/application.status-order";
 import type { ApplicationListItem } from "./ApplicationList";
 import { PipelineColumn } from "./PipelineColumn";
 import { buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "cn";
 
 type Props = {
   applications: ApplicationListItem[];
   requisitionId: string;
 };
+
+function labelFor(status: string): string {
+  return status.replace(/_/g, " ");
+}
 
 export function PipelineBoard({ applications, requisitionId }: Props) {
   if (applications.length === 0) {
@@ -36,26 +41,36 @@ export function PipelineBoard({ applications, requisitionId }: Props) {
     );
   }
 
-  const activeStatuses = PIPELINE_ORDER.filter((status) =>
-    applications.some((row) => row.status === status)
-  );
-  // Always show early stages so recruiters can see the funnel even if empty mid-pipeline
-  const early = ["SOURCED", "SCREENED", "SHORTLISTED"] as const;
-  const columns = PIPELINE_ORDER.filter(
-    (s) => activeStatuses.includes(s) || early.includes(s as (typeof early)[number])
-  );
-
   return (
-    <div className="w-full overflow-x-auto pb-2">
-      <div className="flex min-w-max gap-3">
-        {columns.map((status) => {
-          const items = applications.filter((row) => row.status === status);
-          return (
-            <div key={status} className="w-64 shrink-0">
-              <PipelineColumn status={status} items={items} />
-            </div>
-          );
-        })}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          {applications.length} candidate{applications.length === 1 ? "" : "s"} in
+          pipeline · scroll sideways for all stages
+        </p>
+        <Badge variant="secondary">{PIPELINE_ORDER.length} stages</Badge>
+      </div>
+
+      {/* Horizontal kanban — native overflow (no ScrollArea component in UI kit) */}
+      <div className="w-full overflow-x-auto rounded-lg border bg-muted/20">
+        <div className="flex w-max gap-3 p-4">
+          {PIPELINE_ORDER.map((status) => {
+            const items = applications.filter((row) => row.status === status);
+            return (
+              <div key={status} className="flex w-[280px] shrink-0 flex-col gap-2">
+                <div className="flex items-center justify-between gap-2 px-1">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {labelFor(status)}
+                  </h3>
+                  <Badge variant="secondary" className="rounded-full px-2 py-0 text-[10px]">
+                    {items.length}
+                  </Badge>
+                </div>
+                <PipelineColumn status={status} items={items} />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
