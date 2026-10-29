@@ -156,9 +156,9 @@ describe("role enforcement", () => {
       async () => CandidateService.list(seed.tenantId, {})
     );
 
-    const names = listed.map((c) => c.fullName);
+    const names = listed.items.map((c) => c.fullName);
     expect(names).toContain("Branch A Candidate");
-    const seedCandidate = listed.find((c) => c.id === seed.candidateId);
+    const seedCandidate = listed.items.find((c) => c.id === seed.candidateId);
     expect(seedCandidate).toBeUndefined();
   });
 });
