@@ -4,6 +4,9 @@ import { withSessionScope } from "@/core/auth/action-scope";
 import { RequisitionFilters } from "@/modules/requisition/components/RequisitionFilters";
 import { RequisitionList } from "@/modules/requisition/components/RequisitionList";
 import { RequisitionService } from "@/modules/requisition/requisition.service";
+import { PageHeader } from "@/components/ui/page-header";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "cn";
 
 type ListProps = {
   searchParams: Promise<{ status?: string; client?: string; q?: string }>;
@@ -27,13 +30,19 @@ export default async function RequisitionsPage({ searchParams }: ListProps) {
     })
   );
   return (
-    <main className="grid gap-4 p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Requisitions</h1>
-        <Link href="/requisitions/new" className="rounded bg-black px-3 py-2 text-sm text-white">
-          New
-        </Link>
-      </div>
+    <main className="space-y-6 p-6">
+      <PageHeader
+        title="Requisitions"
+        description="Open roles, SLA, and fulfillment progress"
+        actions={
+          <Link
+            href="/requisitions/new"
+            className={cn(buttonVariants({ variant: "default" }))}
+          >
+            New requisition
+          </Link>
+        }
+      />
       <RequisitionFilters current={sp} />
       <RequisitionList data={data} />
     </main>
