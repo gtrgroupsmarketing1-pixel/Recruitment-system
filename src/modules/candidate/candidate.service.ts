@@ -6,6 +6,8 @@ import type { CreateCandidateInput, UpdateCandidateInput } from "./candidate.sch
 import { tryGetScope } from "@/core/auth/scope";
 import { candidateScopeFilter, loadBranchUserIds } from "@/core/auth/scope-filter";
 
+export type CandidatePoolStatus = "AVAILABLE" | "IN_PROCESS" | "DEPLOYED";
+
 export type CandidateListItem = {
   id: string;
   fullName: string;
@@ -14,7 +16,18 @@ export type CandidateListItem = {
   nationality: string | null;
   portalStatus: string;
   applicationCount: number;
+  poolStatus: CandidatePoolStatus;
+  latestAppStatus: string | null;
   createdAt: Date;
+  updatedAt: Date;
+};
+
+export type CandidateListResult = {
+  items: CandidateListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 };
 
 export type CandidateDetailView = {
@@ -60,25 +73,61 @@ export const CandidateService = {
 
   async list(
     tenantId: string,
-    filter: { search?: string }
-  ): Promise<CandidateListItem[]> {
+    filter: {
+      search?: string;
+      nationality?: string;
+      portalStatus?: string;
+      pool?: string;
+      page?: number;
+      limit?: number;
+    }
+  ): Promise<CandidateListResult> {
     const scope = tryGetScope();
     let branchUserIds: string[] | undefined;
     if (scope?.kind === "USER" && scope.role === "BRANCH_MANAGER" && scope.branchId) {
       branchUserIds = await loadBranchUserIds(tenantId, scope.branchId);
     }
     const scopeWhere = scope ? candidateScopeFilter(scope, branchUserIds) : {};
-    const rows = await CandidateRepo.list(tenantId, filter, scopeWhere);
-    return rows.map((r) => ({
-      id: r.id,
-      fullName: r.fullName,
-      phone: r.phone,
-      email: r.email,
-      nationality: r.nationality,
-      portalStatus: r.portalStatus,
-      applicationCount: r._count.applications,
-      createdAt: r.createdAt,
-    }));
+    const result = await CandidateRepo.list(tenantId, filter, scopeWhere);
+
+    const deployed = new Set([
+      "MOBILIZED",
+      "TRAVELED",
+      "PROBATION",
+      "CONFIRMED",
+    ]);
+
+    let items = result.rows.map((r) => {
+      const latest = r.applications[0]?.status ?? null;
+      let poolStatus: CandidatePoolStatus = "AVAILABLE";
+      if (latest && deployed.has(latest)) poolStatus = "DEPLOYED";
+      else if (r._count.applications > 0) poolStatus = "IN_PROCESS";
+      return {
+        id: r.id,
+        fullName: r.fullName,
+        phone: r.phone,
+        email: r.email,
+        nationality: r.nationality,
+        portalStatus: r.portalStatus,
+        applicationCount: r._count.applications,
+        poolStatus,
+        latestAppStatus: latest,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      };
+    });
+
+    if (filter.pool === "AVAILABLE" || filter.pool === "IN_PROCESS" || filter.pool === "DEPLOYED") {
+      items = items.filter((i) => i.poolStatus === filter.pool);
+    }
+
+    return {
+      items,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+    };
   },
 
   async getById(tenantId: string, id: string): Promise<CandidateDetailView> {

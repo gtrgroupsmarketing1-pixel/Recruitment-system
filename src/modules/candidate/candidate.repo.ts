@@ -15,35 +15,66 @@ export const CandidateRepo = {
 
   async list(
     tenantId: string,
-    filter?: { search?: string },
+    filter?: {
+      search?: string;
+      nationality?: string;
+      portalStatus?: string;
+      page?: number;
+      limit?: number;
+    },
     scopeWhere?: Prisma.CandidateWhereInput
   ) {
-    return db.candidate.findMany({
-      where: {
-        tenantId,
-        deletedAt: null,
-        ...scopeWhere,
-        ...(filter?.search
-          ? {
-              OR: [
-                { fullName: { contains: filter.search, mode: "insensitive" } },
-                { phone: { contains: filter.search, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        fullName: true,
-        phone: true,
-        email: true,
-        nationality: true,
-        portalStatus: true,
-        createdAt: true,
-        _count: { select: { applications: true } },
-      },
-    });
+    const page = Math.max(1, filter?.page ?? 1);
+    const limit = Math.min(100, Math.max(1, filter?.limit ?? 25));
+    const where: Prisma.CandidateWhereInput = {
+      tenantId,
+      deletedAt: null,
+      ...scopeWhere,
+      ...(filter?.nationality
+        ? { nationality: { equals: filter.nationality, mode: "insensitive" } }
+        : {}),
+      ...(filter?.portalStatus
+        ? { portalStatus: filter.portalStatus }
+        : {}),
+      ...(filter?.search
+        ? {
+            OR: [
+              { fullName: { contains: filter.search, mode: "insensitive" } },
+              { phone: { contains: filter.search, mode: "insensitive" } },
+              { email: { contains: filter.search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      db.candidate.findMany({
+        where,
+        take: limit,
+        skip: (page - 1) * limit,
+        orderBy: { updatedAt: "desc" },
+        select: {
+          id: true,
+          fullName: true,
+          phone: true,
+          email: true,
+          nationality: true,
+          portalStatus: true,
+          createdAt: true,
+          updatedAt: true,
+          _count: { select: { applications: true } },
+          applications: {
+            where: { deletedAt: null },
+            orderBy: { updatedAt: "desc" },
+            take: 1,
+            select: { status: true },
+          },
+        },
+      }),
+      db.candidate.count({ where }),
+    ]);
+
+    return { rows, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) };
   },
 
   async create(tenantId: string, data: Prisma.CandidateUncheckedCreateInput) {
