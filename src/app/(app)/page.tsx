@@ -1,8 +1,7 @@
 import { requireSession } from "@/core/auth/session";
 import { withSessionScope } from "@/core/auth/action-scope";
-import { RequisitionService } from "@/modules/requisition/requisition.service";
-import { TaskHome } from "@/modules/task/components/TaskHome";
-import { TaskService } from "@/modules/task/task.service";
+import { DashboardService } from "@/modules/dashboard/dashboard.service";
+import { DashboardHome } from "@/modules/dashboard/components/DashboardHome";
 import { RealtimeRefresher } from "@/components/realtime/RealtimeRefresher";
 
 export default async function AppHome() {
@@ -12,27 +11,34 @@ export default async function AppHome() {
     return <main className="p-8">Missing tenant</main>;
   }
   const userId = session.user.id;
-  const [tasks, counts, requisitions] = await withSessionScope(async (_scope) => {
-    const t = await TaskService.listForUser(tenantId, userId, {
-      status: "OPEN",
-    });
-    const c = await TaskService.countsForUser(tenantId, userId);
-    const r = await RequisitionService.list(tenantId, { status: "OPEN" });
-    return [t, c, r] as const;
+
+  const data = await withSessionScope(async () => {
+    const [kpis, pipeline, urgentReqs, tasks, activity] = await Promise.all([
+      DashboardService.getKpis(tenantId, userId),
+      DashboardService.getPipeline(tenantId),
+      DashboardService.getUrgentRequisitions(tenantId),
+      DashboardService.getTodayTasks(tenantId, userId),
+      DashboardService.getRecentActivity(tenantId),
+    ]);
+    return { kpis, pipeline, urgentReqs, tasks, activity };
   });
+
   const firstName =
     (session.user.name ?? "there").trim().split(/\s+/)[0] || "there";
+
   return (
     <>
-    <RealtimeRefresher eventTypes={["candidate.status_changed", "task.overdue"]} />
-    <main>
-      <TaskHome
-        firstName={firstName}
-        tasks={tasks}
-        counts={counts}
-        requisitions={requisitions}
+      <RealtimeRefresher
+        eventTypes={["candidate.status_changed", "task.overdue"]}
       />
-    </main>
+      <DashboardHome
+        firstName={firstName}
+        kpis={data.kpis}
+        pipeline={data.pipeline}
+        urgentReqs={data.urgentReqs}
+        tasks={data.tasks}
+        activity={data.activity}
+      />
     </>
   );
 }
