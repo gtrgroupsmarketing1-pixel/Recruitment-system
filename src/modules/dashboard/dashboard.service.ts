@@ -1,6 +1,10 @@
+import { differenceInCalendarDays } from "date-fns";
 import { db } from "@/core/db/client";
 import type { ApplicationStatus } from "@prisma/client";
-import { RequisitionService, type RequisitionView } from "@/modules/requisition/requisition.service";
+import {
+  RequisitionService,
+  type RequisitionView,
+} from "@/modules/requisition/requisition.service";
 import { TaskService, type TaskView } from "@/modules/task/task.service";
 
 export type DashboardKpis = {
@@ -11,6 +15,7 @@ export type DashboardKpis = {
   pendingTasks: number;
   overdueTasks: number;
   complianceAlerts: number;
+  docsExpiring: number;
 };
 
 export type PipelineStage = {
@@ -27,6 +32,10 @@ export type ActivityItem = {
   entityId: string;
 };
 
+export type UrgentRequisitionRow = RequisitionView & {
+  slaDays: number | null;
+};
+
 const PIPELINE_ORDER: { status: ApplicationStatus; label: string }[] = [
   { status: "SOURCED", label: "Sourced" },
   { status: "SCREENED", label: "Screened" },
@@ -41,10 +50,28 @@ function weekAgo(): Date {
   return d;
 }
 
+function slaDaysRemaining(target: Date | null): number | null {
+  if (!target) return null;
+  return differenceInCalendarDays(target, new Date());
+}
+
+function humanActivity(row: {
+  entity: string;
+  field: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+}): string {
+  const field = row.field ? ` · ${row.field}` : "";
+  if (row.oldValue || row.newValue) {
+    return `${row.entity}${field}: ${row.oldValue ?? "—"} → ${row.newValue ?? "—"}`;
+  }
+  return `${row.entity}${field || " updated"}`;
+}
+
 export const DashboardService = {
   async getKpis(tenantId: string, userId: string): Promise<DashboardKpis> {
     const since = weekAgo();
-    const now = new Date();
+    const until30 = new Date(Date.now() + 30 * 86_400_000);
 
     const [
       activeReqs,
@@ -52,7 +79,8 @@ export const DashboardService = {
       pipelineCount,
       inScreening,
       openTasks,
-      complianceAlerts,
+      docsExpiring,
+      pendingDocs,
     ] = await Promise.all([
       db.jobRequisition.count({
         where: { tenantId, status: "OPEN", deletedAt: null },
@@ -69,7 +97,15 @@ export const DashboardService = {
         where: {
           tenantId,
           deletedAt: null,
-          status: { notIn: ["REJECTED", "MOBILIZED", "CONFIRMED", "MEDICAL_UNFIT", "VISA_REFUSED"] },
+          status: {
+            notIn: [
+              "REJECTED",
+              "MOBILIZED",
+              "CONFIRMED",
+              "MEDICAL_UNFIT",
+              "VISA_REFUSED",
+            ],
+          },
         },
       }),
       db.candidateApplication.count({
@@ -80,12 +116,16 @@ export const DashboardService = {
         },
       }),
       TaskService.listForUser(tenantId, userId, { status: "OPEN" }),
-      db.complianceCase.count({
+      db.document.count({
         where: {
           tenantId,
           deletedAt: null,
-          status: { in: ["PENDING", "IN_PROGRESS", "BLOCKED"] },
+          confirmed: true,
+          expiryDate: { not: null, lte: until30 },
         },
+      }),
+      db.document.count({
+        where: { tenantId, deletedAt: null, confirmed: false },
       }),
     ]);
 
@@ -98,14 +138,19 @@ export const DashboardService = {
       inScreening,
       pendingTasks: openTasks.length,
       overdueTasks,
-      complianceAlerts,
+      docsExpiring,
+      complianceAlerts: docsExpiring + pendingDocs,
     };
   },
 
   async getPipeline(tenantId: string): Promise<PipelineStage[]> {
     const grouped = await db.candidateApplication.groupBy({
       by: ["status"],
-      where: { tenantId, deletedAt: null },
+      where: {
+        tenantId,
+        deletedAt: null,
+        status: { notIn: ["REJECTED", "MEDICAL_UNFIT", "VISA_REFUSED"] },
+      },
       _count: { _all: true },
     });
     const map = new Map(grouped.map((g) => [g.status, g._count._all]));
@@ -116,18 +161,23 @@ export const DashboardService = {
     }));
   },
 
-  async getUrgentRequisitions(tenantId: string): Promise<RequisitionView[]> {
+  async getUrgentRequisitions(tenantId: string): Promise<UrgentRequisitionRow[]> {
     const list = await RequisitionService.list(tenantId, { status: "OPEN" });
     return list
       .slice()
       .sort((a, b) => {
+        const ad = a.targetOnboardingDate?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const bd = b.targetOnboardingDate?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        if (ad !== bd) return ad - bd;
         const rank = (f: RequisitionView["slaFlag"]) =>
           f === "RED" ? 0 : f === "AMBER" ? 1 : f === "GREEN" ? 2 : 3;
-        const bySla = rank(a.slaFlag) - rank(b.slaFlag);
-        if (bySla !== 0) return bySla;
-        return a.createdAt.getTime() - b.createdAt.getTime();
+        return rank(a.slaFlag) - rank(b.slaFlag);
       })
-      .slice(0, 5);
+      .slice(0, 5)
+      .map((req) => ({
+        ...req,
+        slaDays: slaDaysRemaining(req.targetOnboardingDate),
+      }));
   },
 
   async getTodayTasks(tenantId: string, userId: string): Promise<TaskView[]> {
@@ -152,19 +202,12 @@ export const DashboardService = {
         createdAt: true,
       },
     });
-    return rows.map((r) => {
-      const field = r.field ? ` ${r.field}` : "";
-      const change =
-        r.oldValue || r.newValue
-          ? `: ${r.oldValue ?? "—"} → ${r.newValue ?? "—"}`
-          : "";
-      return {
-        id: r.id,
-        summary: `${r.entity}${field}${change}`.slice(0, 120),
-        createdAt: r.createdAt,
-        entity: r.entity,
-        entityId: r.entityId,
-      };
-    });
+    return rows.map((r) => ({
+      id: r.id,
+      summary: humanActivity(r).slice(0, 140),
+      createdAt: r.createdAt,
+      entity: r.entity,
+      entityId: r.entityId,
+    }));
   },
 };

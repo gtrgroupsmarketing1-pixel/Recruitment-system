@@ -3,8 +3,8 @@ import type {
   ActivityItem,
   DashboardKpis,
   PipelineStage,
+  UrgentRequisitionRow,
 } from "@/modules/dashboard/dashboard.service";
-import type { RequisitionView } from "@/modules/requisition/requisition.service";
 import type { TaskView } from "@/modules/task/task.service";
 import { QuickActions } from "./QuickActions";
 import { DashboardTaskList } from "./DashboardTaskList";
@@ -31,17 +31,34 @@ type Props = {
   firstName: string;
   kpis: DashboardKpis;
   pipeline: PipelineStage[];
-  urgentReqs: RequisitionView[];
+  urgentReqs: UrgentRequisitionRow[];
   tasks: TaskView[];
   activity: ActivityItem[];
 };
 
-function slaBadge(flag: RequisitionView["slaFlag"]) {
-  if (flag === "RED") return <Badge variant="destructive">SLA red</Badge>;
-  if (flag === "AMBER")
-    return <Badge variant="secondary">SLA amber</Badge>;
-  if (flag === "GREEN") return <Badge variant="outline">On track</Badge>;
-  return <Badge variant="outline">—</Badge>;
+function slaCountdown(days: number | null) {
+  if (days == null) {
+    return <Badge variant="outline">No target</Badge>;
+  }
+  if (days < 0) {
+    return (
+      <Badge variant="destructive" className="tabular-nums">
+        {days}d overdue
+      </Badge>
+    );
+  }
+  if (days <= 7) {
+    return (
+      <Badge className="bg-amber-500 text-white hover:bg-amber-500 tabular-nums">
+        {days}d left
+      </Badge>
+    );
+  }
+  return (
+    <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 tabular-nums">
+      {days}d left
+    </Badge>
+  );
 }
 
 export function DashboardHome({
@@ -91,7 +108,9 @@ export function DashboardHome({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">In pipeline</CardTitle>
-            <CardDescription>{kpis.inScreening} in screening</CardDescription>
+            <CardDescription>
+              {kpis.pipelineCount} total · {kpis.inScreening} in screening
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold tabular-nums">{kpis.pipelineCount}</p>
@@ -102,7 +121,7 @@ export function DashboardHome({
             <CardTitle className="text-sm font-medium">Pending tasks</CardTitle>
             <CardDescription>
               {kpis.overdueTasks > 0 ? (
-                <span className="text-destructive font-medium">
+                <span className="font-medium text-destructive">
                   {kpis.overdueTasks} overdue
                 </span>
               ) : (
@@ -114,27 +133,29 @@ export function DashboardHome({
             <p className="text-3xl font-semibold tabular-nums">{kpis.pendingTasks}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Compliance alerts</CardTitle>
-            <CardDescription>
-              <span className="text-amber-600 dark:text-amber-500">
-                Open / blocked cases
-              </span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold tabular-nums text-amber-700 dark:text-amber-400">
-              {kpis.complianceAlerts}
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/documents" className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <Card className="h-full transition-colors hover:bg-muted/40">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Compliance alerts</CardTitle>
+              <CardDescription>
+                {kpis.docsExpiring} docs expiring · open documents
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold tabular-nums text-amber-700 dark:text-amber-400">
+                {kpis.complianceAlerts}
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Candidate pipeline</CardTitle>
-          <CardDescription>Stage mix across active applications</CardDescription>
+          <CardDescription>
+            Stage mix and drop-off across active applications
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <PipelineBar stages={pipeline} />
@@ -146,9 +167,12 @@ export function DashboardHome({
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle>Urgent requisitions</CardTitle>
-              <CardDescription>Oldest / tightest SLA first</CardDescription>
+              <CardDescription>Soonest onboarding target first</CardDescription>
             </div>
-            <Link href="/requisitions?status=OPEN" className="text-sm text-primary underline-offset-4 hover:underline">
+            <Link
+              href="/requisitions?status=OPEN"
+              className="text-sm text-primary underline-offset-4 hover:underline"
+            >
               View all
             </Link>
           </CardHeader>
@@ -165,30 +189,54 @@ export function DashboardHome({
                     <TableHead>Client</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>SLA</TableHead>
-                    <TableHead className="text-right">Filled</TableHead>
+                    <TableHead>Filled</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {urgentReqs.map((req) => (
-                    <TableRow key={req.id}>
-                      <TableCell>
-                        <Link
-                          href={`/requisitions/${req.id}`}
-                          className="font-mono text-sm font-medium hover:underline"
-                        >
-                          {req.reqCode}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="max-w-[10rem] truncate">
-                        {req.client.name}
-                      </TableCell>
-                      <TableCell>{req.roleCategory}</TableCell>
-                      <TableCell>{slaBadge(req.slaFlag)}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {req.fulfillment.mobilized}/{req.fulfillment.target}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {urgentReqs.map((req) => {
+                    const pct = Math.min(
+                      100,
+                      Math.round(
+                        (req.fulfillment.mobilized /
+                          Math.max(req.fulfillment.target, 1)) *
+                          100
+                      )
+                    );
+                    return (
+                      <TableRow key={req.id} className="cursor-pointer">
+                        <TableCell>
+                          <Link
+                            href={`/requisitions/${req.id}`}
+                            className="font-mono text-sm font-medium hover:underline"
+                          >
+                            {req.reqCode}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="max-w-[10rem] truncate">
+                          <Link href={`/requisitions/${req.id}`} className="hover:underline">
+                            {req.client.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/requisitions/${req.id}`}>{req.roleCategory}</Link>
+                        </TableCell>
+                        <TableCell>{slaCountdown(req.slaDays)}</TableCell>
+                        <TableCell className="min-w-[8rem]">
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-primary"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                              {req.fulfillment.mobilized}/{req.fulfillment.target}
+                            </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
@@ -217,10 +265,17 @@ export function DashboardHome({
               ) : (
                 <ul className="space-y-3">
                   {activity.map((item) => (
-                    <li key={item.id} className="border-b border-border/60 pb-2 last:border-0">
+                    <li
+                      key={item.id}
+                      className="border-b border-border/60 pb-2 last:border-0"
+                    >
                       <p className="text-sm leading-snug">{item.summary}</p>
                       <p className="text-xs text-muted-foreground">
-                        {item.createdAt.toISOString().slice(0, 16).replace("T", " ")} UTC
+                        {item.createdAt
+                          .toISOString()
+                          .slice(0, 16)
+                          .replace("T", " ")}{" "}
+                        UTC
                       </p>
                     </li>
                   ))}
