@@ -23,60 +23,62 @@ export async function createCandidateAction(
   formData: FormData
 ): Promise<CandidateFormState> {
   try {
-    return await withSessionScope(async (scope) => {
+    const raw = Object.fromEntries(formData.entries());
+    const payload: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(raw)) {
+      if (typeof value === "string" && value.trim() !== "") {
+        payload[key] = value.trim();
+      }
+    }
+    payload.smsOptIn = formData.get("smsOptIn") === "on";
+    if (payload.email === "") delete payload.email;
+
+    const parsed = CreateCandidateInput.safeParse(payload);
+    if (!parsed.success) {
+      const errors: Record<string, string[]> = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] ? String(issue.path[0]) : "form";
+        errors[key] = [...(errors[key] ?? []), issue.message];
+      }
+      return { errors };
+    }
+
+    const created = await withSessionScope(async (scope) => {
       requirePermission("candidate:create");
-      const raw = Object.fromEntries(formData.entries());
-      const payload: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(raw)) {
-        if (typeof value === "string" && value.trim() !== "") {
-          payload[key] = value.trim();
-        }
-      }
-      payload.smsOptIn = formData.get("smsOptIn") === "on";
-
-      // Empty optional email must not be validated as invalid email
-      if (payload.email === "") delete payload.email;
-
-      const parsed = CreateCandidateInput.safeParse(payload);
-      if (!parsed.success) {
-        const errors: Record<string, string[]> = {};
-        for (const issue of parsed.error.issues) {
-          const key = issue.path[0] ? String(issue.path[0]) : "form";
-          errors[key] = [...(errors[key] ?? []), issue.message];
-        }
-        return { errors };
-      }
-
-      const created = await CandidateService.create(
+      return CandidateService.create(
         scope.tenantId,
         scope.userId,
         parsed.data
       );
+    });
 
-      const requisitionId = parsed.data.requisitionId;
-      if (requisitionId) {
-        requirePermission("application:create");
-        try {
+    const requisitionId = parsed.data.requisitionId;
+    if (requisitionId) {
+      try {
+        await withSessionScope(async (scope) => {
+          requirePermission("application:create");
           await ApplicationService.create(scope.tenantId, scope.userId, {
             candidateId: created.id,
             requisitionId,
           });
-        } catch (linkError) {
-          // Candidate exists; surface link failure without losing the record
-          const msg =
-            linkError instanceof Error
-              ? linkError.message
-              : "Candidate created but could not link to requisition";
-          redirect(
-            `/candidates/${created.id}?error=${encodeURIComponent(msg)}`
-          );
-        }
+        });
+      } catch (linkError) {
+        if (isRedirectError(linkError)) throw linkError;
+        const msg =
+          linkError instanceof Error
+            ? linkError.message
+            : "Candidate created but could not link to requisition";
+        redirect(
+          `/candidates/${created.id}?error=${encodeURIComponent(msg)}`
+        );
       }
-      redirect(`/candidates/${created.id}`);
-    });
+    }
+
+    redirect(`/candidates/${created.id}`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
-    const msg = error instanceof Error ? error.message : "Could not create candidate";
+    const msg =
+      error instanceof Error ? error.message : "Could not create candidate";
     return { errors: { form: [msg] } };
   }
 }

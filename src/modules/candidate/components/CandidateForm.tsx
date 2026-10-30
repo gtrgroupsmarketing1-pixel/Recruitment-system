@@ -23,14 +23,14 @@ export function CandidateForm({ requisitionId }: Props) {
         <input type="hidden" name="requisitionId" value={requisitionId} />
       ) : null}
       <Label htmlFor="fullName">Full name</Label>
-      <Input id="fullName" name="fullName" required />
+      <Input id="fullName" name="fullName" required autoComplete="name" />
       {state.errors?.fullName ? (
         <p className="text-sm text-red-700">{state.errors.fullName[0]}</p>
       ) : null}
       <Label htmlFor="phone">Phone</Label>
-      <Input id="phone" name="phone" />
+      <Input id="phone" name="phone" autoComplete="tel" />
       <Label htmlFor="email">Email</Label>
-      <Input id="email" name="email" type="email" />
+      <Input id="email" name="email" type="email" autoComplete="email" />
       <Label htmlFor="passportNumber">Passport number</Label>
       <Input id="passportNumber" name="passportNumber" />
       <Label htmlFor="nationalId">National ID</Label>
@@ -40,18 +40,27 @@ export function CandidateForm({ requisitionId }: Props) {
         <span>Candidate consents to SMS notifications</span>
       </label>
       <p className="text-xs text-muted-foreground">
-        After create, open the candidate profile to upload CV and supporting documents.
-        A short ID (C-XXXXXX) is assigned automatically.
+        After create, open the candidate profile to upload CV and supporting
+        documents. A short ID (C-XXXXXX) is assigned automatically.
       </p>
-      <Button>{isPending ? "Saving…" : "Create candidate"}</Button>
+      <Button type="submit" disabled={isPending}>
+        {isPending ? "Saving…" : "Create candidate"}
+      </Button>
+      {state.errors?.form ? (
+        <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {state.errors.form[0]}
+        </p>
+      ) : null}
       {state.errors
-        ? Object.entries(state.errors).map(([k, msgs]) =>
-            msgs?.map((m, i) => (
-              <p key={`${k}-${i}`} className="text-sm text-red-700">
-                {k}: {m}
-              </p>
-            ))
-          )
+        ? Object.entries(state.errors)
+            .filter(([k]) => k !== "form" && k !== "fullName")
+            .map(([k, msgs]) =>
+              msgs?.map((m, i) => (
+                <p key={`${k}-${i}`} className="text-sm text-red-700">
+                  {k}: {m}
+                </p>
+              ))
+            )
         : null}
     </form>
   );
