@@ -8,6 +8,8 @@ export type ClientCompanyView = {
   code: string;
   country: string | null;
   createdAt: Date;
+  openRequisitions?: number;
+  portalUsers?: number;
 };
 
 function assertCanManageClients() {
@@ -32,7 +34,46 @@ export const ClientCompanyService = {
       orderBy: { name: "asc" },
       select: { id: true, name: true, code: true, country: true, createdAt: true },
     });
-    return rows;
+    if (rows.length === 0) return [];
+
+    const ids = rows.map((r) => r.id);
+    const [reqGroups, userGroups] = await Promise.all([
+      db.jobRequisition.groupBy({
+        by: ["clientCompanyId"],
+        where: {
+          tenantId,
+          deletedAt: null,
+          status: "OPEN",
+          clientCompanyId: { in: ids },
+        },
+        _count: { _all: true },
+      }),
+      db.user.groupBy({
+        by: ["clientCompanyId"],
+        where: {
+          tenantId,
+          deletedAt: null,
+          role: "CLIENT_USER",
+          clientCompanyId: { in: ids },
+        },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const reqMap = new Map(
+      reqGroups.map((g) => [g.clientCompanyId, g._count._all])
+    );
+    const userMap = new Map(
+      userGroups
+        .filter((g) => g.clientCompanyId != null)
+        .map((g) => [g.clientCompanyId as string, g._count._all])
+    );
+
+    return rows.map((r) => ({
+      ...r,
+      openRequisitions: reqMap.get(r.id) ?? 0,
+      portalUsers: userMap.get(r.id) ?? 0,
+    }));
   },
 
   async getById(tenantId: string, id: string): Promise<ClientCompanyView> {

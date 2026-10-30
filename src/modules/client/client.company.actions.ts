@@ -20,7 +20,7 @@ export async function createClientCompanyAction(formData: FormData) {
         country: country || null,
       });
     });
-    redirect(`/admin/clients/${created.id}/users`);
+    redirect(`/admin/clients`);
   } catch (error) {
     // Next.js redirect throws; rethrow so it still works
     if (
@@ -37,7 +37,7 @@ export async function createClientCompanyAction(formData: FormData) {
         : error instanceof Error
           ? error.message
           : "Could not create client";
-    redirect(`/admin/clients/new?error=${encodeURIComponent(message)}`);
+    redirect(`/admin/clients?error=${encodeURIComponent(message)}`);
   }
 }
 

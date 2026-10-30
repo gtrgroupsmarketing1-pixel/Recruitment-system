@@ -1,12 +1,19 @@
-import Link from "next/link";
 import { requireSession } from "@/core/auth/session";
 import { withSessionScope } from "@/core/auth/action-scope";
 import { ClientCompanyService } from "@/modules/client/client.company.service";
-import { deleteClientCompanyAction } from "@/modules/client/client.company.actions";
+import { ClientTable } from "@/modules/client/components/ClientTable";
+import { NewClientDialog } from "@/modules/client/components/NewClientDialog";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-export default async function ClientsPage() {
+type Props = {
+  searchParams: Promise<{ q?: string; error?: string }>;
+};
+
+export default async function ClientsPage({ searchParams }: Props) {
+  const sp = await searchParams;
   const session = await requireSession();
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) {
@@ -26,68 +33,40 @@ export default async function ClientsPage() {
     <main className="space-y-6 p-6">
       <PageHeader
         title="Clients"
-        description="Client companies for requisitions and portal access"
-        actions={
-          <Link
-            href="/admin/clients/new"
-            className="rounded bg-neutral-900 px-3 py-2 text-sm text-white"
-          >
-            New client
-          </Link>
-        }
+        description="Demand, portal adoption, and company access"
+        actions={<NewClientDialog />}
       />
+
+      {sp.error ? (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {sp.error}
+        </p>
+      ) : null}
 
       {clients.length === 0 ? (
         <EmptyState
           title="No clients yet"
           description="Create a client company before opening requisitions or inviting portal users."
-          action={
-            <Link
-              href="/admin/clients/new"
-              className="rounded bg-neutral-900 px-3 py-2 text-sm text-white"
-            >
-              Add client
-            </Link>
-          }
+          action={<NewClientDialog />}
         />
       ) : (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b bg-neutral-50 text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="px-3 py-2 font-medium">Name</th>
-                <th className="px-3 py-2 font-medium">Code</th>
-                <th className="px-3 py-2 font-medium">Country</th>
-                <th className="px-3 py-2 font-medium">Users</th>
-              </tr>
-            </thead>
-            <tbody>
-              {clients.map((c) => (
-                <tr key={c.id} className="border-b last:border-0">
-                  <td className="px-3 py-2 font-medium">{c.name}</td>
-                  <td className="px-3 py-2 font-mono text-xs">{c.code}</td>
-                  <td className="px-3 py-2">{c.country ?? "—"}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Link
-                        href={`/admin/clients/${c.id}/users`}
-                        className="underline underline-offset-2"
-                      >
-                        Manage users
-                      </Link>
-                      <form action={deleteClientCompanyAction}>
-                        <input type="hidden" name="id" value={c.id} />
-                        <button type="submit" className="text-xs text-red-700 underline underline-offset-2">
-                          Delete
-                        </button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <form
+            method="get"
+            className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center"
+          >
+            <Input
+              name="q"
+              defaultValue={sp.q ?? ""}
+              placeholder="Search name or code…"
+              className="sm:max-w-sm"
+            />
+            <Button type="submit" size="sm">
+              Search
+            </Button>
+          </form>
+          <ClientTable clients={clients} q={sp.q} />
+        </>
       )}
     </main>
   );
