@@ -1,7 +1,13 @@
 import type { Task, TaskPriority, TaskStatus } from "@prisma/client";
 import { NotFoundError, ValidationError } from "@/lib/errors";
+import { db } from "@/core/db/client";
 import { TaskRepo } from "./task.repo";
 import { computeIsOverdue } from "./task.overdue";
+
+export type TaskContextLink = {
+  href: string;
+  label: string;
+};
 
 export type TaskView = {
   id: string;
@@ -15,6 +21,7 @@ export type TaskView = {
   refType: string;
   refId: string;
   createdAt: Date;
+  context: TaskContextLink | null;
 };
 
 export type TaskCounts = {
@@ -25,7 +32,7 @@ export type TaskCounts = {
   thisWeek: number;
 };
 
-function toView(task: Task, nowMs = Date.now()): TaskView {
+function toView(task: Task, nowMs = Date.now(), context: TaskContextLink | null = null): TaskView {
   return {
     id: task.id,
     type: task.type,
@@ -38,6 +45,7 @@ function toView(task: Task, nowMs = Date.now()): TaskView {
     refType: task.refType,
     refId: task.refId,
     createdAt: task.createdAt,
+    context,
   };
 }
 
@@ -53,7 +61,8 @@ export const TaskService = {
   ): Promise<TaskView[]> {
     const rows = await TaskRepo.listForUser(tenantId, userId, filter);
     const now = Date.now();
-    return rows.map((r) => toView(r, now));
+    const contextMap = await resolveTaskContexts(tenantId, rows);
+    return rows.map((r) => toView(r, now, contextMap.get(r.id) ?? null));
   },
 
   async getById(tenantId: string, id: string): Promise<TaskView> {

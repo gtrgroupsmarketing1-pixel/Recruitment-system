@@ -10,20 +10,6 @@ import { cn } from "cn";
 
 type Props = { initialTasks: TaskView[]; emptyMessage?: string };
 
-function contextHref(refType: string, refId: string): string | null {
-  const t = refType.toLowerCase();
-  if (t.includes("requisition") || t === "jobrequisition") {
-    return `/requisitions/${refId}`;
-  }
-  if (t.includes("candidate")) {
-    return `/candidates/${refId}`;
-  }
-  if (t.includes("application")) {
-    return `/candidates`; // no dedicated application page
-  }
-  return null;
-}
-
 function priorityClass(priority: TaskView["priority"]): string {
   if (priority === "URGENT" || priority === "HIGH") return "bg-red-500";
   if (priority === "MEDIUM") return "bg-amber-500";
@@ -59,18 +45,21 @@ export function TaskActionList({ initialTasks, emptyMessage }: Props) {
   return (
     <div className="divide-y overflow-hidden rounded-lg border bg-card">
       {tasks.map((task) => {
-        const href = contextHref(task.refType, task.refId);
         const due = task.dueDate;
         const overdue =
           task.isOverdue ||
-          (due != null && isPast(due) && !isToday(due) && task.status !== "COMPLETED");
+          (due != null &&
+            isPast(due) &&
+            !isToday(due) &&
+            task.status !== "COMPLETED");
 
         return (
           <div
             key={task.id}
             className={cn(
               "flex items-start gap-3 p-4 transition-colors hover:bg-muted/40",
-              pending && "opacity-80"
+              pending && "opacity-80",
+              task.status === "COMPLETED" && "opacity-60"
             )}
           >
             <button
@@ -83,10 +72,20 @@ export function TaskActionList({ initialTasks, emptyMessage }: Props) {
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span
-                  className={cn("size-2 shrink-0 rounded-full", priorityClass(task.priority))}
+                  className={cn(
+                    "size-2 shrink-0 rounded-full",
+                    priorityClass(task.priority)
+                  )}
                   title={task.priority}
                 />
-                <span className="font-medium">{task.title}</span>
+                <span
+                  className={cn(
+                    "font-medium",
+                    task.status === "COMPLETED" && "line-through text-muted-foreground"
+                  )}
+                >
+                  {task.title}
+                </span>
                 <Badge
                   variant={
                     task.priority === "HIGH" || task.priority === "URGENT"
@@ -97,6 +96,15 @@ export function TaskActionList({ initialTasks, emptyMessage }: Props) {
                 >
                   {task.priority}
                 </Badge>
+                {task.refType !== "MANUAL" ? (
+                  <Badge variant="outline" className="text-[10px] font-normal">
+                    System
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] font-normal">
+                    Manual
+                  </Badge>
+                )}
                 {overdue ? (
                   <Badge variant="destructive" className="text-[10px]">
                     Overdue
@@ -107,20 +115,20 @@ export function TaskActionList({ initialTasks, emptyMessage }: Props) {
                 <p className="text-sm text-muted-foreground">{task.description}</p>
               ) : null}
               <div className="flex flex-wrap items-center gap-2 pt-1">
-                {href ? (
-                  <Link href={href}>
+                {task.context ? (
+                  <Link href={task.context.href}>
                     <Badge
-                      variant="outline"
+                      variant="secondary"
                       className="cursor-pointer text-xs font-normal hover:bg-muted"
                     >
-                      {task.refType}: {task.refId.slice(-8)}
+                      {task.context.label}
                     </Badge>
                   </Link>
-                ) : (
+                ) : task.refType !== "MANUAL" ? (
                   <Badge variant="outline" className="text-xs font-normal">
-                    {task.refType}/{task.refId.slice(0, 8)}
+                    {task.refType}
                   </Badge>
-                )}
+                ) : null}
                 <span
                   className={cn(
                     "ml-auto text-xs font-medium",
