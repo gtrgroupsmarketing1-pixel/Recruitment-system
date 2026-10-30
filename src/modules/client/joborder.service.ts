@@ -61,6 +61,9 @@ export const JobOrderService = {
     return db.jobOrder.findMany({
       where: { tenantId, deletedAt: null },
       orderBy: { createdAt: "desc" },
+      include: {
+        clientCompany: { select: { id: true, name: true, code: true } },
+      },
     });
   },
 
