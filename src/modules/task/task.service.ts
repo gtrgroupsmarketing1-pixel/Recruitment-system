@@ -53,6 +53,88 @@ function startOfDay(d: Date): number {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
+
+async function resolveTaskContexts(
+  tenantId: string,
+  rows: Task[]
+): Promise<Map<string, TaskContextLink>> {
+  const map = new Map<string, TaskContextLink>();
+  const appIds = rows
+    .filter((r) => r.refType === "CandidateApplication")
+    .map((r) => r.refId);
+  const candIds = rows
+    .filter((r) => r.refType === "Candidate" || r.refType === "candidate")
+    .map((r) => r.refId);
+  const reqIds = rows
+    .filter(
+      (r) =>
+        r.refType === "JobRequisition" ||
+        r.refType === "Requisition" ||
+        r.refType === "requisition"
+    )
+    .map((r) => r.refId);
+
+  const [apps, cands, reqs] = await Promise.all([
+    appIds.length
+      ? db.candidateApplication.findMany({
+          where: { tenantId, id: { in: appIds }, deletedAt: null },
+          select: {
+            id: true,
+            candidateId: true,
+            candidate: { select: { fullName: true } },
+          },
+        })
+      : Promise.resolve([] as { id: string; candidateId: string; candidate: { fullName: string } }[]),
+    candIds.length
+      ? db.candidate.findMany({
+          where: { tenantId, id: { in: candIds }, deletedAt: null },
+          select: { id: true, fullName: true },
+        })
+      : Promise.resolve([] as { id: string; fullName: string }[]),
+    reqIds.length
+      ? db.jobRequisition.findMany({
+          where: { tenantId, id: { in: reqIds }, deletedAt: null },
+          select: { id: true, reqCode: true },
+        })
+      : Promise.resolve([] as { id: string; reqCode: string }[]),
+  ]);
+
+  const appById = new Map(apps.map((a) => [a.id, a]));
+  const candById = new Map(cands.map((c) => [c.id, c]));
+  const reqById = new Map(reqs.map((r) => [r.id, r]));
+
+  for (const row of rows) {
+    if (row.refType === "CandidateApplication") {
+      const app = appById.get(row.refId);
+      if (app) {
+        map.set(row.id, {
+          href: `/candidates/${app.candidateId}`,
+          label: app.candidate.fullName,
+        });
+        continue;
+      }
+    }
+    if (row.refType === "Candidate" || row.refType === "candidate") {
+      const c = candById.get(row.refId);
+      if (c) {
+        map.set(row.id, { href: `/candidates/${c.id}`, label: c.fullName });
+        continue;
+      }
+    }
+    if (
+      row.refType === "JobRequisition" ||
+      row.refType === "Requisition" ||
+      row.refType === "requisition"
+    ) {
+      const r = reqById.get(row.refId);
+      if (r) {
+        map.set(row.id, { href: `/requisitions/${r.id}`, label: r.reqCode });
+      }
+    }
+  }
+  return map;
+}
+
 export const TaskService = {
   async listForUser(
     tenantId: string,
