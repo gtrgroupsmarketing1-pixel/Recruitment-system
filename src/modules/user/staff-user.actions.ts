@@ -1,9 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { UserRole } from "@prisma/client";
 import { withSessionScope } from "@/core/auth/action-scope";
-import { requirePermission } from "@/core/auth/permissions";
+import { requirePermission } from "@/core/auth/session";
 import { AppError } from "@/lib/errors";
 import { StaffUserService } from "./staff-user.service";
 
@@ -53,6 +54,8 @@ export async function updateStaffRoleAction(formData: FormData) {
         String(formData.get("branchId") ?? "") || null
       );
     });
+    revalidatePath("/admin/users");
+    return { success: true };
   } catch (error) {
     if (isRedirectError(error)) throw error;
     const message =
@@ -61,9 +64,8 @@ export async function updateStaffRoleAction(formData: FormData) {
         : error instanceof Error
           ? error.message
           : "Could not update role";
-    redirect(`/admin/users?error=${encodeURIComponent(message)}`);
+    return { error: message };
   }
-  redirect("/admin/users");
 }
 
 export async function setStaffActiveAction(formData: FormData) {

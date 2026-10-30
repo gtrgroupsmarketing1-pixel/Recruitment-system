@@ -23,6 +23,8 @@ export type StaffUserView = {
   branchName: string | null;
   createdAt: Date;
   isActive: boolean;
+  openRequisitions: number;
+  openTasks: number;
 };
 
 function assertTenantAdmin() {
@@ -58,6 +60,44 @@ export const StaffUserService = {
       orderBy: { createdAt: "desc" },
       include: { branch: { select: { name: true } } },
     });
+    if (rows.length === 0) return [];
+
+    const ids = rows.map((r) => r.id);
+    const { db } = await import("@/core/db/client");
+    const [reqGroups, taskGroups] = await Promise.all([
+      db.jobRequisition.groupBy({
+        by: ["assignedRecruiterId"],
+        where: {
+          tenantId,
+          deletedAt: null,
+          status: "OPEN",
+          assignedRecruiterId: { in: ids },
+        },
+        _count: { _all: true },
+      }),
+      db.task.groupBy({
+        by: ["assigneeId"],
+        where: {
+          tenantId,
+          deletedAt: null,
+          status: { in: ["OPEN", "IN_PROGRESS", "OVERDUE"] },
+          assigneeId: { in: ids },
+        },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const reqMap = new Map(
+      reqGroups
+        .filter((g) => g.assignedRecruiterId != null)
+        .map((g) => [g.assignedRecruiterId as string, g._count._all])
+    );
+    const taskMap = new Map(
+      taskGroups
+        .filter((g) => g.assigneeId != null)
+        .map((g) => [g.assigneeId as string, g._count._all])
+    );
+
     return rows.map((row) => ({
       id: row.id,
       email: row.email,
@@ -67,6 +107,8 @@ export const StaffUserService = {
       branchName: row.branch?.name ?? null,
       createdAt: row.createdAt,
       isActive: row.deletedAt === null,
+      openRequisitions: reqMap.get(row.id) ?? 0,
+      openTasks: taskMap.get(row.id) ?? 0,
     }));
   },
 
@@ -136,6 +178,8 @@ export const StaffUserService = {
       branchName: row.branch?.name ?? null,
       createdAt: row.createdAt,
       isActive: true,
+      openRequisitions: 0,
+      openTasks: 0,
     };
   },
 
