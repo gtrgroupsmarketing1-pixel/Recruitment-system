@@ -35,6 +35,18 @@ function e(ctx: TemplateContext, key: string): string {
 }
 
 export const TEMPLATES: Record<string, Template> = {
+  "system.test_email": {
+    channel: "EMAIL",
+    subject: () => "Test email from Recruitment OS",
+    body: (ctx) =>
+      `This is a test email from your recruitment platform.\n` +
+      `Tenant: ${field(ctx, "tenantName", "your agency")}.\n` +
+      `If you received this, sender configuration is working.`,
+    bodyHtml: (ctx) =>
+      `<p>This is a <strong>test email</strong> from your recruitment platform.</p>` +
+      `<p>Tenant: ${e(ctx, "tenantName") || "your agency"}.</p>` +
+      `<p>If you received this, sender configuration is working.</p>`,
+  },
   "candidate.status_changed": {
     channel: "WHATSAPP",
     body: (ctx) =>
