@@ -59,6 +59,7 @@ model Tenant {
   candidateAuthTokens CandidateAuthToken[]
   candidateAuthRateLimits CandidateAuthRateLimit[]
   clientComments      ClientCandidateComment[]
+  whatsAppLeads       WhatsAppLead[]
 }
 
 enum UserRole {
@@ -167,6 +168,7 @@ model Candidate {
   vaultDocuments Document[]
   authTokens   CandidateAuthToken[]
   authRateLimits CandidateAuthRateLimit[]
+  whatsAppLead   WhatsAppLead?
 
   @@index([tenantId])
   @@index([tenantId, passportNumberBidx])
@@ -1137,4 +1139,28 @@ model RateLimit {
 
   @@unique([key, identifier, windowStart])
   @@index([windowStart])
+}
+
+
+model WhatsAppLead {
+  id          String    @id @default(cuid())
+  tenantId    String
+  phoneNumber String
+  profileName String?
+  lastMessage String?
+  adId        String?
+  ctwaClid    String?
+  status      String    @default("NEW")
+  notes       String?
+  candidateId String?   @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  candidate Candidate? @relation(fields: [candidateId], references: [id])
+
+  @@index([tenantId, status])
+  @@index([tenantId, phoneNumber])
+  @@index([tenantId, createdAt])
 }

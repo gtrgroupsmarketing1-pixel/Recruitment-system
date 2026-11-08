@@ -11,6 +11,7 @@ const OPERATE: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/requisitions", label: "Requisitions" },
   { href: "/candidates", label: "Candidates" },
+  { href: "/crm", label: "WhatsApp CRM" },
   { href: "/tasks", label: "Tasks" },
   { href: "/documents", label: "Documents" },
 ];
