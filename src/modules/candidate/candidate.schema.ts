@@ -8,6 +8,10 @@ export const CreateCandidateInput = z.object({
   passportNumber: z.string().optional(),
   nationalId: z.string().optional(),
   medicalResult: z.string().optional(),
+  nationality: z.string().optional(),
+  trade: z.string().optional(),
+  cvUrl: z.string().optional(),
+  cvStorageKey: z.string().optional(),
   requisitionId: z.string().optional(),
   smsOptIn: z.boolean().optional(),
 });
@@ -20,6 +24,10 @@ export const UpdateCandidateInput = z
     passportNumber: z.string().nullable().optional(),
     nationalId: z.string().nullable().optional(),
     medicalResult: z.string().nullable().optional(),
+    nationality: z.string().nullable().optional(),
+    trade: z.string().nullable().optional(),
+    cvUrl: z.string().nullable().optional(),
+    cvStorageKey: z.string().nullable().optional(),
     smsOptIn: z.boolean().optional(),
   })
   .strict();

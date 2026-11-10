@@ -66,6 +66,10 @@ export const CandidateService = {
       passportNumber: input.passportNumber,
       nationalId: input.nationalId,
       medicalResult: input.medicalResult,
+      nationality: input.nationality,
+      trade: input.trade,
+      cvUrl: input.cvUrl,
+      cvStorageKey: input.cvStorageKey,
       smsOptIn,
       smsOptInAt: smsOptIn ? new Date() : null,
     });

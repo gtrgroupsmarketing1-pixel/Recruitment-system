@@ -19,17 +19,26 @@ export async function POST(req: Request, ctx: Ctx) {
       phone?: string;
       trade?: string;
       nationality?: string;
+      cvUrl?: string;
+      cvStorageKey?: string;
     };
     const fullName = String(body.name ?? "").trim();
     const phone = String(body.phone ?? "").trim();
     const trade = String(body.trade ?? "").trim();
     const nationality = String(body.nationality ?? "").trim();
+    const cvUrl = body.cvUrl ? String(body.cvUrl).trim() : undefined;
+    const cvStorageKey = body.cvStorageKey
+      ? String(body.cvStorageKey).trim()
+      : undefined;
 
     if (!fullName) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
     if (!phone) {
       return NextResponse.json({ error: "Phone is required" }, { status: 400 });
+    }
+    if (!trade) {
+      return NextResponse.json({ error: "Trade is required" }, { status: 400 });
     }
 
     const result = await withMobileScope(req, async (scope) => {
@@ -44,19 +53,19 @@ export async function POST(req: Request, ctx: Ctx) {
       const candidate = await CandidateService.create(
         scope.tenantId,
         scope.userId,
-        { fullName, phone }
+        {
+          fullName,
+          phone,
+          nationality: nationality || undefined,
+          trade,
+          cvUrl,
+          cvStorageKey,
+        }
       );
-
-      if (nationality) {
-        await db.candidate.updateMany({
-          where: { id: candidate.id, tenantId: scope.tenantId },
-          data: { nationality },
-        });
-      }
 
       const noteParts = [
         lead.notes,
-        trade ? `Trade: ${trade}` : null,
+        `Trade: ${trade}`,
         lead.ctwaClid ? `ctwa_clid: ${lead.ctwaClid}` : null,
         lead.adId ? `adId: ${lead.adId}` : null,
       ].filter(Boolean);

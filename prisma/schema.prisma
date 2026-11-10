@@ -151,6 +151,9 @@ model Candidate {
   medicalResult      String?
   medicalResultBidx  String?
   nationality        String?
+  trade              String?
+  cvUrl              String?
+  cvStorageKey       String?
   smsOptIn           Boolean  @default(false)
   smsOptInAt         DateTime?
   whatsappOptIn      Boolean  @default(true)

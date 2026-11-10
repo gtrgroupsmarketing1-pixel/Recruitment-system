@@ -18,6 +18,7 @@ export async function convertLeadToCandidateAction(
 
   if (!fullName) throw new ValidationError("Name is required");
   if (!phone) throw new ValidationError("Phone is required");
+  if (!trade) throw new ValidationError("Trade is required");
 
   const candidateId = await withSessionScope(async (scope) => {
     requirePermission("candidate:create");
@@ -40,19 +41,14 @@ export async function convertLeadToCandidateAction(
       {
         fullName,
         phone,
+        nationality: nationality || undefined,
+        trade,
       }
     );
 
-    if (nationality) {
-      await db.candidate.updateMany({
-        where: { id: candidate.id, tenantId: scope.tenantId },
-        data: { nationality },
-      });
-    }
-
     const noteParts = [
       lead.notes,
-      trade ? `Trade: ${trade}` : null,
+      `Trade: ${trade}`,
       lead.ctwaClid ? `ctwa_clid: ${lead.ctwaClid}` : null,
       lead.adId ? `adId: ${lead.adId}` : null,
     ].filter(Boolean);
