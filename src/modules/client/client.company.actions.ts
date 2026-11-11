@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { withSessionScope } from "@/core/auth/action-scope";
+import { requirePermission } from "@/core/auth/session";
 import { AppError, ValidationError } from "@/lib/errors";
 import { ClientCompanyService } from "./client.company.service";
 
@@ -14,6 +15,7 @@ export async function createClientCompanyAction(formData: FormData) {
     if (!code.trim()) throw new ValidationError("Code is required");
 
     const created = await withSessionScope(async (scope) => {
+      requirePermission("requisition:create");
       return ClientCompanyService.create(scope.tenantId, {
         name,
         code,

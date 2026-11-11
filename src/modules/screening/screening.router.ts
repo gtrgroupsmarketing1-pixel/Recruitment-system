@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "@/trpc/init";
+import { requirePermission } from "@/core/auth/session";
 import { ScreeningService } from "./screening.service";
 
 export const screeningRouter = router({
   getForApplication: protectedProcedure
     .input(z.object({ applicationId: z.string() }).strict())
     .query(({ ctx, input }) => {
+      requirePermission("application:view");
       return ScreeningService.getForApplication(
         ctx.tenantId,
         input.applicationId
@@ -24,6 +26,7 @@ export const screeningRouter = router({
         .strict()
     )
     .mutation(({ ctx, input }) => {
+      requirePermission("application:change_status");
       return ScreeningService.completeStep(
         ctx.tenantId,
         ctx.userId!,
@@ -37,6 +40,7 @@ export const screeningRouter = router({
   finalizeScreening: protectedProcedure
     .input(z.object({ screeningId: z.string() }).strict())
     .mutation(({ ctx, input }) => {
+      requirePermission("application:change_status");
       return ScreeningService.finalizeScreening(
         ctx.tenantId,
         ctx.userId!,

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { withSessionScope } from "@/core/auth/action-scope";
+import { requirePermission } from "@/core/auth/session";
 import { ClientCompanyService } from "./client-company.service";
 import { z } from "zod";
 
@@ -15,6 +16,7 @@ export async function createClientAction(formData: FormData) {
   let errorMsg = null;
   try {
     await withSessionScope(async (scope) => {
+      requirePermission("requisition:create");
       const raw = Object.fromEntries(formData.entries());
       const parsed = Schema.safeParse(raw);
       if (!parsed.success) {

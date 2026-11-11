@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { withSessionScope } from "@/core/auth/action-scope";
+import { requirePermission } from "@/core/auth/session";
 import { ValidationError } from "@/lib/errors";
 import { ScreeningService } from "./screening.service";
 
@@ -18,6 +19,7 @@ const CompleteStepSchema = z.object({
 
 export async function completeStepAction(formData: FormData): Promise<void> {
   await withSessionScope(async (scope) => {
+    requirePermission("application:change_status");
     const parsed = CompleteStepSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) throw new ValidationError("Invalid step data");
     const { screeningId, requisitionId, stepOrder, status, score, notes } =

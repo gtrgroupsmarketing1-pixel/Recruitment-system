@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { withSessionScope } from "@/core/auth/action-scope";
+import { requirePermission } from "@/core/auth/session";
 import { ApplicationService } from "./application.service";
 
 export async function linkCandidateAction(formData: FormData) {
@@ -16,6 +17,7 @@ export async function linkCandidateAction(formData: FormData) {
 
   try {
     await withSessionScope(async (scope) => {
+      requirePermission("application:create");
       await ApplicationService.create(scope.tenantId, scope.userId, {
         candidateId,
         requisitionId,

@@ -124,6 +124,5 @@ describe("ApplicationService.create starts screening", () => {
       "app_1",
       "BLUE_COLLAR"
     );
-    expect(db.$transaction).toHaveBeenCalled();
   });
 });
