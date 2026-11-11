@@ -7,38 +7,76 @@ import { db } from "@/core/db/client";
 
 export const runtime = "nodejs";
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type Ctx = { params: Promise<{ id: string }> };
+
+export async function GET(req: Request, ctx: Ctx) {
   try {
-    const { id } = await params;
+    const { id } = await ctx.params;
 
     const requisition = await withMobileScope(req, async (scope) => {
-      return db.requisition.findUnique({
-        where: { 
-          id: id, 
-          tenantId: scope.tenantId 
+      return db.jobRequisition.findFirst({
+        where: {
+          id,
+          tenantId: scope.tenantId,
+          deletedAt: null,
         },
         include: {
-          client: { select: { name: true } },
           applications: {
+            where: { deletedAt: null },
             include: {
-              candidate: { 
-                select: { id: true, fullName: true, trade: true, phone: true } 
-              }
+              candidate: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  trade: true,
+                  phone: true,
+                  nationality: true,
+                },
+              },
             },
-            orderBy: { updatedAt: "desc" }
-          }
-        }
+            orderBy: { updatedAt: "desc" },
+          },
+        },
       });
     });
 
     if (!requisition) {
       return NextResponse.json({ error: "Requisition not found" }, { status: 404 });
     }
-    
-    return NextResponse.json({ requisition });
+
+    // Resolve client name without assuming a Prisma relation name "client"
+    const client = await withMobileScope(req, async (scope) => {
+      return db.clientCompany.findFirst({
+        where: {
+          id: requisition.clientCompanyId,
+          tenantId: scope.tenantId,
+          deletedAt: null,
+        },
+        select: { id: true, name: true, code: true },
+      });
+    });
+
+    return NextResponse.json({
+      requisition: {
+        id: requisition.id,
+        reqCode: requisition.reqCode,
+        roleCategory: requisition.roleCategory,
+        country: requisition.country,
+        status: requisition.status,
+        vacancyTarget: requisition.vacancyTarget,
+        location: requisition.location,
+        targetOnboardingDate: requisition.targetOnboardingDate,
+        notes: requisition.notes,
+        clientName: client?.name ?? "—",
+        clientCode: client?.code ?? null,
+        applications: requisition.applications.map((a) => ({
+          id: a.id,
+          status: a.status,
+          updatedAt: a.updatedAt,
+          candidate: a.candidate,
+        })),
+      },
+    });
   } catch (error) {
     if (error instanceof MobileAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
