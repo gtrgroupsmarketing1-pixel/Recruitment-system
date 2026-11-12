@@ -10,26 +10,31 @@ export const runtime = "nodejs";
 export async function GET(req: Request) {
   try {
     const data = await withMobileScope(req, async (scope) => {
-      return RequisitionService.list(scope.tenantId, { status: "OPEN" });
+      const open = await RequisitionService.list(scope.tenantId, { status: "OPEN" });
+      if (open.length > 0) return open;
+      return RequisitionService.list(scope.tenantId, {});
     });
-    return NextResponse.json({
-      requisitions: data.map((r) => ({
-        id: r.id,
-        reqCode: r.reqCode,
-        roleCategory: r.roleCategory,
-        country: r.country,
-        status: r.status,
-        clientName: r.client.name,
-        vacancyTarget: r.vacancyTarget,
-        mobilized: r.fulfillment.mobilized,
-        targetOnboardingDate: r.targetOnboardingDate,
-      })),
-    });
+
+    const requisitions = data.map((r) => ({
+      id: r.id,
+      reqCode: r.reqCode,
+      roleCategory: r.roleCategory,
+      country: r.country,
+      status: r.status,
+      clientName: r.client?.name ?? "Unknown",
+      vacancyTarget: r.vacancyTarget ?? 0,
+      mobilized: r.fulfillment?.mobilized ?? 0,
+      targetOnboardingDate: r.targetOnboardingDate ?? null,
+    }));
+
+    return NextResponse.json({ requisitions });
   } catch (error) {
     if (error instanceof MobileAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
+    const message =
+      error instanceof Error ? error.message : "Failed to load requisitions";
     console.error("[mobile/requisitions]", error);
-    return NextResponse.json({ error: "Failed to load requisitions" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
