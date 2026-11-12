@@ -15,7 +15,7 @@ export async function GET(req: Request) {
       return RequisitionService.list(scope.tenantId, {});
     });
 
-    const requisitions = data.map((r) => ({
+    const requisitions = data.map((r: any) => ({
       id: r.id,
       reqCode: r.reqCode,
       roleCategory: r.roleCategory,
@@ -23,7 +23,12 @@ export async function GET(req: Request) {
       status: r.status,
       clientName: r.client?.name ?? "Unknown",
       vacancyTarget: r.vacancyTarget ?? 0,
+      quantity: r.vacancyTarget ?? 0, // Added for mobile UI compatibility
       mobilized: r.fulfillment?.mobilized ?? 0,
+      
+      // 👇 CRITICAL FIX: Read `filled` from the Service layer, NOT `_count`
+      filled: r.filled ?? 0, 
+      
       targetOnboardingDate: r.targetOnboardingDate ?? null,
     }));
 

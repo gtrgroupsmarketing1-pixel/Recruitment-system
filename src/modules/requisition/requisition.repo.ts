@@ -10,6 +10,12 @@ export const RequisitionRepo = {
   async findById(tenantId: string, id: string) {
     return db.jobRequisition.findFirst({
       where: { id, tenantId, deletedAt: null },
+      // 👇 ADDED: Include the count of applications for this requisition
+      include: {
+        _count: {
+          select: { applications: true }
+        }
+      }
     });
   },
 
@@ -36,6 +42,12 @@ export const RequisitionRepo = {
               ],
             }
           : {}),
+      },
+      // 👇 ADDED: Include the count of applications for every requisition in the list
+      include: {
+        _count: {
+          select: { applications: true }
+        }
       },
       orderBy: { createdAt: "desc" },
     });
