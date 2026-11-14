@@ -7,18 +7,13 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   try {
     await withMobileScope(req, async (scope) => {
-      const formData = await req.formData();
-      const file = formData.get("file") as File;
-      if (!file) throw new Error("No image provided");
+      // 👇 RECEIVE JSON INSTEAD OF FORMDATA
+      const { base64Image, mimeType } = await req.json();
+      if (!base64Image) throw new Error("No image provided");
 
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      // 👇 FIX 1: Extract raw base64 string (no data:image prefix)
-      const base64Image = buffer.toString("base64");
-      
-      // 👇 FIX 2: Force mediaType to image so OpenAI doesn't default to text/plain
-      const mimeType = file.type && file.type.startsWith("image/") ? file.type : "image/jpeg";
+      // Convert base64 back to Uint8Array
+      const buffer = Buffer.from(base64Image, "base64");
+      const uint8Array = new Uint8Array(buffer);
 
       const { object } = await generateWithFallback({
         schema: ExtractedSchema,
@@ -31,10 +26,8 @@ export async function POST(req: Request) {
                 text: "Extract the candidate's profile details from this image. If it looks like a job order, set intent to REQUISITION." 
               },
               { 
-                // 👇 FIX 3: Use type: "file" instead of "image", and specify mediaType
-                type: "file", 
-                data: base64Image,
-                mediaType: mimeType
+                type: "image", // 👈 Use type "image" with Uint8Array
+                image: uint8Array 
               },
             ],
           },

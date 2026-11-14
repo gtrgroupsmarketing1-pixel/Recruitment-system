@@ -42,8 +42,8 @@ export async function generateWithFallback(params: {
   for (const key of geminiKeys) {
     try {
       return await generateObject({
-        // 👇 FIX 1: Added -latest to the model name
-        model: createGoogleGenerativeAI({ apiKey: key })('gemini-1.5-pro-latest'),
+        // 👇 FIX: Use standard flash model
+        model: createGoogleGenerativeAI({ apiKey: key })('gemini-1.5-flash'),
         schema: params.schema,
         messages: params.messages,
       });
@@ -55,7 +55,6 @@ export async function generateWithFallback(params: {
   throw new Error("All AI providers failed to process the request. Check Vercel logs for details.");
 }
 
-// 👇 FIX 2: Changed all .optional() to .nullable()
 export const ExtractedSchema = z.object({
   intent: z.enum(["CANDIDATE", "REQUISITION", "UNKNOWN"]),
   candidate: z.object({
