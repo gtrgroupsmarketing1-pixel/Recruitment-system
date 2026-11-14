@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withMobileScope, MobileAuthError } from "@/core/mobile-auth/with-mobile-scope";
-import { generateWithFallback, ExtractedSchema } from "@/lib/ai"; // 👈 Import the new function
+import { generateWithFallback, ExtractedSchema } from "@/lib/ai"; 
 
 export const runtime = "nodejs";
 
@@ -14,7 +14,12 @@ export async function POST(req: Request) {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      // 👇 Use the new custom fallback function
+      // 👇 1. Convert Buffer to a Base64 Data URL (Crucial for AI SDK)
+      const mimeType = file.type || "image/jpeg";
+      const base64Image = buffer.toString("base64");
+      const dataUrl = `data:${mimeType};base64,${base64Image}`;
+
+      // 👇 2. Use the new custom fallback function
       const { object } = await generateWithFallback({
         schema: ExtractedSchema,
         messages: [
@@ -27,7 +32,7 @@ export async function POST(req: Request) {
               },
               { 
                 type: "image", 
-                image: buffer 
+                image: dataUrl // 👈 3. Pass the Base64 URL, not the raw buffer
               },
             ],
           },
@@ -40,7 +45,11 @@ export async function POST(req: Request) {
     if (error instanceof MobileAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
+    
     console.error("[mobile/intake/parse-image]", error);
-    return NextResponse.json({ error: "Failed to parse image" }, { status: 500 });
+    
+    // 👇 Return the actual error message so the mobile app can display it
+    const message = error instanceof Error ? error.message : "Failed to parse image";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
