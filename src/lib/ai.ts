@@ -4,17 +4,18 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
+// 👇 FIXED: Removed the underscores to match your Vercel variables
 const openAIKeys = [
-  process.env.OPENAI_KEY_1,
-  process.env.OPENAI_KEY_2,
+  process.env.OPENAI_KEY1,
+  process.env.OPENAI_KEY2,
 ].filter(Boolean) as string[]; 
 
 const geminiKeys = [
-  process.env.GEMINI_KEY_1,
-  process.env.GEMINI_KEY_2,
+  process.env.GEMINI_KEY1,
+  process.env.GEMINI_KEY2,
 ].filter(Boolean) as string[];
 
-// 👇 ADDED LOGS TO DEBUG ENV VARIABLES
+// Debug logs
 console.log(`🔑 OpenAI Keys loaded: ${openAIKeys.length}`);
 console.log(`🔑 Gemini Keys loaded: ${geminiKeys.length}`);
 
@@ -22,7 +23,7 @@ export async function generateWithFallback(params: {
   schema: any;
   messages: any[];
 }) {
-  // 👇 STRICT CHECK: Throw a clear error if no keys exist
+  // STRICT CHECK: Throw a clear error if no keys exist
   if (openAIKeys.length === 0 && geminiKeys.length === 0) {
     throw new Error("No API keys found. Please check Vercel Environment Variables.");
   }
@@ -31,7 +32,6 @@ export async function generateWithFallback(params: {
   for (const key of openAIKeys) {
     try {
       return await generateObject({
-        // 👇 Changed to gpt-4o-mini for better access and lower cost
         model: createOpenAI({ apiKey: key })('gpt-4o-mini'),
         schema: params.schema,
         messages: params.messages,
@@ -45,7 +45,6 @@ export async function generateWithFallback(params: {
   for (const key of geminiKeys) {
     try {
       return await generateObject({
-        // 👇 Changed to gemini-1.5-flash for better access and lower cost
         model: createGoogleGenerativeAI({ apiKey: key })('gemini-1.5-flash'),
         schema: params.schema,
         messages: params.messages,
