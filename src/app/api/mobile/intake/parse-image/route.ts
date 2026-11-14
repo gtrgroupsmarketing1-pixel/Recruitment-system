@@ -14,12 +14,12 @@ export async function POST(req: Request) {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      // 👇 1. Convert Buffer to a Base64 Data URL (Crucial for AI SDK)
-      const mimeType = file.type || "image/jpeg";
+      // 👇 FIX 1: Extract raw base64 string (no data:image prefix)
       const base64Image = buffer.toString("base64");
-      const dataUrl = `data:${mimeType};base64,${base64Image}`;
+      
+      // 👇 FIX 2: Force mediaType to image so OpenAI doesn't default to text/plain
+      const mimeType = file.type && file.type.startsWith("image/") ? file.type : "image/jpeg";
 
-      // 👇 2. Use the new custom fallback function
       const { object } = await generateWithFallback({
         schema: ExtractedSchema,
         messages: [
@@ -31,8 +31,10 @@ export async function POST(req: Request) {
                 text: "Extract the candidate's profile details from this image. If it looks like a job order, set intent to REQUISITION." 
               },
               { 
-                type: "image", 
-                image: dataUrl // 👈 3. Pass the Base64 URL, not the raw buffer
+                // 👇 FIX 3: Use type: "file" instead of "image", and specify mediaType
+                type: "file", 
+                data: base64Image,
+                mediaType: mimeType
               },
             ],
           },
@@ -46,9 +48,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
     
-    console.error("[mobile/intake/parse-image]", error);
-    
-    // 👇 Return the actual error message so the mobile app can display it
+    console.error("[mobile/intake/parse-image] Final Error:", error);
     const message = error instanceof Error ? error.message : "Failed to parse image";
     return NextResponse.json({ error: message }, { status: 500 });
   }
