@@ -14,20 +14,29 @@ const geminiKeys = [
   process.env.GEMINI_KEY_2,
 ].filter(Boolean) as string[];
 
+// 👇 ADDED LOGS TO DEBUG ENV VARIABLES
+console.log(`🔑 OpenAI Keys loaded: ${openAIKeys.length}`);
+console.log(`🔑 Gemini Keys loaded: ${geminiKeys.length}`);
+
 export async function generateWithFallback(params: {
   schema: any;
   messages: any[];
 }) {
+  // 👇 STRICT CHECK: Throw a clear error if no keys exist
+  if (openAIKeys.length === 0 && geminiKeys.length === 0) {
+    throw new Error("No API keys found. Please check Vercel Environment Variables.");
+  }
+
   // Try OpenAI Keys
   for (const key of openAIKeys) {
     try {
       return await generateObject({
-        model: createOpenAI({ apiKey: key })('gpt-4o'),
+        // 👇 Changed to gpt-4o-mini for better access and lower cost
+        model: createOpenAI({ apiKey: key })('gpt-4o-mini'),
         schema: params.schema,
         messages: params.messages,
       });
     } catch (error: any) {
-      // 👇 Print the EXACT error message to Vercel Logs
       console.error("⚠️ OpenAI key failed:", error?.message || error);
     }
   }
@@ -36,7 +45,8 @@ export async function generateWithFallback(params: {
   for (const key of geminiKeys) {
     try {
       return await generateObject({
-        model: createGoogleGenerativeAI({ apiKey: key })('gemini-1.5-pro'),
+        // 👇 Changed to gemini-1.5-flash for better access and lower cost
+        model: createGoogleGenerativeAI({ apiKey: key })('gemini-1.5-flash'),
         schema: params.schema,
         messages: params.messages,
       });
