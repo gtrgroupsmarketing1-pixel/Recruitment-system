@@ -9,11 +9,9 @@ import { RequisitionService } from "@/modules/requisition/requisition.service";
 export const runtime = "nodejs";
 
 function titleFrom(r: {
-  jobTitle?: string | null;
   notes?: string | null;
   roleCategory: string;
 }): string {
-  if (r.jobTitle?.trim()) return r.jobTitle.trim();
   const notes = r.notes?.trim();
   if (notes) {
     const titleLine = notes.split("\n").find((l) => /^title\s*:/i.test(l));
@@ -29,7 +27,6 @@ export async function GET(req: Request) {
       const views = await RequisitionService.list(scope.tenantId, {
         status: "OPEN",
       });
-      // Enrich with application counts in one query
       const ids = views.map((v) => v.id);
       const counts =
         ids.length === 0
@@ -50,7 +47,7 @@ export async function GET(req: Request) {
       return views.map((r) => ({
         id: r.id,
         reqCode: r.reqCode,
-        jobTitle: titleFrom(r as { jobTitle?: string | null; notes?: string | null; roleCategory: string }),
+        jobTitle: titleFrom(r),
         roleCategory: r.roleCategory,
         country: r.country,
         status: r.status,
