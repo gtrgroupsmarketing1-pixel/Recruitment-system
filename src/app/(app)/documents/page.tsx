@@ -14,6 +14,7 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { RealtimeRefresher } from "@/components/realtime/RealtimeRefresher";
 import { cn } from "cn";
+import { db } from "@/core/db/client";
 
 type Props = {
   searchParams: Promise<{ q?: string; type?: string }>;
@@ -25,9 +26,16 @@ export default async function DocumentsPage({ searchParams }: Props) {
   const tenantId = session.user.tenantId || session.tenantId;
   if (!tenantId) throw new Error("Missing tenant");
 
-  const data = await withSessionScope(() =>
-    DocumentService.getComplianceDashboard(tenantId, 30)
-  );
+  const { data, candidates } = await withSessionScope(async (scope) => {
+    const data = await DocumentService.getComplianceDashboard(scope.tenantId, 30);
+    const candidates = await db.candidate.findMany({
+      where: { tenantId: scope.tenantId, deletedAt: null },
+      select: { id: true, fullName: true },
+      orderBy: { updatedAt: "desc" },
+      take: 50,
+    });
+    return { data, candidates };
+  });
 
   let rows = data.actionRequired;
   if (sp.q?.trim()) {
@@ -141,6 +149,31 @@ export default async function DocumentsPage({ searchParams }: Props) {
             Filter
           </button>
         </form>
+
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold tracking-tight">
+            Upload for candidate
+          </h2>
+          <Card>
+            <CardContent className="space-y-3 p-4">
+              <p className="text-sm text-muted-foreground">
+                Select a candidate vault to upload passport, CV, license, or medical docs.
+              </p>
+              <ul className="flex flex-wrap gap-2 text-sm">
+                {candidates.slice(0, 12).map((c) => (
+                  <li key={c.id}>
+                    <Link
+                      href={`/candidates/${c.id}/documents`}
+                      className="rounded-full border px-3 py-1 hover:bg-muted"
+                    >
+                      {c.fullName}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </section>
 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold tracking-tight">

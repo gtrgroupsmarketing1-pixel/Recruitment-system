@@ -30,7 +30,20 @@ export async function GET(req: Request) {
       });
     });
     
-    return NextResponse.json({ tasks: data });
+    return NextResponse.json({
+      tasks: data.map((t) => ({
+        id: t.id,
+        title: t.title,
+        description: t.description,
+        isOverdue: t.isOverdue,
+        priority: t.priority,
+        dueDate: t.dueDate,
+        status: t.status,
+        context: t.context,
+        refType: t.refType,
+        refId: t.refId,
+      })),
+    });
   } catch (error) {
     if (error instanceof MobileAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
