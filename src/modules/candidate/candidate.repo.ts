@@ -59,6 +59,7 @@ export const CandidateRepo = {
           phone: true,
           email: true,
           nationality: true,
+          trade: true,
           portalStatus: true,
           createdAt: true,
           updatedAt: true,
