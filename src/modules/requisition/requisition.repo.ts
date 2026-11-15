@@ -85,6 +85,12 @@ export const RequisitionRepo = {
     return max;
   },
 
+  async countApplications(tenantId: string, requisitionId: string): Promise<number> {
+    return db.candidateApplication.count({
+      where: { tenantId, requisitionId, deletedAt: null },
+    });
+  },
+
   async countMobilized(tenantId: string, requisitionId: string): Promise<number> {
     return db.candidateApplication.count({
       where: {

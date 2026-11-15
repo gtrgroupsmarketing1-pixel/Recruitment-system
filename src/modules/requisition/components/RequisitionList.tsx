@@ -141,7 +141,7 @@ export function RequisitionList({ data }: Props) {
                       />
                     </div>
                     <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
-                      {req.fulfillment.mobilized}/{req.fulfillment.target}
+                      {req.applicationCount ?? 0} cand · {req.fulfillment.mobilized}/{req.fulfillment.target}
                     </span>
                   </div>
                 </TableCell>

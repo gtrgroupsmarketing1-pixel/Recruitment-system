@@ -18,6 +18,7 @@ import { requisitionScopeFilter, loadBranchUserIds } from "@/core/auth/scope-fil
  */
 export type RequisitionView = JobRequisition & {
   fulfillment: { mobilized: number; target: number; pct: number };
+  applicationCount: number;
   slaFlag: "RED" | "AMBER" | "GREEN" | null;
   client: { id: string; name: string; code: string };
 };
@@ -37,6 +38,7 @@ async function toView(
 ): Promise<RequisitionView> {
   const client = await RequisitionRepo.findClient(tenantId, row.clientCompanyId);
   const mobilized = await RequisitionRepo.countMobilized(tenantId, row.id);
+  const applicationCount = await RequisitionRepo.countApplications(tenantId, row.id);
   return {
     ...row,
     fulfillment: {
@@ -44,6 +46,7 @@ async function toView(
       target: row.vacancyTarget,
       pct: computeFulfillmentPct(mobilized, row.vacancyTarget),
     },
+    applicationCount,
     slaFlag: computeSlaFlag(row.targetOnboardingDate),
     client: client ?? { id: row.clientCompanyId, name: "unknown", code: "?" },
   };

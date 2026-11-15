@@ -14,6 +14,7 @@ export type CandidateListItem = {
   phone: string | null;
   email: string | null;
   nationality: string | null;
+  trade: string | null;
   portalStatus: string;
   applicationCount: number;
   poolStatus: CandidatePoolStatus;
@@ -112,6 +113,7 @@ export const CandidateService = {
         phone: r.phone,
         email: r.email,
         nationality: r.nationality,
+        trade: r.trade ?? null,
         portalStatus: r.portalStatus,
         applicationCount: r._count.applications,
         poolStatus,

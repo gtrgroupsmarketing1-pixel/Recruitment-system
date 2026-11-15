@@ -60,6 +60,8 @@ export async function GET(req: Request, ctx: Ctx) {
       requisition: {
         id: requisition.id,
         reqCode: requisition.reqCode,
+        jobTitle: (requisition as { jobTitle?: string | null }).jobTitle
+          ?? (requisition.notes?.trim()?.split("\n")[0] ?? requisition.roleCategory),
         roleCategory: requisition.roleCategory,
         country: requisition.country,
         status: requisition.status,
