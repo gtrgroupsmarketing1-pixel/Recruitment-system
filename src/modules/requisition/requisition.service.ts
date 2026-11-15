@@ -20,7 +20,6 @@ export type RequisitionView = JobRequisition & {
   fulfillment: { mobilized: number; target: number; pct: number };
   slaFlag: "RED" | "AMBER" | "GREEN" | null;
   client: { id: string; name: string; code: string };
-  filled: number; // 👈 ADDED: Count of candidates in pipeline
 };
 
 function isP2002(error: unknown): boolean {
@@ -34,12 +33,10 @@ function isP2002(error: unknown): boolean {
 
 async function toView(
   tenantId: string,
-  // 👈 UPDATED: Allow _count to be passed from the Repo
-  row: JobRequisition & { _count?: { applications: number } }
+  row: JobRequisition
 ): Promise<RequisitionView> {
   const client = await RequisitionRepo.findClient(tenantId, row.clientCompanyId);
   const mobilized = await RequisitionRepo.countMobilized(tenantId, row.id);
-  
   return {
     ...row,
     fulfillment: {
@@ -49,7 +46,6 @@ async function toView(
     },
     slaFlag: computeSlaFlag(row.targetOnboardingDate),
     client: client ?? { id: row.clientCompanyId, name: "unknown", code: "?" },
-    filled: row._count?.applications ?? 0, // 👈 ADDED: Map the count
   };
 }
 
@@ -131,10 +127,7 @@ export const RequisitionService = {
       branchUserIds = await loadBranchUserIds(tenantId, scope.branchId);
     }
     const scopeWhere = scope ? requisitionScopeFilter(scope, branchUserIds) : {};
-    
-    // Note: Ensure RequisitionRepo.list includes `_count: { select: { applications: true } }`
     const rows = await RequisitionRepo.list(tenantId, filter, scopeWhere);
-    
     const views: RequisitionView[] = [];
     for (const row of rows) {
       views.push(await toView(tenantId, row));
@@ -143,7 +136,6 @@ export const RequisitionService = {
   },
 
   async getById(tenantId: string, id: string): Promise<RequisitionView> {
-    // Note: Ensure RequisitionRepo.findById includes `_count: { select: { applications: true } }`
     const row = await RequisitionRepo.findById(tenantId, id);
     if (!row) throw new NotFoundError("JobRequisition", id);
     return toView(tenantId, row);
